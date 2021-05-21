@@ -1,0 +1,63 @@
+{% extends 'onlineshop/base.html' %}
+{% load static %}
+{% block content %}
+{% include 'onlineshop/search.html' %}
+<div class="nav justify-content-between align-center">
+<div class="h3">Liste des produits</div>
+<div class="h3">{{ produits_list|length }} produits</div>
+</div>
+<div class="row mb-2">
+    {% for produit in produits %}
+        <div class="col-sm-6">
+            <div class="card" {% if produit.stock > 0 %}style="background:#D0F4D2;"{% endif %}>
+                <div class="card-header">{{ produit.espece }}</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ produit.nom }}</h5>
+                    <p class="card-text">Prix : {{ produit.prix }} €<br/>Qte : {{ produit.stock }}</p>
+                    <a href="{{ produit.get_absolute_url }}" class="btn btn-primary">Detail</a>
+                    <form action="{% url 'cart:cart_add' produit.id %}" method="POST" class="btn" >
+                        {{ cart_produit_form }}
+                        <input type="number" name="qte" value="1" min="1" required="" id="id_qte" class="form-control btn btn-light" width="60" style="width:60px;">
+                        {% csrf_token %}
+                        <input type="submit" value="Ajouter au panier" class="btn btn-warning" />
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% if forloop.counter|divisibleby:2 %}</div><div class="row mb-2">{% endif %}
+    {% endfor %}
+    {% if produits|length_is:"0" %}
+        <div class="text-center">
+            Aucun résultat !
+        </div>
+    {% endif %}
+</div>
+{% if paginate %}
+<div class="clearfix"></div>
+<nav aria-label="...">
+<ul class="pagination justify-content-center">
+    {% if produits.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ produits.previous_page_number }}{{ getvars }}"><<</a></li>
+    {% else %}
+        <li class="page-item disabled"><a class="page-link" href="#"><<</a></li>
+    {% endif %}
+    {% if produits.number|add:'-4' > 1 %}
+        <li class="page-item"><a class="page-link" href="?page={{ produits.number|add:'-5' }}{{ getvars }}">...</a></li>
+    {% endif %}
+    {% for i in produits.paginator.page_range %}
+        {% if produits.number == i %}
+            <li class="page-item active"><span class="page-link" href="#">{{ i }}</span></li>
+        {% elif i > produits.number|add:'-5' and i < produits.number|add:'10' %}
+            <li class="page-item"><a class="page-link" href="?page={{ i }}{{ getvars }}">{{ i }}</a></li>
+        {% endif %}
+    {% endfor %}
+    <!-- <span class="current">{{ commandes.number }} / {{ commandes.paginator.num_pages }}</span>-->
+    {% if produits.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ produits.next_page_number }}{{ getvars }}">>></a></li>
+    {% else %}
+        <li class="page-item disabled"><a class="page-link" href="#">>></a></li>
+    {% endif %}
+</ul>
+</nav>
+{% endif %}
+{% endblock %}
