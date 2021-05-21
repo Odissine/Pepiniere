@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}La pépinière{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'img/leaf.png' %}" />.
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
@@ -13,7 +14,7 @@
 <body>
     <header class="navbar navbar-expand-lg navbar-light justify-content-between fixed-top bg-white shadow">
         <div class="container-fluid">
-            <a href="/" class="navbar-brand">La pepinière</a>
+            <a href="/" class="navbar-brand"><img class="img-fluid" src="{% static 'img/leaf.png' %}" /> La pepinière</a>
             <div class="navbar-nav justify-content-end">
                 <ul class="nav justify-content-end align-center">
                     <li class="nav-item pe-2"><a class="nav-link" href="/"><i class="bi-house text-secondary fs-4"></i> Accueil</a></li>
