@@ -2,8 +2,12 @@ from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from .models import Espece, Variete, PorteGreffe, Spec, Produit
 from cart.forms import CartAddProduitForm
+from account.decorators import unauthenticated_user
+from account.decorators import allowed_users
 
 
+#@unauthenticated_user
+#@allowed_users(allowed_roles=['user'])
 def produit_list(request, espece_slug=None, variete_slug=None, portegreffe_slug=None, spec_slug=None):
     espece = None
     variete = None
@@ -52,12 +56,12 @@ def produit_list(request, espece_slug=None, variete_slug=None, portegreffe_slug=
                'produits': produits,
                'produits_list': produits_list,
                'paginate': True
-    }
+               }
 
     return render(request, 'onlineshop/list.html', context)
 
 
-
+#@unauthenticated_user
 def produit_detail(request, id, slug):
     produit = get_object_or_404(Produit, id=id, slug=slug, available=True)
     cart_produit_form = CartAddProduitForm

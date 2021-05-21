@@ -3,9 +3,11 @@ from django.views.decorators.http import require_POST
 from .cart import Cart
 from .forms import CartAddProduitForm
 from onlineshop.models import Produit
+from account.decorators import unauthenticated_user
 
 
 @require_POST
+#@unauthenticated_user
 def cart_add(request, produit_id):
     cart = Cart(request)
     produit = get_object_or_404(Produit, id=produit_id)
@@ -17,16 +19,14 @@ def cart_add(request, produit_id):
 
     return redirect('cart:cart_detail')
 
-
+#@unauthenticated_user
 def cart_remove(request, produit_id):
     cart = Cart(request)
     produit = get_object_or_404(Produit, id=produit_id)
     cart.remove(produit)
     return redirect('cart:cart_detail')
 
-
+#@unauthenticated_user
 def cart_detail(request):
     cart = Cart(request)
     return render(request, 'cart/detail.html', {'cart': cart})
-
-
