@@ -2,32 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="837eb0e2-804b-47d2-b186-877eb60894b1" name="Default Changelist" comment="Premier Commit">
-      <change afterPath="$PROJECT_DIR$/../.idea/PYTHON.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/dbnavigator.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/account/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/account/admin.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/account/apps.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/account/decorators.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/account/migrations/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/account/models.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/account/tests.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/account/urls.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/account/views.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/onlineshop/static/img/leaf.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pepiniere/templates/account/login.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/../pepiniere_django/.idea/pepiniere_django.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cart/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/cart/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/onlineshop/static/css/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/onlineshop/static/css/style.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/onlineshop/templates/onlineshop/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/pepiniere/templates/onlineshop/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/onlineshop/templates/onlineshop/detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/pepiniere/templates/onlineshop/detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/onlineshop/templates/onlineshop/list.html" beforeDir="false" afterPath="$PROJECT_DIR$/pepiniere/templates/onlineshop/list.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/onlineshop/templates/onlineshop/search.html" beforeDir="false" afterPath="$PROJECT_DIR$/pepiniere/templates/onlineshop/search.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/onlineshop/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/onlineshop/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/onlineshop/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/onlineshop/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pepiniere/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/pepiniere/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pepiniere/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/pepiniere/urls.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -87,7 +63,14 @@
       <option name="project" value="LOCAL" />
       <updated>1621611008341</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Premier Commit">
+      <created>1621632284886</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1621632284886</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
