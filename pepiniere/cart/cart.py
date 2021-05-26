@@ -14,6 +14,7 @@ class Cart(object):
         self.cart = cart
 
     def add(self, produit, qte, override_qte=False):
+        print(self.cart)
         produit_id = str(produit.id)
 
         if produit_id not in self.cart:

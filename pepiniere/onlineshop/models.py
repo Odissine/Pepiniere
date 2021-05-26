@@ -95,3 +95,6 @@ class Produit(models.Model):
 
     def get_absolute_url(self):
         return reverse('onlineshop:produit_detail', args=[self.id, self.slug])
+
+    def get_prix(self):
+        return self.prix

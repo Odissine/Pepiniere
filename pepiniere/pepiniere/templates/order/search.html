@@ -1,0 +1,45 @@
+<div class="col-lg-12 detail-separator">
+    <form class="form-horizontal" action="" method="get" accept-charset="utf-8">
+        <div class="row align-items-center">
+            <h2 class="col-11">Recherche</h2>
+            <a href="" class="col-1 text-end" id="search-button"><i class="bi-plus-circle"></i></a>
+        </div>
+      <div class="row g-2" style="display:none" id="search-form">
+        <div class="col-md mb-3">
+            <select id="client" name="client" class="form-select form-select-lg my-3">
+                {% if client %}
+                    <option value="/">Aucun client</option>
+                    <option selected value="{{ client.get_absolute_url }}">{{ client.prenom }}{{ client.nom }}</option>
+                {% else %}
+                    <option selected value=>Client</option>
+                {% endif %}
+                {% for clt in clients %}
+                    <option value="{{ clt.get_absolute_url }}">{{ clt.prenom }}{{ clt.nom }}</option>
+                {% endfor %}
+            </select>
+            <div class="input-group input-group-lg flex-nowrap my-3">
+                <input class="form-control" type="date" name="date_after" />
+                <span class="input-group-text">Commandes passées après le : </span>
+            </div>
+            <div class="input-group input-group-lg flex-nowrap">
+                <span class="input-group-text">Commandes passées avant le : </span>
+                <input class="form-control" type="date" name="date_before" />
+            </div>
+            <div class="d-grid gap-2 my-3">
+                <button type="submit" class="btn btn-lg btn-primary">LANCER LA RECHERCHE</button>
+            </div>
+        </div>
+      </div>
+    </form>
+</div>
+<script>
+    $(document).ready(function() {
+        $('#search-form').hide();
+        $('#search-button').click(function() {
+            //$('#search-button').removeClass("bi-plus-circle");
+            //$('#search-button').addClass("bi-dash-circle");
+            $('#search-form').toggle();
+
+        });
+    });
+</script>

@@ -1,0 +1,63 @@
+{% extends 'onlineshop/base.html' %}
+{% load static %}
+{% block content %}
+{% include 'order/search.html' %}
+<div class="nav justify-content-between align-center">
+<div class="h3">Liste des commandes</div>
+<div class="h3">{{ orders_list|length }} commandes</div>
+</div>
+<div class="row mb-2">
+    {% for order in orders %}
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-header">FA-{{ order.id }}-2021</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ order.date|date:'d M Y @ H:i' }}</h5>
+                    <p class="card-text">Statut : {{ order.statut }}<br/>Client : {{ order.client.prenom }} {{ order.client.nom }}</p>
+                    <a href="{% url 'order:order_detail' order.id %}" class="btn btn-primary">Detail</a>
+                    <!--<form action="{#% url 'cart:cart_add' produit.id %}" method="POST" class="btn" >
+                        {{ cart_produit_form }}
+                        <input type="number" name="qte" value="1" min="1" required="" id="id_qte" class="form-control btn btn-light" width="60" style="width:60px;">
+                        {#% csrf_token %}
+                        <input type="submit" value="Ajouter au panier" class="btn btn-warning" />
+                    </form>-->
+                </div>
+            </div>
+        </div>
+        {% if forloop.counter|divisibleby:2 %}</div><div class="row mb-2">{% endif %}
+    {% endfor %}
+    {% if orders|length_is:"0" %}
+        <div class="text-center">
+            Aucune commande !
+        </div>
+    {% endif %}
+</div>
+{% if paginate %}
+<div class="clearfix"></div>
+<nav aria-label="...">
+<ul class="pagination justify-content-center">
+    {% if orders.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ orders.previous_page_number }}{{ getvars }}"><<</a></li>
+    {% else %}
+        <li class="page-item disabled"><a class="page-link" href="#"><<</a></li>
+    {% endif %}
+    {% if orders.number|add:'-4' > 1 %}
+        <li class="page-item"><a class="page-link" href="?page={{ orders.number|add:'-5' }}{{ getvars }}">...</a></li>
+    {% endif %}
+    {% for i in orders.paginator.page_range %}
+        {% if orders.number == i %}
+            <li class="page-item active"><span class="page-link" href="#">{{ i }}</span></li>
+        {% elif i > orders.number|add:'-5' and i < orders.number|add:'10' %}
+            <li class="page-item"><a class="page-link" href="?page={{ i }}{{ getvars }}">{{ i }}</a></li>
+        {% endif %}
+    {% endfor %}
+    <!-- <span class="current">{{ commandes.number }} / {{ commandes.paginator.num_pages }}</span>-->
+    {% if orders.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ orders.next_page_number }}{{ getvars }}">>></a></li>
+    {% else %}
+        <li class="page-item disabled"><a class="page-link" href="#">>></a></li>
+    {% endif %}
+</ul>
+</nav>
+{% endif %}
+{% endblock %}

@@ -6,9 +6,15 @@
     <h1>{{ produit.nom }}</h1>
     <p>{{ produit.prix }} €</p>
     <form action="{% url 'cart:cart_add' produit.id %}" method="POST">
-        {{ cart_produit_form }}
-        {% csrf_token %}
-        <input type="submit" value="Ajouter au panier" />
+        <div class="input-group mb-3">
+            <label for="id_qte" class="input-group-text">Qte</label>
+            <input type="number" name="qte" value="1" min="1" required="" id="id_qte" class="form-control" />
+            <input type="hidden" name="override" value="False" id="id_override" />
+            {% csrf_token %}
+
+
+            <button type="submit" value="" class="btn btn-success">Ajouter au panier</button>
+        </div>
     </form>
     <p>{{ produit.description|linebreaks }}</p>
 </div>

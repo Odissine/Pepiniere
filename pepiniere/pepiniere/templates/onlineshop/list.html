@@ -14,12 +14,14 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ produit.nom }}</h5>
                     <p class="card-text">Prix : {{ produit.prix }} €<br/>Qte : {{ produit.stock }}</p>
-                    <a href="{{ produit.get_absolute_url }}" class="btn btn-primary">Detail</a>
-                    <form action="{% url 'cart:cart_add' produit.id %}" method="POST" class="btn" >
-                        {{ cart_produit_form }}
-                        <input type="number" name="qte" value="1" min="1" required="" id="id_qte" class="form-control btn btn-light" width="60" style="width:60px;">
-                        {% csrf_token %}
-                        <input type="submit" value="Ajouter au panier" class="btn btn-warning" />
+                    <form action="{% url 'cart:cart_add' produit.id %}" method="POST">
+                        <!-- {{ cart_produit_form }} -->
+                        <div class="input-group mb-3">
+                            <a href="{{ produit.get_absolute_url }}" class="btn btn-primary">Detail</a>
+                            <input type="number" name="qte" value="1" min="1" required="" id="id_qte" class="form-control" width="60" style="width:60px;">
+                            {% csrf_token %}
+                            <button type="submit" value="Ajouter au panier" class="btn btn-warning">Ajouter au panier</button>
+                        </div>
                     </form>
                 </div>
             </div>
