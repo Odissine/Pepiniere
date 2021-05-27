@@ -10,7 +10,14 @@
     {% for order in orders %}
         <div class="col-sm-6">
             <div class="card">
-                <div class="card-header">FA-{{ order.id }}-2021</div>
+                <!-- bg-warning -->
+                {% if order.statut == "Annulée" %}
+                <div class="card-header fst-italic">FA-{{ order.id }}-2021</div>
+                {% elif order.statut == "Validée" %}
+                <div class="card-header bg-success">FA-{{ order.id }}-2021</div>
+                {% else %}
+                <div class="card-header bg-warning">FA-{{ order.id }}-2021</div>
+                {% endif %}
                 <div class="card-body">
                     <h5 class="card-title">{{ order.date|date:'d M Y @ H:i' }}</h5>
                     <p class="card-text">Statut : {{ order.statut }}<br/>Client : {{ order.client.prenom }} {{ order.client.nom }}</p>

@@ -1,27 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="837eb0e2-804b-47d2-b186-877eb60894b1" name="Default Changelist" comment="Premier Commit">
-      <change afterPath="$PROJECT_DIR$/cart/templates/cart/valid.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/order/urls.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pepiniere/templates/order/detail.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pepiniere/templates/order/list.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pepiniere/templates/order/search.html" afterDir="false" />
+    <list default="true" id="837eb0e2-804b-47d2-b186-877eb60894b1" name="Default Changelist" comment="Cart : Done&#10;Commande : Done&#10;Update : En cours">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cart/cart.py" beforeDir="false" afterPath="$PROJECT_DIR$/cart/cart.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cart/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/cart/forms.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cart/templates/cart/detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/cart/templates/cart/detail.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cart/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/cart/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cart/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/cart/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/db.sqlite3" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/onlineshop/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/onlineshop/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/order/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/order/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/order/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/order/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/order/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/order/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/order/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/order/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pepiniere/templates/onlineshop/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/pepiniere/templates/onlineshop/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pepiniere/templates/onlineshop/detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/pepiniere/templates/onlineshop/detail.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pepiniere/templates/onlineshop/list.html" beforeDir="false" afterPath="$PROJECT_DIR$/pepiniere/templates/onlineshop/list.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pepiniere/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/pepiniere/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pepiniere/templates/order/detail.html" beforeDir="false" afterPath="$PROJECT_DIR$/pepiniere/templates/order/detail.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pepiniere/templates/order/list.html" beforeDir="false" afterPath="$PROJECT_DIR$/pepiniere/templates/order/list.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pepiniere/templates/order/search.html" beforeDir="false" afterPath="$PROJECT_DIR$/pepiniere/templates/order/search.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -103,7 +91,14 @@
       <option name="project" value="LOCAL" />
       <updated>1621633912217</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Cart : Done&#10;Commande : Done&#10;Update : En cours">
+      <created>1622039200936</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1622039200936</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -120,7 +115,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Premier Commit" />
-    <option name="LAST_COMMIT_MESSAGE" value="Premier Commit" />
+    <MESSAGE value="Cart : Done&#10;Commande : Done&#10;Update : En cours" />
+    <option name="LAST_COMMIT_MESSAGE" value="Cart : Done&#10;Commande : Done&#10;Update : En cours" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

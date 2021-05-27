@@ -3,20 +3,34 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from .models import Commande, Client, Cartdb
 from cart.forms import CartAddProduitForm, CartUpdateForm
 from django.contrib import messages
+from datetime import datetime
+from django.db import connection
 
 
 def order_list(request, date_before=None, date_after=None, statut_request=None, client_request=None):
-    orders_list = Commande.objects.filter(statut='En cours').order_by('-date')
+
+    # orders_list = Commande.objects.filter(statut="En cours")
+
+    date_before = request.GET.get('date_before')
+    date_after = request.GET.get('date_after')
+    client_request = request.GET.get('client_request')
+    statut_request = request.GET.get('statut')
+
+    if statut_request and statut_request != "All":
+        orders_list = Commande.objects.filter(statut=statut_request).order_by('-date')
+    else:
+        orders_list = Commande.objects.filter(statut__isnull=False).order_by('-date')
+        print(orders_list.query)
 
     clients = Client.objects.all()
     client_cmd = None
 
-    if date_before:
-        orders_list = orders_list.filter(date >= date_before)
     if date_after:
-        orders_list = orders_list.filter(date >= date_after)
-    if statut_request:
-        orders_list = orders_list.filter(statut=statut_request)
+        orders_list = orders_list.filter(date__gte=datetime.strptime(date_after, '%Y-%m-%d'))
+
+    if date_before:
+        orders_list = orders_list.filter(date__lte=datetime.strptime(date_before, '%Y-%m-%d'))
+
     if client_request:
         client_cmd = get_object_or_404(Client, id=client_request)
         orders_list = orders_list.filter(client=client_cmd)
@@ -39,7 +53,6 @@ def order_list(request, date_before=None, date_after=None, statut_request=None, 
                'orders_list': orders_list,
                'paginate': True
                }
-
     return render(request, 'order/list.html', context)
 
 
@@ -99,3 +112,14 @@ def order_remove(request, id):
     message = "Suppression du produit effectuée avec succès !"
     messages.success(request, message)
     return redirect('order:order_detail', order.commande.id)
+
+
+def order_cancel(request, id):
+    order = get_object_or_404(Commande, pk=id)
+
+    Commande.objects.filter(pk=id).update(statut="Annulée")
+
+    message = "Commande annulée avec succès !"
+    print(message)
+    messages.success(request, message)
+    return redirect('order:order_detail', id)
