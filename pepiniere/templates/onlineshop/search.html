@@ -6,12 +6,11 @@
             <select id="espece" name="espece" class="form-select form-select-lg my-3" onchange="window.location.href=this.value">
                 {% if espece %}
                     <option value="/">Aucune espece</option>
-                    <option selected value="{{ espece.get_absolute_url }}">{{ espece.nom }}</option>
                 {% else %}
-                    <option selected value=>Espece</option>
+                    <option selected value=>({{ especes|length }}) Espece</option>
                 {% endif %}
                 {% for esp in especes %}
-                    <option value="{{ esp.get_absolute_url }}">{{ esp.nom }}</option>
+                    <option value="{{ esp.get_absolute_url }}" {% if espece and espece == esp %} selected {% endif %}>{{ esp.nom }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -20,12 +19,12 @@
                 <select id="variete" name="variete" class="form-select form-select-lg my-3" onchange="if (this.value) window.location.href=this.value">
                 {% if variete %}
                     <option value="{{ espece.get_absolute_url }}">Aucune variete</option>
-                    <option selected value="/{{ espece.slug }}/{{ variete.slug }}/">{{ variete.nom }}</option>
                 {% else %}
-                    <option selected value=>Variete</option>
+                    <option selected value=>({{ varietes|length }}) Variete</option>
                 {% endif %}
-                {% for variete in varietes %}
-                    <option value="/{{ espece.slug }}/{{ variete.slug }}/">{{ variete.nom }}</option>
+
+                {% for vte in varietes %}
+                    <option value="/produit/{{ espece.slug }}/{{ vte.slug }}/" {% if variete and variete == vte %} selected {% endif %}>{{ vte.nom }}</option>
                 {% endfor %}
                 </select>
         </div>
@@ -36,13 +35,12 @@
             <div class="col-md">
                     <select id="portegreffe" name="portegreffe" class="form-select form-select-lg my-3" onchange="if (this.value) window.location.href=this.value">
                     {% if portegreffe %}
-                        <option value="/{{ espece.slug }}/{{ variete.slug }}/">Aucun porte greffe</option>
-                        <option selected value="/{{ espece.slug }}/{{ variete.slug }}/{{ portegreffe.slug }}/">{{ portegreffe.nom }}</option>
+                        <option value="/produit/{{ espece.slug }}/{{ variete.slug }}/">Aucun porte greffe</option>
                     {% else %}
-                        <option selected value=>Porte Greffe</option>
+                        <option selected value=>({{ portegreffes|length }}) Porte Greffe</option>
                     {% endif %}
-                    {% for portegreffe in portegreffes %}
-                        <option value="/{{ espece.slug }}/{{ variete.slug }}/{{ portegreffe.slug }}/">{{ portegreffe.nom }}</option>
+                    {% for pg in portegreffes %}
+                        <option value="/produit/{{ espece.slug }}/{{ variete.slug }}/{{ pg.slug }}/" {% if portegreffe and portegreffe == pg %} selected {% endif %}>{{ pg.nom }}</option>
                     {% endfor %}
                     </select>
             </div>
@@ -51,13 +49,12 @@
         <div class="col-md">
                 <select id="spec" name="spec" class="form-select form-select-lg my-3" onchange="if (this.value) window.location.href=this.value">
                 {% if spec %}
-                    <option value="/{{ espece.slug }}/{{ variete.slug }}/{{ portegreffe.slug }}/">Aucun porte greffe</option>
-                    <option selected value="/{{ espece.slug }}/{{ variete.slug }}/{{ portegreffe.slug }}/{{ spec.slug }}/">{{ spec.nom }}</option>
+                    <option value="/produit/{{ espece.slug }}/{{ variete.slug }}/{{ portegreffe.slug }}/">Aucun porte greffe</option>
                 {% else %}
                     <option selected value=>Specialité</option>
                 {% endif %}
-                {% for spec in specs %}
-                    <option value="/{{ espece.slug }}/{{ variete.slug }}/{{ portegreffe.slug }}/{{ spec.slug }}/">{{ spec.nom }}</option>
+                {% for sp in specs %}
+                    <option value="/produit/{{ espece.slug }}/{{ variete.slug }}/{{ portegreffe.slug }}/{{ sp.slug }}/" {% if spec and spec == sp %} selected {% endif %}>{{ sp.nom }}</option>
                 {% endfor %}
                 </select>
         </div>

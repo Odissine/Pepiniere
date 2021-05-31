@@ -1,5 +1,6 @@
 from django.db import models
 from django.urls import reverse
+from django.utils.text import slugify
 
 
 class Espece(models.Model):
@@ -92,6 +93,18 @@ class Produit(models.Model):
 
     def __str__(self):
         return self.nom
+
+    def get_espece(self):
+        return self.espece
+
+    def get_variete(self):
+        return self.variete # {'nom': self.variete, 'slug': slugify(self.variete)}
+
+    def get_portegreffe(self):
+        return self.portegreffe
+
+    def get_spec(self):
+        return self.spec
 
     def get_absolute_url(self):
         return reverse('onlineshop:produit_detail', args=[self.id, self.slug])

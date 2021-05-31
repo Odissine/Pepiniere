@@ -11,16 +11,16 @@
         <div class="col-sm-6">
             <div class="card">
                 <!-- bg-warning -->
-                {% if order.statut == "Annulée" %}
+                {% if order.statut.nom == "Annulée" %}
                 <div class="card-header fst-italic">FA-{{ order.id }}-2021</div>
-                {% elif order.statut == "Validée" %}
+                {% elif order.statut.nom == "Terminée" %}
                 <div class="card-header bg-success">FA-{{ order.id }}-2021</div>
                 {% else %}
                 <div class="card-header bg-warning">FA-{{ order.id }}-2021</div>
                 {% endif %}
                 <div class="card-body">
                     <h5 class="card-title">{{ order.date|date:'d M Y @ H:i' }}</h5>
-                    <p class="card-text">Statut : {{ order.statut }}<br/>Client : {{ order.client.prenom }} {{ order.client.nom }}</p>
+                    <p class="card-text">Statut : {{ order.statut.nom }}<br/>Client : {{ order.client.prenom }} {{ order.client.nom }}</p>
                     <a href="{% url 'order:order_detail' order.id %}" class="btn btn-primary">Detail</a>
                     <!--<form action="{#% url 'cart:cart_add' produit.id %}" method="POST" class="btn" >
                         {{ cart_produit_form }}

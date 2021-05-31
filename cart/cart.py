@@ -18,14 +18,26 @@ class Cart(object):
         produit_id = str(produit.id)
 
         if produit_id not in self.cart:
-            self.cart[produit_id] = {'qte': qte, 'prix': str(produit.prix)}
+            if qte > produit.stock:
+                message = "Stock insuffisant !"
+            else:
+                message = "Produit ajouté au panier"
+                self.cart[produit_id] = {'qte': qte, 'prix': str(produit.prix)}
 
         else:
             if override_qte:
-                self.cart[produit_id]['qte'] = qte
+                if qte > produit.stock:
+                    message = "Stock insuffisant !"
+                else:
+                    self.cart[produit_id]['qte'] = qte
             else:
-                self.cart[produit_id]['qte'] += qte
+                if self.cart[produit_id]['qte'] + qte > produit.stock:
+                    message = "Stock insuffisant !"
+                else:
+                    message = "Quantité mise à jour"
+                    self.cart[produit_id]['qte'] += qte
         self.save()
+        return message
 
     def save(self):
         self.session.modified = True

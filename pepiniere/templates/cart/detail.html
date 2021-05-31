@@ -50,5 +50,6 @@
     {% csrf_token %}
     <button type="submit" class="btn btn-success">Valider</button>
 </div>
+    <a href="{% url 'cart:cart_cancel' %}" class="btn btn-outline-danger">Vider le panier ...</a>
 </form>
 {% endblock %}

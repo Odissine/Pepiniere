@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Client, Commande, Cartdb
+from .models import Client, Commande, Cartdb, Statut
 
 
 @admin.register(Client)
@@ -16,3 +16,8 @@ class CommandeAdmin(admin.ModelAdmin):
 class Cartdb(admin.ModelAdmin):
     list_display = ['qte', 'prix']
     list_display_links = ['qte', 'prix']
+
+@admin.register(Statut)
+class Statut(admin.ModelAdmin):
+    list_display = ['nom']
+    list_display_links = ['nom']

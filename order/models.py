@@ -3,6 +3,7 @@ from onlineshop.models import Produit
 
 
 class Client(models.Model):
+    objects = models.Manager()
     nom = models.CharField(max_length=250, db_index=True, null=False, blank=False)
     prenom = models.CharField(max_length=250, db_index=True, null=False, blank=False)
     adresse = models.TextField(blank=True)
@@ -18,12 +19,20 @@ class Client(models.Model):
         return full_name.strip()
 
 
+class Statut(models.Model):
+    nom = models.CharField(max_length=100, db_index=True, null=False, blank=False, default='En cours')
+
+    def __str__(self):
+        return self.nom
+
+
 class Commande(models.Model):
     objects = models.Manager()
     date = models.DateTimeField(auto_now=True)
-    client = models.ForeignKey(Client, related_name='clients', on_delete=models.CASCADE)
+    client = models.ForeignKey(Client, related_name='commande', on_delete=models.CASCADE)
     remise = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    statut = models.CharField(max_length=200, db_index=True, null=False, blank=False, default='En cours')
+    statut = models.ForeignKey(Statut, related_name='commande', on_delete=models.CASCADE)
+    # statut = models.CharField(max_length=250, db_index=True, null=False, blank=False, default='En cours')
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
@@ -32,15 +41,16 @@ class Commande(models.Model):
 
 class Cartdb(models.Model):
     objects = models.Manager()
-    produit = models.ForeignKey(Produit, related_name='produit', on_delete=models.CASCADE)
+    produit = models.ForeignKey(Produit, related_name='cartdb', on_delete=models.CASCADE)
     qte = models.IntegerField(default=1)
     prix = models.DecimalField(max_digits=10, decimal_places=2, default=15.00)
-    commande = models.ForeignKey(Commande, related_name='commande', on_delete=models.CASCADE)
+    commande = models.ForeignKey(Commande, related_name='cartdb', on_delete=models.CASCADE)
     total_line = models.DecimalField(max_digits=10, decimal_places=2, default=15.00)
 
     def add_cartdb(self, produit, qte, prix, commande, total_line):
         cartdb = self.create(produit=produit, qte=qte, prix=prix, commande=commande, total_line=total_line)
         return cartdb
+
 
     # def total_line(self):
     #     total = self.prix * self.qte
