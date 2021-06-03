@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.views.decorators.http import require_POST
 from .cart import Cart
-from .forms import CartAddProduitForm, CartValidForm
+from .forms import CartAddProduitForm, CartValidForm, CartUpdateForm
 from onlineshop.models import Produit
 from order.models import Cartdb, Commande, Client, Statut
 from datetime import datetime
@@ -16,6 +16,7 @@ from django.http import JsonResponse
 @login_required
 def cart_add(request, produit_id):
     cart = Cart(request)
+
     produit = get_object_or_404(Produit, id=produit_id)
     form = CartAddProduitForm(request.POST)
 
@@ -52,6 +53,21 @@ def cart_remove(request, produit_id):
     cart.remove(produit)
     return redirect('cart:cart_detail')
 
+@login_required
+def cart_update(request, produit_id):
+    cart = Cart(request)
+    form = CartUpdateForm(request.POST or None)
+
+    if form.is_valid():
+        cd = form.cleaned_data
+        produit = get_object_or_404(Produit, id=produit_id)
+        cart.update_qte(produit, cd['qte'])
+        cart.update_prix(produit, cd['prix'])
+        message = "Quantités/Produits mis(es) à jour avec succès !"
+        messages.success(request, message)
+
+    return redirect('cart:cart_detail')
+
 
 @login_required
 def cart_detail(request):
@@ -86,9 +102,10 @@ def cart_valid(request):
         cd = form.cleaned_data
 
         statut_en_cours = Statut.objects.get(nom="En cours")
-        print(statut_en_cours)
 
-        commande_create = Commande.objects.create(date=datetime.now, client=cd['client'], remise=0, statut=statut_en_cours, total=total_commande)
+        remise_client = cd['client'].remise
+
+        commande_create = Commande.objects.create(date=datetime.now, client=cd['client'], remise=remise_client, statut=statut_en_cours, total=total_commande)
         commande_create.save()
 
         for item in cart:

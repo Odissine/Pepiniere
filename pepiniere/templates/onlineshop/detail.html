@@ -3,8 +3,16 @@
 {% block title %}La Pépinière - {% if espece %}{{ espece.nom }}{% else %}Produits{% endif %}{% endblock %}
 {% block content %}
 <div class="container">
-    <h1>{{ produit.nom }}</h1>
-    <p>{{ produit.prix }} €</p>
+    <div class="row fs-4">
+        <div class="col"><strong>Espece</strong> : {{ produit.espece }}</div><div class="col"><strong>Prix</strong> : {{ produit.prix }} €</div>
+    </div>
+    <div class="row fs-4">
+        <div class="col"><strong>Variété</strong> : {{ produit.variete }}</div><div class="col"><strong>Stock</strong> : {{ produit.stock }} unités</div>
+    </div>
+    <div class="row fs-4">
+        <div class="col"><strong>Porte-Greffe</strong> : {{ produit.portegreffe }}</div>
+    </div>
+    <p></p>
     <form action="{% url 'cart:cart_add' produit.id %}" method="POST">
         <div class="input-group mb-3">
             <label for="id_qte" class="input-group-text">Qte</label>

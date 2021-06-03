@@ -2,7 +2,7 @@
     <form class="form-horizontal" action="" method="get" accept-charset="utf-8">
         <div class="row align-items-center">
             <h2 class="col-11">Recherche</h2>
-            <span href="" class="col-1 text-end cursor-hand" id="search-button"><i class="fs-4 bi-plus-circle" id="plus-icon"></i></span>
+            <span role="button" href="" class="rounded-pill col-1 text-center cursor-pointer" id="search-button"><i class="fs-3 bi-plus" id="plus-icon"></i></span>
         </div>
         <hr style="" id="hr-form">
 
@@ -11,7 +11,7 @@
             <select id="client_request" name="client_request" class="form-select form-select-lg my-3">
                     <option selected value="">Client</option>
                 {% for clt in clients %}
-                    <option value="{{ clt.id }}" {% if client_cmd.id == clt.id %}selected{% endif %}>{{ clt.prenom }} {{ clt.nom }}</option>
+                    <option value="{{ clt.id }}" {% if client_cmd.id == clt.id %} selected {% endif %}>{{ clt.prenom }} {{ clt.nom }}</option>
                 {% endfor %}
             </select>
             <div class="input-group input-group-lg flex-nowrap my-3">

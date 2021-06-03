@@ -16,4 +16,8 @@ class CartValidForm(forms.Form):
 
 class CartUpdateForm(forms.Form):
     qte = forms.IntegerField(min_value=1, initial=1)
+    prix = forms.CharField(max_length=8)
 
+
+class RemiseUpdateForm(forms.Form):
+    remise = forms.DecimalField(decimal_places=2, max_digits=5)

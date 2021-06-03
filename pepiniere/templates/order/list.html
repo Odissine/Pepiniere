@@ -15,6 +15,8 @@
                 <div class="card-header fst-italic">FA-{{ order.id }}-2021</div>
                 {% elif order.statut.nom == "Terminée" %}
                 <div class="card-header bg-success">FA-{{ order.id }}-2021</div>
+                {% elif order.statut.nom == "Validée" %}
+                <div class="card-header bg-primary">FA-{{ order.id }}-2021</div>
                 {% else %}
                 <div class="card-header bg-warning">FA-{{ order.id }}-2021</div>
                 {% endif %}

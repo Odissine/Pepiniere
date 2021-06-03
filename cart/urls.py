@@ -10,5 +10,6 @@ urlpatterns = [
     path('cancel/', views.cart_cancel, name='cart_cancel'),
     # path('add/<int:produit_id>', views.cart_add, name='cart_add'),
     path('add/<int:produit_id>', views.cart_add_ajax, name='cart_add'),
+    path('update/<int:produit_id>', views.cart_update, name='cart_update'),
     path('remove/<int:produit_id>', views.cart_remove, name='cart_remove'),
 ]

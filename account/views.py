@@ -15,6 +15,7 @@ def login_view(request):
 
         if user is not None:
             login(request, user)
+            print(user.groups.all())
             return redirect("produit_list")
         else:
             messages.error(request, "Erreur d'authentification ! Merci de réessayer.")

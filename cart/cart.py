@@ -57,7 +57,7 @@ class Cart(object):
             cart[str(produit.id)]['produit'] = produit
 
         for item in cart.values():
-            item['prix'] = Decimal(item['prix'])
+            item['prix'] = float(item['prix'])
             item['total'] = item['prix'] * item['qte']
             yield item
 
@@ -65,8 +65,37 @@ class Cart(object):
         return sum(item['qte'] for item in self.cart.values())
 
     def get_total_prix(self):
-        return sum(Decimal(item['prix'])*Decimal(item['qte']) for item in self.cart.values())
+        return sum(float(item['prix'])*float(item['qte']) for item in self.cart.values())
 
     def clear(self):
         del self.session[settings.CART_SESSION_ID]
         self.save()
+
+    def update_qte(self, produit, qte):
+        produit_id = str(produit.id)
+        if produit_id in self.cart:
+            item = self.cart[produit_id]
+            item['qte'] = qte
+            self.save()
+        return self.cart.values()
+
+    def update_prix(self, produit, prix):
+        produit_id = str(produit.id)
+        if produit_id in self.cart:
+
+            item = self.cart[produit_id]
+            prix = prix.replace(",", ".")
+
+            if is_float(prix):
+                prix = round(float(prix), 2)
+                item['prix'] = prix
+                self.save()
+        return self.cart.values()
+
+
+def is_float(number):
+    try:
+        float(number)
+        return True
+    except ValueError:
+        return False

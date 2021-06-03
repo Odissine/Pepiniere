@@ -12,6 +12,7 @@ class EspeceAdmin(admin.ModelAdmin):
 class VarieteAdmin(admin.ModelAdmin):
     list_display = ['nom', 'slug']
     prepopulated_fields = {'slug': ('nom',)}
+    search_fields = ('nom',)
 
 
 @admin.register(PorteGreffe)
@@ -28,7 +29,9 @@ class SpecAdmin(admin.ModelAdmin):
 
 @admin.register(Produit)
 class ProduitAdmin(admin.ModelAdmin):
-    list_display = ['nom', 'slug', 'prix', 'stock', 'available']
-    list_filter = ['stock', 'available']
+    list_display = ['nom', 'slug', 'prix', 'stock', 'available', 'espece', 'variete', 'portegreffe']
+    list_filter = ['stock', 'available', 'prix']
     list_editable = ['prix', 'stock', 'available']
-    prepopulated_fields = {'slug': ('nom',)}
+    prepopulated_fields = {'nom': ('espece','variete', 'portegreffe', 'spec'), 'slug': ('nom',)}
+    list_per_page = 200
+    search_fields = ('nom',)

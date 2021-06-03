@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from onlineshop.models import Produit
 
 
@@ -13,6 +14,7 @@ class Client(models.Model):
     mail = models.CharField(max_length=250, blank=False)
     commentaire = models.TextField(blank=True)
     remise = models.DecimalField(max_digits=5, decimal_places=2, default=0, blank=True)
+    user = models.ForeignKey(User, related_name='client', on_delete=models.SET_NULL, blank=True, null=True)
 
     def get_fullname(self):
         full_name = '%s %s' % (self.nom, self.prenom)
@@ -26,18 +28,33 @@ class Statut(models.Model):
         return self.nom
 
 
+class Frais(models.Model):
+    objects = models.Manager()
+    nom = models.CharField(max_length=250, db_index=True, null=False, blank=False)
+    prix = models.DecimalField(max_digits=10, decimal_places=2, null=False)
+    tva = models.DecimalField(max_digits=10, decimal_places=2, default=20.00)
+
+
 class Commande(models.Model):
     objects = models.Manager()
-    date = models.DateTimeField(auto_now=True)
+    date = models.DateTimeField(auto_now_add=True)
     client = models.ForeignKey(Client, related_name='commande', on_delete=models.CASCADE)
     remise = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     statut = models.ForeignKey(Statut, related_name='commande', on_delete=models.CASCADE)
     # statut = models.CharField(max_length=250, db_index=True, null=False, blank=False, default='En cours')
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    date_update = models.DateTimeField(auto_now=True)
+    tva = models.DecimalField(max_digits=10, decimal_places=2, default=10.00, blank=True)
+    frais = models.ForeignKey(Frais, related_name='commande', on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
         return self.client.get_fullname()
 
+    def add_frais(self, frais):
+        frais_obj = Frais.objects.get(pk=frais)
+
+        self.frais = frais_obj
+        self.save()
 
 class Cartdb(models.Model):
     objects = models.Manager()
@@ -50,7 +67,6 @@ class Cartdb(models.Model):
     def add_cartdb(self, produit, qte, prix, commande, total_line):
         cartdb = self.create(produit=produit, qte=qte, prix=prix, commande=commande, total_line=total_line)
         return cartdb
-
 
     # def total_line(self):
     #     total = self.prix * self.qte

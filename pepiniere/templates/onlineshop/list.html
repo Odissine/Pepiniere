@@ -6,69 +6,68 @@
 <div class="h3">Liste des produits</div>
 <div class="h3">{{ produits_list|length }} produits</div>
 </div>
-<div class="row mb-2">
+<div class="centered">
+    <section class="cards">
     {% for produit in produits %}
-        <div class="col-sm-6">
-            <div class="card" {% if produit.stock > 0 %}style="background:#D0F4D2;"{% endif %}>
-                <div class="card-header">{{ produit.espece }}</div>
-                <div class="card-body">
-                    <h5 class="card-title">{{ produit.nom }}</h5>
-                    <p class="card-text">Prix : {{ produit.prix }} €<br/>Qte : {{ produit.stock }}</p>
-                    {% if request.user.is_authenticated %}
-                    <!-- <form action="{% url 'cart:cart_add' produit.id %}" method="POST" class="was-validated" onSubmit="return checkform({{ produit.stock }}, {{ produit.id }})"> -->
-                        <!-- {{ cart_produit_form }} -->
-                        <div class="input-group mb-3">
-                            <a href="{{ produit.get_absolute_url }}" class="btn btn-primary">Detail</a>
-                            <input type="number" name="qte" value="1" min="1" max="{{ produit.stock }}" required="" id="id-qte-{{ produit.id}}" class="form-control" width="60" style="width:60px;">
-                            {% csrf_token %}
-                            <button type="submit" value="Ajouter au panier" class="btn btn-warning" id="cart-{{ produit.id }}">Ajouter au panier</button>
-                        </div>
-                    <!-- </form> -->
-                    <script>
-                        document.querySelector("#cart-{{ produit.id }}").addEventListener("click", event => {
-                            let formData = new FormData();
-                            let csrfTokenValue = document.querySelector('[name=csrfmiddlewaretoken]').value;
-                            formData.append('qte', document.querySelector("#id-qte-{{ produit.id }}").value);
-                            console.log(formData.get('qte'))
-                            const request = new Request('/cart/add/{{ produit.id }}', {
-                                method: 'POST',
-                                body: formData,
-                                headers: {'X-CSRFToken': csrfTokenValue}
-                            });
+        <div class="card mb-4" {% if produit.stock > 0 %} style="background:#D0F4D2;" {% endif %}>
+            <div class="card-header">
+                <img src="/static/img/espece/{{ produit.espece|slugify }}.png" height="18" />
+                <span class="align-center">{{ produit.espece }}</span>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ produit.nom }}</h5>
+                <p class="card-text">Prix : {{ produit.prix }} €<br/>Qte : {{ produit.stock }}</p>
+                {% if request.user.is_authenticated %}
+                <!-- <form action="{% url 'cart:cart_add' produit.id %}" method="POST" class="was-validated" onSubmit="return checkform({{ produit.stock }}, {{ produit.id }})"> -->
+                    <!-- {{ cart_produit_form }} -->
+                    <div class="input-group mb-3">
+                        <a href="{{ produit.get_absolute_url }}" class="btn btn-primary col-3">Detail</a>
+                        <input type="number" name="qte" value="1" min="1" max="{{ produit.stock }}" required="" id="id-qte-{{ produit.id}}" class="form-control" width="60" style="width:60px;">
+                        {% csrf_token %}
+                        <button type="submit" value="Ajouter au panier" class="btn btn-warning" id="cart-{{ produit.id }}">Ajouter au panier</button>
+                    </div>
+                <!-- </form> -->
+                <script>
+                    document.querySelector("#cart-{{ produit.id }}").addEventListener("click", event => {
+                        let formData = new FormData();
+                        let csrfTokenValue = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                        formData.append('qte', document.querySelector("#id-qte-{{ produit.id }}").value);
 
-                            fetch(request)
-                                .then(response => response.json())
-                                    .then(result => {
-                                        console.log(result['data'])
-                                        console.log(result['total'])
-                                        document.querySelector('#lblCartCount').innerHTML = result['total'];
-                                        //document.querySelector('#lblCartCount').style.display = "block";
-                                        document.querySelector("#cartLink").href = "/cart/";
-                                        console.log(result['message'])
-                                        document.querySelector('#toastAjax').style.display = "block";
-                                        document.querySelector('#textErrorMessageAjax').innerHTML = result['message'];
-                                        document.querySelector('#errorMessageAjax').style.display = "block";
-                                        let y =  window.scrollY;
-                                        document.querySelector('#toastPlacementAjax').setAttribute('style', 'z-index:100; top:' + y + 'px !important');
-                                        console.log(y);
+                        const request = new Request('/cart/add/{{ produit.id }}', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {'X-CSRFToken': csrfTokenValue}
+                        });
 
-                                        $('#errorMessageAjax').addClass('show');
-                                        $('#errorMessageAjax').removeClass('hide');
-                                        function hideMsg () {
-                                            $('#errorMessageAjax').fadeOut();
-                                            $('#erroMessageAjax').removeClass('show');
-                                            $('#errorMessageAjax').addClass('hide');
-                                        }
-                                        setTimeout(hideMsg,3000);
-                                    })
-                        })
-                    </script>
-                    {% endif %}
-                </div>
+                        fetch(request)
+                            .then(response => response.json())
+                                .then(result => {
+                                    document.querySelector('#lblCartCount').innerHTML = result['total'];
+                                    //document.querySelector('#lblCartCount').style.display = "block";
+                                    document.querySelector("#cartLink").href = "/cart/";
+                                    document.querySelector('#toastAjax').style.display = "block";
+                                    document.querySelector('#textErrorMessageAjax').innerHTML = result['message'];
+                                    document.querySelector('#errorMessageAjax').style.display = "block";
+                                    let y =  window.scrollY;
+                                    console.log(y)
+                                    document.querySelector('#toastPlacementAjax').setAttribute('style', 'z-index:100; top:' + y + 'px !important');
+
+                                    $('#errorMessageAjax').addClass('show');
+                                    $('#errorMessageAjax').removeClass('hide');
+                                    function hideMsg () {
+                                        $('#errorMessageAjax').fadeOut();
+                                        $('#erroMessageAjax').removeClass('show');
+                                        $('#errorMessageAjax').addClass('hide');
+                                    }
+                                    setTimeout(hideMsg,3000);
+                                })
+                    })
+                </script>
+                {% endif %}
             </div>
         </div>
-        {% if forloop.counter|divisibleby:2 %}</div><div class="row mb-2">{% endif %}
     {% endfor %}
+    </section>
     {% if produits|length_is:"0" %}
         <div class="text-center">
             Aucun résultat !

@@ -3,7 +3,6 @@
 {% load static %}
 <head>
     <meta charset="UTF-8">
-    <base href="/" />
     <title>{% block title %}La pépinière{% endblock %}</title>
     <link rel="icon" type="image/png" href="{% static 'img/leaf.png' %}" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" />
@@ -53,19 +52,25 @@
             </div>
         </div>
     </div>
-    <header class= "navbar navbar-expand-lg navbar-light justify-content-between fixed-top bg-white shadow">
+    <nav class= "navbar navbar-expand-lg navbar-light justify-content-between fixed-top shadow bgheader" aria-label="Menu">
         <div class="container-fluid">
             <a href="/" class="navbar-brand"><img class="img-fluid" src="{% static 'img/leaf.png' %}" /> La pepinière</a>
-            <div class="navbar-nav justify-content-end">
-                <ul class="nav justify-content-end align-center">
+            <button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="navbar-collapse collapse" id="navbar">
+                <ul class="navbar-nav flex-row flex-wrap bd-navbar-nav pt-2 py-md-0">
                     {% if request.user.is_authenticated %}
-                    <li class="nav-item pe-2"><a class="nav-link" href="/"><i class="bi-house text-secondary fs-4"></i> Accueil</a></li>
-                    <li class="nav-item pe-2"><a class="nav-link" href="{% url 'onlineshop:produit_list' %}"><i class="bi-box-seam text-secondary fs-4"></i> Liste Produits</a></li>
-                    <li class="nav-item pe-2"><a class="nav-link" href="{% url 'order:order_list' %}"><i class="bi-card-checklist text-secondary fs-4"></i> Liste Commandes</a></li>
+                    <li class="nav-item pe-2"><a class="nav-link fs-4" href="/" aria-describedby="tooltip"><i class="{% if request.path == '/' %} text-dark bi-house-fill {% else %}text-secondary bi-house {% endif %} fs-3"></i> Accueil</a></li>
+                    <li class="nav-item pe-2"><a class="nav-link fs-4" href="{% url 'onlineshop:produit_list' %}"><i class="{% if '/produit/' in request.path  %} text-dark bi-archive-fill {% else %}text-secondary bi-archive{% endif %} fs-3"></i> Produits</a></li>
+                    <li class="nav-item pe-2"><a class="nav-link fs-4" href="{% url 'order:order_list' %}"><i class="{% if '/order/' in request.path  %} text-dark bi-book-fill {% else %}text-secondary bi-book {% endif %} fs-3"></i> Commandes</a></li>
+                </ul>
+                <ul class="navbar-nav flex-row flex-wrap ms-md-auto">
                     <li class="nav-item pe-2">
                         {% if 'cart' in request.session %}
-                        <a href="/cart/" class="nav-link" id="cartLink">
-                            <i class="bi-bag text-secondary fs-4"></i>
+                        <a href="/cart/" class="nav-link fs-4" id="cartLink">
+                            <i class="{% if '/cart/' in request.path  %} text-dark bi-bag-fill {% else %}text-secondary bi-bag {% endif %} fs-3 strong"></i>
                             {% if request.session.cart|length > 0 %}
                             <span class='badge badge-warning' id='lblCartCount'> {{ request.session.cart|length }} </span>
                             {% else %}
@@ -73,24 +78,29 @@
                             {% endif %}
                         </a>
                         {% else %}
-                        <a class="nav-link" href="/" id="cartLink">
-                            <i class="bi-bag text-muted fs-4"></i>
+                        <a class="nav-link fs-4" href="/" id="cartLink">
+                            <i class="bi-bag text-muted fs-3"></i>
                             <span class='badge badge-warning' id='lblCartCount'></span>
                         </a>
                         {% endif %}
                     </li>
                     {% endif %}
+                    {% if request.user.is_authenticated %}
+                    <li class="nav-item pe-2">
+                        <a class="nav-link fs-4" href="/"><i class="bi bi-person-circle fs-3"></i> <span>{{ user.client.all.0.nom }} {{ user.client.all.0.prenom }}</span></a>
+                    </li>
+                    {% endif %}
                     <li class="nav-item pe-2">
                     {% if request.user.is_authenticated %}
-                        <a class="nav-link" href="/account/logout"><i class="bi-power text-danger fs-4"></i> Quitter</a>
+                        <a class="nav-link fs-4" href="/account/logout"><i class="bi-power text-danger fs-3"></i></a>
                         {% else %}
-                        <a class="nav-link" href="/account/login"><i class="bi-power text-success fs-4"></i> Identification</a>
+                        <a class="nav-link fs-4" href="/account/login"><i class="bi-power text-success fs-3"></i></a>
                     {% endif %}
                     </li>
                 </ul>
             </div>
         </div>
-    </header>
+    </nav>
     <div class="container py-5">
     <div id="subheader" class="justify-content-end">
 
