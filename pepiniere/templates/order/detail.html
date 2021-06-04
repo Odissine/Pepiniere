@@ -12,9 +12,9 @@
         {% if commande.statut.nom == "Annulée" %}
         <thead class="bg-secondary text-black">
         {% elif commande.statut.nom == "Terminée" %}
-        <thead class="bg-success text-white">
+        <thead class="bg-success text-light">
         {% elif commande.statut.nom == "Validée" %}
-        <thead class="bg-primary text-white">
+        <thead class="bg-primary text-light">
         {% else %}
         <thead class="bg-warning">
         {% endif %}
@@ -51,7 +51,7 @@
         </td>
         <td class="align-middle">
             {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Validée" or commande.statut.nom == "Terminée" %}
-                <span class="">{{ item.prix }}</span>
+                <span class="">{{ item.prix }} €</span>
             {% else %}
             <span class="input-symbol-euro">
                 <input type="text" name="prix" value="{{ item.prix|floatformat:'2' }}" min="1" step="1" required id="id-prix-{{ item.id }}" class="form-control" width="95" style="width:95px;" />
@@ -87,14 +87,17 @@
     {% endwith %}
     {% endfor %}
     <tr class="table-dark h5">
-        <td colspan="2" class="text-start">Total <span class="fs-6 fst-italic">(avant remise)</span></td>
-        <td colspan="2" class="num text-end" id="total_avant_remise">{{ commande.total }} €</td>
-        <td colspan="2"></td>
+        <td colspan="2" class="text-start">Total{% if remise_montant > 0 %} <span class="fs-6 fst-italic">(avant remise)</span>{% endif %}</td>
+        <td colspan="4" class="num text-end" id="total_avant_remise">{{ commande.total }} €</td>
     </tr>
+    {% if remise_montant > 0 or commande.statut.nom == "En cours" %}
     <tr class="table-secondary h5 align-middle">
         <td colspan="2" class="text-start">Remise</td>
-        <td colspan="2" class="num text-end align-center" id="td_remise_montant">{{ remise_montant|floatformat:2 }} €</td>
-        <td colspan="2" class="num text-end">
+        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Validée" or commande.statut.nom == "Terminée" %}
+        <td class="num text-end">{{ commande.remise }} %</td>
+        <td></td>
+        {% else %}
+        <td colspan=2 class="num text-end">
             <form class="was-validated" method="post" name="remiseForm" id="remiseForm" action="{% url 'order:order_update_remise' commande.id %}">
                 <span class="input-symbol-purcent">
                     <input type="text" name="remise" value="{{ commande.remise }}" min="0" max="100" required="" id="remise" class="form-control" width="95" style="width:95px;" />
@@ -106,51 +109,57 @@
                 </script>
             </form>
         </td>
+        {% endif %}
+        <td colspan="2" class="num text-end align-center" id="td_remise_montant">{{ remise_montant|floatformat:2 }} €</td>
     </tr>
     <tr class="table-dark h5">
         <td>Total <span class="fs-6 fst-italic">(après remise)</span></td>
-        <td colspan="3" class="num text-end" id="td_total_post_remise">{{ total_post_remise|floatformat:2 }} €</td>
-        <td colspan="2" class="text-start">TTC</td>
+        <td colspan="3" class="text-end">TTC</td>
+        <td colspan="2" class="num text-end" id="td_total_post_remise">{{ total_post_remise|floatformat:2 }} €</td>
+    </tr>
+    {% endif %}
+    <tr class="table-secondary">
+        <td colspan="4" class="text-end">HT</td>
+        <td colspan="2" class="num text-end" id="td_ht_post_remise">{{ total_ht_post_remise|floatformat:2 }} €</td>
     </tr>
     <tr class="table-secondary">
-        <td colspan="4" class="num text-end" id="td_ht_post_remise">{{ total_ht_post_remise|floatformat:2 }} €</td>
-        <td colspan="2" class="text-start">HT</td>
+        <td colspan="3" class="text-end">({{ commande.tva }}%)</td>
+        <td class="text-end">TVA</td>
+        <td colspan="2" class="num text-end" id="td_tva_post_remise">{{ tva_post_remise|floatformat:2 }} €</td>
     </tr>
-    <tr class="table-secondary">
-        <td colspan="4" class="num text-end" id="td_tva_post_remise">{{ tva_post_remise|floatformat:2 }} €</td>
-        <td class="text-start">TVA</td>
-        <td class="text-start">({{ commande.tva }}%)</td>
-    </tr>
+    {% if frais_id.nom != "Aucun frais" or commande.statut.nom == "En cours" %}
     <tr class="table-secondary h5 align-middle">
-        <td>
+        <td colspan="2" class="text-start">
+        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Validée" or commande.statut.nom == "Terminée" %}
+            {{ frais_id.nom }}
+        {% else %}
             <form>
                 <select id="frais"  class="form-select form-select-lg bg-transparent">
-                    <option value="">Frais</option>
+                    <!-- <option value="">Frais</option> -->
                     {% for frais in frais_commandes %}
                     <option value="{{ frais.id }}" {% if frais_id.id == frais.id %} selected {% endif %}>{{ frais.nom }}</option>
                     {% endfor %}
                 </select>
             </form>
+        {% endif %}
         </td>
-        <td colspan="3" class="num text-end" id="td_prix_frais">{% if frais_commande != 0 %} {{ frais_commande|floatformat:2 }} € {% endif %}</td>
-        <td class="text-start">TTC</td>
-        <td class="text-start"></td>
+        <td colspan="2" class="text-end">TTC</td>
+        <td colspan="2" class="num text-end" id="td_prix_frais">{% if frais_commande != 0 %} {{ frais_commande|floatformat:2 }} € {% endif %}</td>
     </tr>
     <tr class="table-secondary">
-        <td colspan="4" class="num text-end" id="td_frais_ht">{% if frais_commande != 0 %} {{ frais_ht|floatformat:2 }} €{% endif %}</td>
-        <td class="text-start">HT</td>
-        <td class="text-start"></td>
+        <td colspan="4" class="text-end">HT</td>
+        <td colspan="2" class="num text-end" id="td_frais_ht">{% if frais_commande != 0 %} {{ frais_ht|floatformat:2 }} €{% endif %}</td>
     </tr>
     <tr class="table-secondary">
-        <td colspan="4" class="num text-end" id="td_frais_tva">{% if frais_commande != 0 %} {{ tva_frais|floatformat:2 }} € {% endif %}</td>
-        <td class="text-start">TVA</td>
-        <td class="text-start" id="td_tva_frais">{% if frais_commande != 0 %} ({{ frais_tva|floatformat:2 }}%) {% endif %}</td>
+        <td colspan="3" class="text-end" id="td_tva_frais">{% if frais_commande != 0 %} ({{ frais_tva|floatformat:2 }}%) {% endif %}</td>
+        <td class="text-end">TVA</td>
+        <td colspan="2" class="num text-end" id="td_frais_tva">{% if frais_commande != 0 %} {{ tva_frais|floatformat:2 }} € {% endif %}</td>
     </tr>
+    {% endif %}
     <tr class="table-dark h4">
-        <td class="text-start">Montant total</td>
-        <td colspan="3" class="num text-end" id="td_total_global">{{ total_global|floatformat:2 }} €</td>
-        <td class="text-start">TTC</td>
-        <td class="text-start"></td>
+        <td colspan="3" class="text-start">Montant total</td>
+        <td class="text-end">TTC</td>
+        <td colspan="2" class="num text-end" id="td_total_global">{{ total_global|floatformat:2 }} €</td>
     </tr>
     </tbody>
 </table>
@@ -177,7 +186,7 @@
     </form>
     {% endif %}
 </div>
-
+{% if commande.statut.nom == "En cours" %}
 <script>
 
     function virgule(val)
@@ -205,7 +214,7 @@
         let formData = new FormData();
         let csrfTokenValue = document.querySelector('[name=csrfmiddlewaretoken]').value;
         formData.append('frais', document.querySelector("#frais").value);
-
+        console.log(document.querySelector('#frais').value);
         const request = new Request('/order/updatefrais/{{ commande.id }}', {
             method: 'POST',
             body: formData,
@@ -264,4 +273,5 @@
                 })
     })
 </script>
+{% endif %}
 {% endblock %}

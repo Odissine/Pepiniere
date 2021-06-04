@@ -14,7 +14,9 @@ from datetime import datetime
 import io
 import locale
 
-locale.setlocale(locale.LC_ALL, 'fr_FR')
+from .pdf import ProductPdfView
+
+locale.setlocale(locale.LC_ALL, 'C')
 
 @login_required
 def order_list(request, date_before=None, date_after=None, statut_request=None, client_request=None):
@@ -97,6 +99,7 @@ def order_detail(request, id):
         tva_frais = frais_ht * frais_tva / 100
 
     else:
+        frais = Frais.objects.get(nom="Aucun frais")
         frais_commande = 0
         frais_ht = 0
         tva_frais = 0
@@ -269,19 +272,22 @@ def order_update_remise(request, id):
 @login_required
 def order_update_frais(request, id):
     commande = Commande.objects.get(pk=id)
-    frais = int(request.POST.get("frais"))
+    print(request.POST.get("frais"))
+    if (request.POST.get("frais")) == "":
+        frais_commande = ""
+        frais_ht = ""
+        tva_frais = ""
+        tva_montant_frais = ""
+        commande.add_frais(frais=None)
+    else:
+        frais = int(request.POST.get("frais"))
+        commande.add_frais(frais=frais)
+        frais_commande = commande.frais.prix
+        frais_ht = frais_commande / (1 + (commande.frais.tva / 100))
+        tva_montant_frais = frais_ht * commande.frais.tva / 100
+        tva_frais = commande.frais.tva
 
-    #form = CartAddProduitForm(request.POST)
-    #
-    #if form.is_valid():
-    #    cd = form.cleaned_data
-    commande.add_frais(frais=frais)
-
-    frais_commande = commande.frais.prix
-    frais_ht = frais_commande / (1 + (commande.frais.tva / 100))
-    tva_frais = frais_ht * commande.frais.tva / 100
-
-    return JsonResponse({"prix_frais": frais_commande, "tva_frais": commande.frais.tva, "frais_ht": frais_ht, "tva_montant_frais": tva_frais})
+    return JsonResponse({"prix_frais": frais_commande, "tva_frais": tva_frais, "frais_ht": frais_ht, "tva_montant_frais": tva_montant_frais})
 
 
 @login_required
@@ -338,15 +344,15 @@ def order_print_old(request, id):
 
 
 def order_print(request, id):
-    data = {}
+    # data = {}
     # template = get_template('liste_adresse.html')
     # html = template.render(Context(data))
     # html = open('liste_adresse.pdf', "w+b")
     # pisaStatus = pisa.CreatePDF(html.encode('utf-8'), dest=file, encoding='utf-8')
-    model = Commande
-    resp = HttpResponse(content_type='application/pdf')
-    result = generate_pdf('template_pdf.html', file_object=resp)
+    # model = Commande
+    # resp = HttpResponse(content_type='application/pdf')
+    # result = generate_pdf('template_pdf.html', file_object=resp)
     # file.seek(0)
     # pdf = file.read()
     # file.close()
-    return result
+    return ProductPdfView()

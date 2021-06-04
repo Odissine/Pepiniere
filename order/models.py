@@ -51,10 +51,21 @@ class Commande(models.Model):
         return self.client.get_fullname()
 
     def add_frais(self, frais):
-        frais_obj = Frais.objects.get(pk=frais)
-
-        self.frais = frais_obj
+        if frais is None:
+            self.frais = None
+        else:
+            frais_obj = Frais.objects.get(pk=frais)
+            self.frais = frais_obj
         self.save()
+
+    def montant_total(self):
+        montant_remise = float(self.total) * float(self.remise) / 100
+        print(montant_remise)
+        montant_frais = 0
+        if not self.frais is None:
+            montant_frais = self.frais.prix
+        somme = float(self.total) - float(montant_remise) + float(montant_frais)
+        return somme
 
 class Cartdb(models.Model):
     objects = models.Manager()

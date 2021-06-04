@@ -82,13 +82,14 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': str(BASE_DIR / 'db.sqlite3'),
-    }
-    #'python': {
-    #    'NAME': 'pepiniere',
-    #    'ENGINE': 'Odissine.mysql.pythonanywhere-services.com',
+    },
+    # 'mysql': {
+    #     'NAME': 'Odissine@pepiniere',
+    #     'ENGINE': 'django.db.backends.mysql',
     #    'USER': 'Odissine',
-    #    'PASSWORD': 'PyRe_2021',
-    #}
+    #     'PASSWORD': 'PyRe_2021',
+    #     'HOST': 'Odissine.mysql.pythonanywhere-services.com',
+    # }
 }
 
 
