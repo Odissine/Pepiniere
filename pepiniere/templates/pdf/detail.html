@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+{% load i18n %}
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            font-family: var(--bs-font-sans-serif);
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #212529;
+            background-color: #fff;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .h1, h1 {
+            font-size: 2rem;
+        }
+        .h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+            margin-top: 0;
+            margin-bottom: .5rem;
+            font-weight: 500;
+            line-height: 1.2;
+        }
+        .table {
+            width: 100%;
+            margin-bottom: 1rem;
+            color: #212529;
+            vertical-align: top;
+            border-color: #dee2e6;
+        }
+        .bg-success {
+            background-color: #198754 !important;
+        }
+        .text-light {
+            color: #f8f9fa !important;
+        }
+    </style>
+    <title>Facture_{{commande.id}}_{{commande.date|date:'Y' }}</title>
+</head>
+<body>
+    <div id="content" style="width:100%;">
+        {% with client=commande.client %}
+        <table>
+            <tr>
+                <td style="width:60%; font-size:1.5rem">
+                    Gregory FAUPIN<br/>
+                    49500 Chazé/Arges<br/>
+                    FR-BIO-09<br/>
+                    SIRET:79347157400020
+                </td>
+                <td style="width:40%; font-size:1.5rem">
+                    <span style="font-size:2.5rem; font-weight:500;">FACTURE N° {{ commande.id}}</span><br/><br/>
+                    {{ client.nom }} {{ client.prenom }}<br/>
+                    {{ client.adresse }}<br/>
+                    {{ client.cp }} {{ client.ville }}
+                </td>
+            </tr>
+        </table>
+            {% language 'fr' %}
+                <h1 style="font-size:2rem; font-weight:500; line-height:1.2; margin-top:.5rem;">Commande du {{ commande.date|date:'d F Y' }}</h1>
+            {% endlanguage %}
+        {% endwith %}
+        <table style="border-color:#000000; color:#212529;">
+            <thead style="background-color: #198754; font-size:2rem; border-color:#000000; border-bottom-width:1px;">
+                <tr style="background-color: #198754; color: #f8f9fa;vertical-align:middle; padding:.3rem .2rem .1rem .2rem; border-color:#000000; border-bottom-width:1px;">
+                    <th style="border-bottom-width:1px; text-align:left;">Produit</th>
+                    <th style="border-bottom-width:1px; text-align:right;">Quantité</th>
+                    <th style="border-bottom-width:1px; text-align:right;">Prix Unitaire</th>
+                    <th style="border-bottom-width:1px; text-align:right;">Total</th>
+                </tr>
+            </thead>
+            <tbody style="vertical-align: inherit;">
+            {% for item in orders %}
+            {% with produit=item.produit %}
+            <tr style="background-color:white; color:black; padding:.4rem .2rem .1rem .2rem; font-size:1.5rem; border-color:#000000; border-bottom-width:1px;">
+                <td style="border-bottom-width:1px; text:align:left; width:40%;">{{ produit.nom }}</td>
+                <td style="border-bottom-width:1px; text-align:right; width:20%;">{{ item.qte }}</td>
+                <td style="border-bottom-width:1px; text-align:right; width:20%;">{{ item.prix }} €</td>
+                <td style="border-bottom-width:1px; text-align:right; width:20%;">{{ item.total_line }} €</td>
+            </tr>
+            {% endwith %}
+            {% endfor %}
+            <tr style="background-color:black; color:white; font-size:1.5rem; vertical-align:middle; padding:.4rem .2rem .1rem .2rem;">
+                <td colspan="3" style="text-align:left;">Total{% if remise_montant > 0 %} <span style="font-size:.6rem; font-style:italic; ">(avant remise)</span>{% endif %}</td>
+                <td style="text-align:right; ">{{ commande.total }} €</td>
+            </tr>
+            {% if remise_montant > 0 %}
+            <tr style="background-color:#DDDDDD; color:black; font-size:1.5rem; vertical-align:middle; padding:.4rem .2rem .1rem .2rem;">
+                <td style="border-bottom-width: 1px;">Remise</td>
+                <td style="border-bottom-width:1px; text-align:right;">{{ commande.remise }} %</td>
+                <td colspan="2" style="border-bottom-width: 1px; text-align:right; ">{{ remise_montant|floatformat:2 }} €</td>
+            </tr>
+            <tr style="background-color:black; color:white; font-size:1.5rem; vertical-align:middle; padding:.4rem .2rem .1rem .2rem;">
+                <td colspan="2" style="border-bottom-width:1px;">Total <span style="font-size:1rem; font-style:italic;">(après remise)</span></td>
+                <td style="border-bottom-width:1px; text-align:right;">TTC</td>
+                <td style="border-bottom-width:1px; text-align:right;">{{ total_post_remise|floatformat:2 }} €</td>
+            </tr>
+            {% endif %}
+            <tr style="background-color:#FFF; color:black; font-size:1.2rem; vertical-align:middle; padding:.4rem .2rem .1rem .2rem;">
+                <td colspan="3" style="text-align:right; border-bottom: 1px solid #DDD">HT</td>
+                <td style="text-align:right; border-bottom: 1px solid #DDD">{{ total_ht_post_remise|floatformat:2 }} €</td>
+            </tr>
+            <tr style="background-color:#FFF; color:black; font-size:1.2rem; vertical-align:middle; padding:.4rem .2rem .1rem .2rem;">
+                <td colspan="2" style="text-align:right; border-bottom: 1px solid #FFF">({{ commande.tva }}%)</td>
+                <td style="text-align:right; border-bottom: 1px solid #FFF">TVA</td>
+                <td style="text-align:right; border-bottom: 1px solid #FFF">{{ tva_post_remise|floatformat:2 }} €</td>
+            </tr>
+            {% if frais_id.nom != "Aucun frais" %}
+            <tr style="background-color:#EEE; color:black; font-size:2rem; vertical-align:middle; padding:.4rem .2rem .1rem .2rem;">
+                <td colspan="2" style="text-align:left; border-bottom: 1px solid #FFF">{{ frais_id.nom }}</td>
+                <td style="text-align:right; border-bottom: 1px solid #FFF">TTC</td>
+                <td style="text-align:right; border-bottom: 1px solid #FFF">{% if frais_commande != 0 %} {{ frais_commande|floatformat:2 }} € {% endif %}</td>
+            </tr>
+            <tr style="background-color:#FFF; color:black; font-size:1.2rem; vertical-align:middle; padding:.4rem .2rem .1rem .2rem;">
+                <td colspan="3" style="text-align:right; border-bottom: 1px solid #DDD;">HT</td>
+                <td style="text-align:right; border-bottom: 1px solid #DDD;">{% if frais_commande != 0 %} {{ frais_ht|floatformat:2 }} €{% endif %}</td>
+            </tr>
+            <tr style="background-color:#FFF; color:black; font-size:1.2rem; vertical-align:middle; padding:.4rem .2rem .1rem .2rem;">
+                <td colspan="2" style="text-align:right;">{% if frais_commande != 0 %} ({{ frais_tva|floatformat:2 }}%) {% endif %}</td>
+                <td style="text-align:right;">TVA</td>
+                <td style="text-align:right;">{% if frais_commande != 0 %} {{ tva_frais|floatformat:2 }} € {% endif %}</td>
+            </tr>
+            {% endif %}
+            <tr style="background-color:black; color:white; font-size:2.5rem; vertical-align:middle; padding:.4rem .2rem .1rem .2rem;">
+                <td colspan="2" style="text-align:left;">Montant total</td>
+                <td style="text-align:right;">TTC</td>
+                <td style="text-align:right;">{{ total_global|floatformat:2 }} €</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

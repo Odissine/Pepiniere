@@ -14,18 +14,24 @@
                 {% if order.statut.nom == "Annulée" %}
                 <div class="card-header fst-italic">FA-{{ order.id }}-2021</div>
                 {% elif order.statut.nom == "Terminée" %}
-                <div class="card-header bg-success">FA-{{ order.id }}-2021</div>
+                <div class="card-header bg-success text-light">FA-{{ order.id }}-2021</div>
                 {% elif order.statut.nom == "Validée" %}
                 <div class="card-header bg-primary text-light">FA-{{ order.id }}-2021</div>
                 {% else %}
                 <div class="card-header bg-warning">FA-{{ order.id }}-2021</div>
                 {% endif %}
                 <div class="card-body">
-                    <h5 class="card-title">{{ order.date|date:'d F Y @ H:i' }}</h5>
-                    <p class="card-text">Statut : {{ order.statut.nom }}<br/>Client : {{ order.client.prenom }} {{ order.client.nom }}</p>
                     <div class="row align-middle">
-                        <div class="col-md-4"><a href="{% url 'order:order_detail' order.id %}" class="btn btn-primary">Detail</a></div>
-                        <div class="col-md-4 offset-md-4 text-end h4">{{ order.montant_total|floatformat:"2" }} €</div>
+                        <h5 class="col-md-6">{{ order.date|date:'d F Y @ H:i' }}</h5>
+                        <h5 class="col-md-6 text-end h5 text-secondary">{{ order.qte_item }} articles</h5>
+                    </div>
+                    <p class="card-text">Statut : {{ order.statut.nom }}{% if order.statut.nom != "En cours" %} le {{ order.date_update|date:'d F Y @ H:i' }} {% endif %}<br/>Client : {{ order.client.prenom }} {{ order.client.nom }}</p>
+                    <div class="row align-middle">
+                        <div class="col-md-auto"><a href="{% url 'order:order_detail' order.id %}" class="btn btn-primary">Detail</a></div>
+                        {% if order.statut.nom == "Terminée" or order.statut.nom == "Validée"%}
+                        <div class="col-md-auto"><a target="_blank" href="{% url 'order:order_print' order.id %}?download=1" class="btn btn-warning"><i class="bi bi-clipboard-check"></i> Facture</a></div>
+                        {% endif %}
+                        <div class="col md-4 text-end h4">{{ order.montant_total|floatformat:"2" }} €</div>
                     </div>
                     <!--<form action="{#% url 'cart:cart_add' produit.id %}" method="POST" class="btn" >
                         {{ cart_produit_form }}

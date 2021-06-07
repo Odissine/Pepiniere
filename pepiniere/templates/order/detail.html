@@ -185,6 +185,9 @@
         {% csrf_token %}
     </form>
     {% endif %}
+    {% if ordcommandeer.statut.nom == "Terminée" or commande.statut.nom == "Validée"%}
+        <div class="col-md-auto"><a target="_blank" href="{% url 'order:order_print' commande.id %}?download=1" class="btn btn-warning"><i class="bi bi-clipboard-check"></i> Facture</a></div>
+    {% endif %}
 </div>
 {% if commande.statut.nom == "En cours" %}
 <script>

@@ -53,6 +53,10 @@ body {
     flex: 0 1  calc(33% - 1em);
 }
 
+.textCart, .textConnect {
+    display:none;
+}
+
 @media screen and (min-width:1200px) {
     .card {
         flex: 0 1 calc(33% - 1em);
@@ -68,6 +72,7 @@ body {
     .card {
         flex: 0 1 calc(100%);
     }
+
 }
 
 @media only screen
@@ -77,6 +82,62 @@ body {
     and (orientation: portrait) {
     .card {
         flex: 0 1 calc(50% - 1em);
+    }
+    .navbar-toggler {
+        font-size:4rem;
+    }
+    .fs-3 {
+        font-size:4rem !important;
+    }
+    .fs-4 {
+        font-size:3rem !important;
+    }
+    #navBarLeft.flex-row {
+        flex-direction: column !important;
+    }
+    #navBarRight.flex-row {
+        flex-direction: column !important;
+    }
+    .textCart, .textConnect {
+        display:inline-block;
+    }
+    #lblCartCount {
+        font-size:3rem;
+        border-radius:50%;
+        padding:5px 15px;
+        margin-left:-30px;
+    }
+    .navbar-brand img {
+        height: 4.5rem!important;
+    }
+    .navbar-brand {
+        font-size: 3.5rem;
+    }
+    .form-select-lg, .form-control {
+        font-size: 3rem;
+    }
+
+    form div.row {
+        flex-direction:column;
+    }
+    h2 {
+        font-size:3rem;
+        margin-top:1em;
+    }
+    .cards {
+        display: list-item;
+    }
+    .card-title {
+        font-size: 2.5rem;
+    }
+    .card {
+        font-size:2rem;
+    }
+    .btn {
+        font-size:2rem;
+    }
+    .container {
+        max-width:90%;
     }
 }
 .active {

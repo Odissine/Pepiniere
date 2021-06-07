@@ -67,6 +67,13 @@ class Commande(models.Model):
         somme = float(self.total) - float(montant_remise) + float(montant_frais)
         return somme
 
+    def qte_item(self):
+        items = Cartdb.objects.filter(commande=self)
+        nb_item = len(items)
+        print(items)
+        print(items)
+        return nb_item
+
 class Cartdb(models.Model):
     objects = models.Manager()
     produit = models.ForeignKey(Produit, related_name='cartdb', on_delete=models.CASCADE)

@@ -41,9 +41,9 @@ def cart_add_ajax(request, produit_id):
     #
     if form.is_valid():
         cd = form.cleaned_data
-        message = cart.add(produit=produit, qte=qte, override_qte=cd['override'])
+        message, tags = cart.add(produit=produit, qte=qte, override_qte=cd['override'])
 
-    return JsonResponse({"data": request.session['cart'], "total": len(request.session['cart']), "message": message})
+    return JsonResponse({"data": request.session['cart'], "total": len(request.session['cart']), "message": message, "tags": tags})
 
 
 @login_required
@@ -92,20 +92,22 @@ def cart_detail(request):
 def cart_valid(request):
     cart = Cart(request)
     commande_creee = False
-    form = CartValidForm(request.POST or None)
 
-    total_commande = 0
-    for item in cart:
-        total_commande += float(item['prix']) * item['qte']
+    if request.method == "POST":
 
-    if request.method == "POST" and form.is_valid():
-        cd = form.cleaned_data
+        total_commande = 0
+        for item in cart:
+            total_commande += float(item['prix']) * item['qte']
 
+    print("CLIENT : ", request.POST['client'])
+
+    if len(request.POST['client']) > 0:
+        print("Client OK")
+        client = Client.objects.get(pk=request.POST['client'])
         statut_en_cours = Statut.objects.get(nom="En cours")
+        remise_client = client.remise
 
-        remise_client = cd['client'].remise
-
-        commande_create = Commande.objects.create(date=datetime.now, client=cd['client'], remise=remise_client, statut=statut_en_cours, total=total_commande)
+        commande_create = Commande.objects.create(date=datetime.now, client=client, remise=remise_client, statut=statut_en_cours, total=total_commande)
         commande_create.save()
 
         for item in cart:
@@ -118,26 +120,12 @@ def cart_valid(request):
 
         cart.clear()
         commande_creee = True
+    else:
+        print("Client absent")
+        message = "Veuillez selectionner un client pour cette commande !"
+        messages.warning(request, message)
+        return redirect('cart:cart_detail')
 
-    # commandes_list = Commande.objects.filter(statut='En cours').order_by('-date')
-    # paginator = Paginator(commandes_list, 21)
-    # page = request.GET.get('page')
-    #
-    # try:
-    #     commandes = paginator.page(page)
-    # except PageNotAnInteger:
-    #     # If page is not an integer, deliver first page.
-    #     commandes = paginator.page(1)
-    # except EmptyPage:
-    #     # If page is out of range (e.g. 9999), deliver last page of results.
-    #     commandes = paginator.page(paginator.num_pages)
-    # context = {
-    #     'commande': commande_create.id,
-    #     'commande_creee': commande_creee,
-    #     'commandes': commandes,
-    #     'commandes_list': commandes_list,
-    #     'paginate': True,
-    # }
     return redirect('order:order_list')
 
 
