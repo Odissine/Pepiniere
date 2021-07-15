@@ -35,8 +35,6 @@ def cart_add_ajax(request, produit_id):
     produit = get_object_or_404(Produit, id=produit_id)
     qte = int(request.POST.get("qte"))
 
-
-
     form = CartAddProduitForm(request.POST)
     #
     if form.is_valid():
@@ -99,10 +97,7 @@ def cart_valid(request):
         for item in cart:
             total_commande += float(item['prix']) * item['qte']
 
-    print("CLIENT : ", request.POST['client'])
-
     if len(request.POST['client']) > 0:
-        print("Client OK")
         client = Client.objects.get(pk=request.POST['client'])
         statut_en_cours = Statut.objects.get(nom="En cours")
         remise_client = client.remise
@@ -114,6 +109,9 @@ def cart_valid(request):
             total_line = float(item['prix']) * item['qte']
             cart_commande = Cartdb.objects.create(produit=item['produit'], prix=item['prix'], qte=item['qte'], commande=commande_create, total_line=total_line)
             cart_commande.save()
+            qte_product_id = Produit.objects.get(nom=item['produit'])
+            new_qte = qte_product_id.stock_bis - item['qte']
+            Produit.objects.filter(nom=item['produit']).update(stock_bis=new_qte)
 
         message = "Commande créée avec succès !"
         messages.success(request, message)
@@ -121,7 +119,6 @@ def cart_valid(request):
         cart.clear()
         commande_creee = True
     else:
-        print("Client absent")
         message = "Veuillez selectionner un client pour cette commande !"
         messages.warning(request, message)
         return redirect('cart:cart_detail')

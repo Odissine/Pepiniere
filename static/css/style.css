@@ -82,7 +82,7 @@ body {
 .active {
     color:red !important;
 }
-.input-symbol-euro, .input-symbol-purcent {
+.input-symbol-euro-fdp, .input-symbol-euro, .input-symbol-purcent {
     position:relative;
 }
 .input-symbol-euro input {
@@ -93,6 +93,12 @@ body {
     top:7px;
     content:"€";
     left:98px;
+}
+.input-symbol-euro-fdp:before {
+    position:absolute;
+    top:7px;
+    content:"€";
+    left:-20px;
 }
 .input-symbol-purcent:before {
     position:absolute;

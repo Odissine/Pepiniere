@@ -1,0 +1,24 @@
+<div class="modal fade" id="modalSearchOrder" tabindex="-1" aria-labelledby="modalSearchOrderLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalSearchOrderLabel">Ajouter le produit à une commande</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="/order/add/" method="POST" id="form-add-produit-order" name="form-add-produit-order">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="recipient-order" class="col-form-label">Saisir le numéro de la commande : FA-(??)</label>
+            <input type="text" class="form-control" id="recipient-order" name="recipient-order">
+            <input type="hidden" class="form-control" id="produit-id" name="produit-id">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+          <input type="submit" class="btn btn-primary" id="search-button-modal-order" value="Ajouter" />
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

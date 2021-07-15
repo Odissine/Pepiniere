@@ -7,16 +7,19 @@ from django_xhtml2pdf.utils import generate_pdf
 from django.http import HttpResponse, JsonResponse, FileResponse
 from django.views.generic import View
 from django.template.loader import get_template
+from django.conf import settings
 from .utils import render_to_pdf
 from .models import Commande, Client, Cartdb, Statut, Frais
 from onlineshop.models import Produit
 from cart.forms import CartAddProduitForm, CartUpdateForm, RemiseUpdateForm
+from .forms import OrderAddProduitOrder
 
 from datetime import datetime
 import io
 import locale
 
 locale.setlocale(locale.LC_ALL, 'C')
+
 
 @login_required
 def order_list(request, date_before=None, date_after=None, statut_request=None, client_request=None):
@@ -31,9 +34,9 @@ def order_list(request, date_before=None, date_after=None, statut_request=None, 
     if statut_request and statut_request != "All":
         statut_cmd = get_object_or_404(Statut, id=statut_request)
         orders_list = Commande.objects.filter(statut=statut_cmd).order_by('-date')
+        statut_request = int(statut_request)
     else:
         orders_list = Commande.objects.filter(statut__isnull=False).order_by('-date')
-        print(orders_list.query)
 
     clients = Client.objects.all()
     statuts = Statut.objects.all()
@@ -51,7 +54,7 @@ def order_list(request, date_before=None, date_after=None, statut_request=None, 
         client_cmd = get_object_or_404(Client, id=client_request)
         orders_list = orders_list.filter(client=client_cmd)
 
-    paginator = Paginator(orders_list, 10)
+    paginator = Paginator(orders_list, 20)
     page = request.GET.get('page')
 
     try:
@@ -70,9 +73,12 @@ def order_list(request, date_before=None, date_after=None, statut_request=None, 
                'date_after': date_after,
                'date_before': date_before,
                'statut_cmd': statut_cmd,
+               'statut_request': statut_request,
                'statuts': statuts,
                'paginate': True
                }
+    print(statut_request)
+    print(type(statut_request))
     return render(request, 'order/list.html', context)
 
 
@@ -81,7 +87,7 @@ def order_detail(request, id):
     # order = Commande.objects.filter(id=id)
     commande = get_object_or_404(Commande, id=id)
     orders = Cartdb.objects.filter(commande=commande)
-    frais_commandes = Frais.objects.all()
+    frais_commandes = Frais.objects.all().order_by('prix')
     frais = commande.frais
     total_commande = 0
     for order in orders:
@@ -106,6 +112,8 @@ def order_detail(request, id):
         frais_tva = 0
 
     total_global = total_post_remise + frais_commande
+    total_global_tva = tva_frais + tva_post_remise
+    total_global_ht = frais_ht + total_ht_post_remise
 
     context = {
         'commande': commande,
@@ -121,6 +129,8 @@ def order_detail(request, id):
         'frais_commandes': frais_commandes,
         'frais_id': frais,
         'total_global': total_global,
+        'total_global_tva': total_global_tva,
+        'total_global_ht': total_global_ht,
     }
 
     return render(request, 'order/detail.html', context)
@@ -132,17 +142,6 @@ def order_valid(request, id):
     statut = Statut.objects.get(nom='Validée')
     Commande.objects.filter(pk=id).update(statut=statut, date_update=datetime.now())
     items = Cartdb.objects.filter(commande=order)
-    print(order)
-    for item in items:
-
-        produit = Produit.objects.get(nom=item.produit)
-        print('Ancien Stock : ', produit.stock)
-        new_stock = produit.stock - item.qte
-        print('Nouveau Stock : ', new_stock)
-        # print(item.produit)
-        # Produit.objects.filter()
-        produit.stock = new_stock
-        produit.save()
 
     message = "Commande validée avec succès :)"
     messages.success(request, message)
@@ -157,9 +156,8 @@ def order_update_qte_prix(request, id):
     if request.method == "POST":
 
         prix = float(request.POST['prix'].replace(',', '.'))
-        print("Prix", type(prix))
         qte = int(request.POST['qte'])
-        print("Qte", type(qte))
+        old_qte = int(request.POST['qte_old'])
         if isinstance(prix, float) and isinstance(qte, int):
 
             item_qte = Cartdb.objects.get(pk=id).qte
@@ -168,8 +166,14 @@ def order_update_qte_prix(request, id):
             # ON MET A JOUR LE PRODUIT DE LA COMMANDE AVEC LA NOUVELLE QUANTITE ET LE NOUVEAU TOTAL
             Cartdb.objects.filter(pk=id).update(qte=qte, prix=prix, total_line=new_total)
 
-            commande = Cartdb.objects.get(pk=id).commande
+            # ON MET A JOUR LES QTE VIRTUELLES DU PRODUIT
+            produit = Cartdb.objects.get(pk=id).produit
+            produit = Produit.objects.get(nom=produit)
+            new_stock = produit.stock_bis - (qte - old_qte)
+            produit.stock_bis = new_stock
+            produit.save()
 
+            commande = Cartdb.objects.get(pk=id).commande
             # ON RECUPERE TOUS LES PRODUITS DE LA COMMANDE POUR CALCULER LE NOUVEAU TOTAL DE LA COMMANDE
             items = Cartdb.objects.filter(commande=commande)
             total_commande = 0
@@ -177,7 +181,7 @@ def order_update_qte_prix(request, id):
                 total_commande += item.total_line
 
             # ON MET A JOUR LA COMMANDE AVEC LE NOUVEAU TOTAL
-            Commande.objects.filter(pk=commande.id).update(total=total_commande, date_update=datetime.now)
+            Commande.objects.filter(pk=commande.id).update(total=total_commande, date_update=datetime.now())
 
             message = "Mise à jour quantités / prix effectuée avec succès !"
             messages.success(request, message)
@@ -213,7 +217,7 @@ def order_update(request, id):
             total_commande += item.total_line
 
         # ON MET A JOUR LA COMMANDE AVEC LE NOUVEAU TOTAL
-        Commande.objects.filter(pk=commande.id).update(total=total_commande, date_update=datetime.now)
+        Commande.objects.filter(pk=commande.id).update(total=total_commande, date_update=datetime.now())
 
         message = "Mise à jour des quantités effectuée avec succès !"
         messages.success(request, message)
@@ -246,7 +250,7 @@ def order_update_price(request, id):
                 total_commande += item.total_line
 
             # ON MET A JOUR LA COMMANDE AVEC LE NOUVEAU TOTAL
-            Commande.objects.filter(pk=commande.id).update(total=total_commande, date_update=datetime.now)
+            Commande.objects.filter(pk=commande.id).update(total=total_commande, date_update=datetime.now())
 
             message = "Mise à jour des prix unitaires effectuée avec succès !"
             messages.success(request, message)
@@ -278,8 +282,8 @@ def order_update_remise(request, id):
 @login_required
 def order_update_frais(request, id):
     commande = Commande.objects.get(pk=id)
-    print(request.POST.get("frais"))
-    if (request.POST.get("frais")) == "":
+
+    if (request.POST.get("frais")) == "" or (request.POST.get("frais")) == 1:
         frais_commande = ""
         frais_ht = ""
         tva_frais = ""
@@ -292,17 +296,56 @@ def order_update_frais(request, id):
         frais_ht = frais_commande / (1 + (commande.frais.tva / 100))
         tva_montant_frais = frais_ht * commande.frais.tva / 100
         tva_frais = commande.frais.tva
+    remise = commande.remise
+    total = commande.total
+    total_post_remise = total - (total * remise / 100)
+    total_ht_post_remise = total_post_remise / (1 + (commande.tva / 100))
+    tva_commande = total_ht_post_remise * commande.tva / 100
 
     message = "Frais modifié avec succès !"
     messages.success(request, message)
 
-    return JsonResponse({"prix_frais": frais_commande, "tva_frais": tva_frais, "frais_ht": frais_ht, "tva_montant_frais": tva_montant_frais})
+    return JsonResponse({"prix_frais": frais_commande, "tva_frais": tva_frais, "frais_ht": frais_ht, "tva_montant_frais": tva_montant_frais, "tva_montant_global": tva_commande})
+
+
+# AJOUT D'UN PRODUIT SUR UNE COMMANDE
+@login_required
+def order_update_add_product(request):
+    print("Je suis arrivé ici !!!! ----------------------------")
+    if (request.POST.get("recipient-order")) != "" and (request.POST.get("produit-id")) != "":
+        order_id = request.POST.get("recipient-order")
+        produit_id = request.POST.get("produit-id")
+        order = get_object_or_404(Commande, pk=order_id)
+        produit = get_object_or_404(Produit, pk=produit_id)
+
+        cart_commande = Cartdb.objects.create(produit=produit, prix=15.0, qte=1, commande=order, total_line=15.0)
+        cart_commande.save()
+
+        total = float(order.total) + 15.0
+        Commande.objects.filter(pk=order_id).update(total=total)
+
+        stock = produit.stock_bis - 1
+        print(stock)
+        Produit.objects.filter(pk=produit_id).update(stock_bis=stock)
+
+        message = "Ajout du produit effectué avec succès !"
+        messages.success(request, message)
+        return redirect('order:order_detail', order.id)
+    else:
+        return false
 
 
 # SUPPRESSION D'UN ITEM DE LA COMMANDE
 @login_required
 def order_remove(request, id):
     order = get_object_or_404(Cartdb, id=id)
+    item = Cartdb.objects.get(id=id)
+    print("Quantité :", item.qte)
+    produit = Cartdb.objects.get(pk=id).produit
+    print("Produit concerné : ", produit)
+    stock = produit.stock_bis + item.qte
+    print("Nouveau stock à mettre à jour : ", stock)
+    Produit.objects.filter(pk=produit.id).update(stock_bis=stock)
     Cartdb.objects.filter(pk=id).delete()
 
     message = "Suppression du produit effectuée avec succès !"
@@ -316,7 +359,13 @@ def order_cancel(request, id):
     order = get_object_or_404(Commande, pk=id)
     statut = Statut.objects.get(nom='Annulée')
     Commande.objects.filter(pk=id).update(statut=statut)
-    Commande.objects.filter(pk=id).update(date_update=datetime.now)
+    Commande.objects.filter(pk=id).update(date_update=datetime.now())
+
+    orders = Cartdb.objects.filter(commande=order)
+    for order in orders:
+        qte_product_id = Produit.objects.get(nom=order.produit)
+        old_qte = qte_product_id.stock_bis + order.qte
+        Produit.objects.filter(nom=order.produit).update(stock_bis=old_qte)
 
     message = "Commande annulée avec succès !"
     messages.success(request, message)
@@ -327,7 +376,13 @@ def order_cancel(request, id):
 def order_end(request, id):
     order = get_object_or_404(Commande, pk=id)
     statut = Statut.objects.get(nom='Terminée')
-    Commande.objects.filter(pk=id).update(statut=statut, date_update=datetime.now)
+
+    Commande.objects.filter(pk=id).update(statut=statut, date_update=datetime.now())
+    orders = Cartdb.objects.filter(commande=order)
+    for order in orders:
+        qte_product_id = Produit.objects.get(nom=order.produit)
+        new_qte = qte_product_id.stock - order.qte
+        Produit.objects.filter(nom=order.produit).update(stock=new_qte)
 
     message = "Commande terminée avec succès !"
     messages.success(request, message)
@@ -335,7 +390,17 @@ def order_end(request, id):
 
 
 def order_print(request, id, *args, **kwargs):
-    template = get_template('pdf/detail.html')
+
+    mode = int(request.GET['mode'])
+
+    if mode == 1:
+        path_pdf = 'pdf/facture.html'
+        type_pdf = "Facture"
+    else:
+        path_pdf = 'pdf/boncommande.html'
+        type_pdf = "Commande"
+
+    template = get_template(path_pdf)
     commande = get_object_or_404(Commande, id=id)
     orders = Cartdb.objects.filter(commande=commande)
     frais_commandes = Frais.objects.all()
@@ -363,6 +428,10 @@ def order_print(request, id, *args, **kwargs):
         frais_tva = 0
 
     total_global = total_post_remise + frais_commande
+    total_global_tva = tva_frais + tva_post_remise
+    total_global_ht = frais_ht + total_ht_post_remise
+
+    image = settings.STATIC_ROOT+'/img/logo_facture.png'
 
     context = {
         'commande': commande,
@@ -378,24 +447,33 @@ def order_print(request, id, *args, **kwargs):
         'frais_commandes': frais_commandes,
         'frais_id': frais,
         'total_global': total_global,
+        'total_global_tva': total_global_tva,
+        'total_global_ht': total_global_ht,
+        'image': image,
     }
     html = template.render(context)
-    pdf = render_to_pdf('pdf/detail.html', context)
+    pdf = render_to_pdf(path_pdf, context)
     if pdf:
-        response = HttpResponse(pdf, content_type='application/pdf')
-        filename = "Facture_%s_%s.pdf" % (commande.id, commande.date.strftime('%Y'))
+        # response = HttpResponse(pdf, content_type='application/pdf')
+        response = HttpResponse(content_type='application/pdf')
+        result = generate_pdf(path_pdf, file_object=response, context=context)
+
+        # response = HttpResponse(html, content_type='text/html')
+        filename = type_pdf + "_%s_%s.pdf" % (commande.id, commande.date.strftime('%Y'))
         content = "inline; filename=%s" % filename
-        print(request)
         download = request.GET.get("download")
+        download = False
         if download:
             content = "attachment; filename=%s" % filename
         response['Content-Disposition'] = content
-        return response
+        # return response
+        return result
     return HttpResponse("Not found")
     # return HttpResponse(pdf, content_type='application/pdf')
     # return HttpResponse(html)
 
 
+# Modal Search for Client by Name/Firstname for Add in Order
 def order_search_client(request):
     nom = request.POST.get("recipient-nom")
     prenom = request.POST.get("recipient-prenom")
@@ -403,15 +481,22 @@ def order_search_client(request):
     clients = Client.objects.all().values()
 
     if nom == "" and prenom == "":
-        print("TOUT VIDE")
         clients = Client.objects.all().values()
     if nom == "":
-        print("NOM VIDE")
-        clients = Client.objects.filter(prenom=prenom).values()
+        clients = Client.objects.filter(prenom__icontains=prenom).values()
     if prenom == "":
-        print("PRENOM VIDE")
-        clients = Client.objects.filter(nom=nom).values()
-
-    print(clients)
+        clients = Client.objects.filter(nom__icontains=nom).values()
 
     return JsonResponse({"clients_json": list(clients)})
+
+
+# Modal Search for Commande by ID for Add Product in
+def order_search_order(request):
+    order_id = request.POST.get("recipient-order")
+    orders = Commande.objects.all().values()
+
+    if order_id != "":
+        orders = Commande.objects.filter(pk=order_id)
+    print(orders)
+
+    return JsonResponse({"orders_json": orders})
