@@ -46,16 +46,19 @@ class Commande(models.Model):
     date_update = models.DateTimeField(auto_now=True)
     tva = models.DecimalField(max_digits=10, decimal_places=2, default=10.00, blank=True)
     frais = models.ForeignKey(Frais, related_name='commande', on_delete=models.SET_NULL, blank=True, null=True)
+    fdp = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 
     def __str__(self):
         return self.client.get_fullname()
 
     def add_frais(self, frais):
-        if frais is None:
+        if frais == 0:
             self.frais = None
+            # self.fdp = 0
         else:
             frais_obj = Frais.objects.get(pk=frais)
             self.frais = frais_obj
+            # self.fdp = frais
         self.save()
 
     def montant_total(self):
@@ -74,6 +77,7 @@ class Commande(models.Model):
         print(items)
         return nb_item
 
+# Liste des produits commandés ... chaque produit appartient à une et une seule commande
 class Cartdb(models.Model):
     objects = models.Manager()
     produit = models.ForeignKey(Produit, related_name='cartdb', on_delete=models.CASCADE)

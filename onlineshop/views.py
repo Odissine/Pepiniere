@@ -23,11 +23,34 @@ def create_tab_dict(items, menu):
                 itemslist.append(item.get_spec())
     return itemslist
 
+
 def produit_list(request, espece_slug=None, variete_slug=None, portegreffe_slug=None, spec_slug=None):
     espece = None
     variete = None
     portegreffe = None
     spec = None
+    stock_bool = True
+
+    if request.method == "POST":
+        print(request.POST)
+        if request.POST['espece']:
+            espece_slug = request.POST['espece']
+            print(espece_slug)
+
+        if request.POST['variete']:
+            variete_slug = request.POST['variete']
+
+        if request.POST['portegreffe']:
+            portegreffe_slug = request.POST['portegreffe']
+
+        if request.POST['spec']:
+            spec_slug = request.POST['spec']
+
+        stock_check = request.POST.get("stock_bool", None)
+        if stock_check == "True":
+            stock_bool = True
+        else:
+            stock_bool = False
 
     especes = Espece.objects.all()
     # varietes = Variete.objects.all()
@@ -35,7 +58,11 @@ def produit_list(request, espece_slug=None, variete_slug=None, portegreffe_slug=
 
     # portegreffes = PorteGreffe.objects.all()
     # specs = Spec.objects.all()
-    produits_list = Produit.objects.filter(available=True).order_by('-stock')
+    produits_list = Produit.objects.filter(available=True).order_by('espece', 'variete', 'portegreffe')
+
+    if not request.user.is_authenticated:
+        produits_list = produits_list.filter(stock_bis__gt=0)
+
     varietes = create_tab_dict(produits_list, 'variete')
     portegreffes = create_tab_dict(produits_list, 'portegreffe')
     specs = create_tab_dict(produits_list, 'spec')
@@ -59,7 +86,10 @@ def produit_list(request, espece_slug=None, variete_slug=None, portegreffe_slug=
         spec = get_object_or_404(Spec, slug=spec_slug)
         produits_list = produits_list.filter(spec=spec)
 
-    paginator = Paginator(produits_list, 21)
+    if stock_bool:
+        produits_list = produits_list.filter(stock_bis__gt=0)
+
+    paginator = Paginator(produits_list, 50)
     page = request.GET.get('page')
 
     try:
@@ -81,6 +111,7 @@ def produit_list(request, espece_slug=None, variete_slug=None, portegreffe_slug=
                'specs': specs,
                'produits': produits,
                'produits_list': produits_list,
+               'stock_bool': stock_bool,
                'paginate': True
                }
 

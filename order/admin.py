@@ -9,16 +9,21 @@ class ClientAdmin(admin.ModelAdmin):
     list_filter = ['ville', 'remise']
     search_fields = ('nom', 'prenom',)
 
-# @admin.register(Commande)
-# class CommandeAdmin(admin.ModelAdmin):
-#     list_display = ['date', 'remise', 'statut', 'date_update','tva']
-#     list_display_links = ['date', 'remise', 'statut']
-#     list_filter = ['statut']
 
-# @admin.register(Cartdb)
-# class Cartdb(admin.ModelAdmin):
-#     list_display = ['qte', 'prix']
-#     list_display_links = ['qte', 'prix']
+@admin.register(Commande)
+class CommandeAdmin(admin.ModelAdmin):
+    list_display = ['id', 'total', 'date', 'statut', 'date_update']
+    list_display_links = ['id', 'date']
+    list_filter = ['statut']
+    list_editable = ['statut']
+    list_per_page = 100
+
+@admin.register(Cartdb)
+class Cartdb(admin.ModelAdmin):
+    list_display = ['qte', 'prix', 'produit', 'commande']
+    list_display_links = ['produit']
+    list_filter = ['commande']
+    list_per_page = 100
 
 @admin.register(Statut)
 class Statut(admin.ModelAdmin):

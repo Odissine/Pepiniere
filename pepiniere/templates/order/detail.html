@@ -5,7 +5,7 @@
 {% block content %}
 {% with client=commande.client %}
 {% language 'fr' %}
-<h1>Commande de {{ client.prenom }} {{ client.nom }} du {{ commande.date|date:'d F Y' }}</h1>
+<h1>Commande FA-{{ commande.id }}-{{ commande.date|date:'Y' }}</h1><h4>{{ client.prenom }} {{ client.nom }} du {{ commande.date|date:'d F Y' }}</h4>
 {% endlanguage %}
 {% endwith %}
 <table class="table table-striped table-hover">
@@ -36,13 +36,14 @@
         <td class="align-middle">
             <a class="btn" href="{{ produit.get_absolute_url }}">{{ produit.nom }}</a>
         </td>
-        <form class="was-validated" method="post" name="qteForm{{ item.id }}" id="qteForm{{ item.id }}" action="{% url 'order:order_update_qte_prix' item.id %}" onSubmit="return checkform({{ produit.stock }}, {{ item.id }})">
+        <form class="was-validated" method="post" name="qteForm{{ item.id }}" id="qteForm{{ item.id }}" action="{% url 'order:order_update_qte_prix' item.id %}" onSubmit="return checkform({{ produit.stock_bis }}, {{ item.id }})">
         <td class="align-middle">
-            {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Validée" or commande.statut.nom == "Terminée" %}
+            {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" %}
                 <span class="">{{ item.qte }}</span>
             {% else %}
-                <input type="number" name="qte" value="{{ item.qte }}" min="1" max="{{ produit.stock }}" required id="id-qte-{{ item.id }}" class="form-control" width="95" style="width:95px;" />
+                <input type="number" name="qte" value="{{ item.qte }}" min="1" max="{{ produit.stock_bis }}" required id="id-qte-{{ item.id }}" class="form-control" width="95" style="width:95px;" />
                 {% csrf_token %}
+                <input type="number" hidden name="qte_old" value="{{ item.qte }}" id="id-qte-old-{{ item.id }}"/>
                 <input type="submit" hidden />
                 <script>
                     document.getElementById('id-qte-{{ item.id }}').validity.rangeOverflow;
@@ -50,7 +51,7 @@
             {% endif %}
         </td>
         <td class="align-middle">
-            {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Validée" or commande.statut.nom == "Terminée" %}
+            {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" %}
                 <span class="">{{ item.prix }} €</span>
             {% else %}
             <span class="input-symbol-euro">
@@ -62,7 +63,7 @@
         </td>
         </form>
 
-        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Validée" or commande.statut.nom == "Terminée" %}
+        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" %}
         <td class="align-middle text-end" colspan="3">{{ item.total_line }} €</td>
         {% else %}
         <td class="align-middle">{{ item.total_line }} €</td>
@@ -137,14 +138,16 @@
                 <select id="frais"  class="form-select form-select-lg bg-transparent">
                     <!-- <option value="">Frais</option> -->
                     {% for frais in frais_commandes %}
-                    <option value="{{ frais.id }}" {% if frais_id.id == frais.id %} selected {% endif %}>{{ frais.nom }}</option>
+                    <option value="{{ frais.id }}" {% if frais_id.id == frais.id %} selected {% endif %}>{{ frais.nom }} ({{ frais.prix|floatformat:0 }})</option>
                     {% endfor %}
                 </select>
             </form>
         {% endif %}
         </td>
         <td colspan="2" class="text-end">TTC</td>
-        <td colspan="2" class="num text-end" id="td_prix_frais">{% if frais_commande != 0 %} {{ frais_commande|floatformat:2 }} € {% endif %}</td>
+        <td colspan="2" class="num text-end" id="td_prix_frais">
+            {% if frais_commande != 0 %} {{ frais_commande|floatformat:2 }} € {% endif %}
+        </td>
     </tr>
     <tr class="table-secondary">
         <td colspan="4" class="text-end">HT</td>
@@ -161,11 +164,21 @@
         <td class="text-end">TTC</td>
         <td colspan="2" class="num text-end" id="td_total_global">{{ total_global|floatformat:2 }} €</td>
     </tr>
+    <tr class="table-secondary h5">
+        <td colspan="3" class="text-start"></td>
+        <td class="text-end">TVA</td>
+        <td colspan="2" class="num text-end" id="td_total_global_tva">{{ total_global_tva|floatformat:2 }} €</td>
+    </tr>
+    <tr class="table-secondary h5">
+        <td colspan="3" class="text-start"></td>
+        <td class="text-end">HT</td>
+        <td colspan="2" class="num text-end" id="td_total_global_ht">{{ total_global_ht|floatformat:2 }} €</td>
+    </tr>
     </tbody>
 </table>
 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
     <!-- SI COMMANDE AUTRE QUE ANNULEE -->
-    {% if commande.statut.nom != "Annulée" %}
+    {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée"  %}
     <form method="post" name="cancel-form-cart" id="cancel-form-cart" action="{% url 'order:order_cancel' commande.id %}">
         <button type="submit" class="btn btn-outline-danger me-md-2">Annuler la commande</button>
         {% csrf_token %}
@@ -185,8 +198,8 @@
         {% csrf_token %}
     </form>
     {% endif %}
-    {% if ordcommandeer.statut.nom == "Terminée" or commande.statut.nom == "Validée"%}
-        <div class="col-md-auto"><a target="_blank" href="{% url 'order:order_print' commande.id %}?download=1" class="btn btn-warning"><i class="bi bi-clipboard-check"></i> Facture</a></div>
+    {% if commande.statut.nom == "Terminée" or commande.statut.nom == "Validée"%}
+        <div class="col-md-auto"><a target="_blank" href="{% url 'order:order_print' commande.id %}?download=1&mode=1" class="btn btn-warning"><i class="bi bi-clipboard-check"></i> Facture</a></div>
     {% endif %}
 </div>
 {% if commande.statut.nom == "En cours" %}
@@ -201,10 +214,13 @@
         return montant;
     }
 
-    function checkform(qte, id)
+    function checkform(stock_bis, id)
     {
-        var stock = document.getElementById('id-qte-' + id);
-        if (stock.value > qte)
+        var qte = document.getElementById('id-qte-' + id);
+        var qte_old = document.getElementById('id-qte-old-' + id);
+        var diff_qte = qte_old.value - qte.value
+        var test_stock = diff_qte + stock_bis
+        if (test_stock < 0)
         {
             alert('Stock insuffisant (Max : ' + qte + ')');
             return false;
@@ -232,13 +248,16 @@
                     var total_post_remise = document.querySelector('#td_total_post_remise').innerText;
                     total_post_remise = parseFloat(total_post_remise.replace(",",".")).toFixed(2);
                     var total_global = (parseFloat(total_post_remise) + parseFloat(result['prix_frais'])).toFixed(2);
-
+                    var total_global_tva = (parseFloat(tva_montant_frais) + parseFloat(result['tva_montant_global'])).toFixed(2);
+                    var total_global_ht = (parseFloat(total_global) - parseFloat(total_global_tva)).toFixed(2);
 
                     document.querySelector('#td_prix_frais').innerHTML = result['prix_frais'].replace(".",",")+' €';
                     document.querySelector('#td_tva_frais').innerHTML = '('+result['tva_frais'].replace(".",",")+'%)';
                     document.querySelector('#td_frais_ht').innerHTML = frais_ht.replace(".",",")+' €';
                     document.querySelector('#td_frais_tva').innerHTML = tva_montant_frais.replace(".",",")+' €';
                     document.querySelector('#td_total_global').innerHTML = total_global.replace(".",",")+' €';
+                    document.querySelector('#td_total_global_tva').innerHTML = total_global_tva.replace(".",",")+' €';
+                    document.querySelector('#td_total_global_ht').innerHTML = total_global_ht.replace(".",",")+' €';
                 })
     })
 
@@ -263,16 +282,35 @@
                     var ht_post_remise = (total_post_remise / 1.1).toFixed(2);
                     var tva_post_remise = (total_post_remise - ht_post_remise).toFixed(2);
                     var frais = document.querySelector('#td_prix_frais').innerText
+                    var frais_tva = document.querySelector('#td_frais_tva').innerText;
+                    var frais_ht = document.querySelector('#td_frais_ht').innerText;
                     var total_global = total_post_remise;
                     if (frais.length > 0) {
-                        total_global += parseFloat(frais)
+                        total_global += parseFloat(frais);
                     }
+                    if (frais.length > 0) {
+                        frais_tva = frais_tva.replace(",",".");
+                        frais_tva = frais_tva.replace("€","");
+                        frais_tva = parseFloat(frais_tva).toFixed(2);
+
+                        frais_ht = frais_ht.replace(",",".");
+                        frais_ht = frais_ht.replace("€","");
+                        frais_ht = parseFloat(frais_ht).toFixed(2);
+                     } else {
+                        frais_tva = 0;
+                        frais_ht = 0;
+                     }
+
+                    var total_global_tva = parseFloat(frais_tva) + parseFloat(tva_post_remise);
+                    var total_global_ht = parseFloat(frais_ht) + parseFloat(ht_post_remise);
                     document.querySelector('#remise').value = virgule(parseFloat(result['remise_taux']));
                     document.querySelector('#td_remise_montant').innerHTML = virgule(remise_montant)+' €';
                     document.querySelector('#td_total_post_remise').innerHTML = virgule(total_post_remise) + ' €';
                     document.querySelector('#td_ht_post_remise').innerHTML = ht_post_remise.replace(".",",")+' €';
                     document.querySelector('#td_tva_post_remise').innerHTML = tva_post_remise.replace(".",",") + ' €';
-                    document.querySelector('#td_total_global').innerHTML = total_global+' €';
+                    document.querySelector('#td_total_global').innerHTML = total_global.toFixed(2).replace(".",",") +' €';
+                    document.querySelector('#td_total_global_tva').innerHTML = total_global_tva.toFixed(2).replace(".",",") +' €';
+                    document.querySelector('#td_total_global_ht').innerHTML = total_global_ht.toFixed(2).replace(".",",") +' €';
                 })
     })
 </script>

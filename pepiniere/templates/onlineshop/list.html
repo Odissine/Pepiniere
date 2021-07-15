@@ -1,33 +1,54 @@
 {% extends 'onlineshop/base.html' %}
 {% load static %}
 {% block content %}
-{% include 'onlineshop/search.html' %}
-<div class="nav justify-content-between align-center">
+{% include 'onlineshop/searchb.html' %}
+{% include 'onlineshop/modal_search_order.html' %}
+<div class="nav justify-content-between">
 <div class="h3">Liste des produits</div>
 <div class="h3">{{ produits_list|length }} produits</div>
 </div>
 <div class="centered">
-    <section class="cards">
+    <table class="table table-striped border-collapse">
+    <tr>
+        <th scope="col">Espèce</th>
+        <th scope="col">Variété</th>
+        <th scope="col">Porte-Greffe</th>
+        <th scope="col">Prix</th>
+        <th scope="col">Stock</th>
+        {% if request.user.is_authenticated %}
+            <th scope="col">SI</th>
+        {% endif %}
+        <th scope="col-3">&nbsp;</th>
+    </tr>
     {% for produit in produits %}
-        <div class="card mb-4" {% if produit.stock > 0 %} style="background:#D0F4D2;" {% endif %}>
-            <div class="card-header">
-                <img src="/static/img/espece/{{ produit.espece|slugify }}.png" height="18" />
-                <span class="align-center">{{ produit.espece }}</span>
-            </div>
-            <div class="card-body">
-                <h5 class="card-title">{{ produit.nom }}</h5>
-                <p class="card-text">Prix : {{ produit.prix }} €<br/>Qte : {{ produit.stock }}</p>
-                {% if request.user.is_authenticated %}
-                <!-- <form action="{% url 'cart:cart_add' produit.id %}" method="POST" class="was-validated" onSubmit="return checkform({{ produit.stock }}, {{ produit.id }})"> -->
-                    <!-- {{ cart_produit_form }} -->
-                    <div class="input-group mb-3">
-                        <a href="{{ produit.get_absolute_url }}" class="btn btn-primary col-3">Detail</a>
-                        <input type="number" name="qte" value="1" min="1" max="{{ produit.stock }}" required="" id="id-qte-{{ produit.id}}" class="form-control" width="60" style="width:60px;">
+        {% if produit.stock_bis > 0 or request.user.is_authenticated %}
+        <tr class="align-middle" {% if produit.stock_bis > 0 %} style="background:#D0F4D2;" {% endif %}>
+            <td class="align-middle">{{ produit.espece }}</td>
+            <td class="align-middle">{{ produit.variete }}</td>
+            <td class="align-middle">{{ produit.portegreffe }}</td>
+            <td class="align-middle">{{ produit.prix }} €</td>
+            <td class="align-middle">{{ produit.stock_bis }}</td>
+            {% if request.user.is_authenticated %}
+                <td class="align-middle">{{ produit.stock }}</td>
+                <td class="d-flex justify-content-end">
+                    {% if produit.stock_bis > 0 %}
                         {% csrf_token %}
-                        <button type="submit" value="Ajouter au panier" class="btn btn-warning" id="cart-{{ produit.id }}">Ajouter au panier</button>
-                    </div>
-                <!-- </form> -->
+                        <input type="number" name="qte" value="1" min="1" max="{{ produit.stock_bis }}" required="" id="id-qte-{{ produit.id}}" class="form-control w-80" width="80" style="width:80px;">
+                        <button type="submit" value="Ajouter au panier" class="btn btn-warning" id="cart-{{ produit.id }}"><i class="bi-cart-plus"></i></button>
+                        <input type="hidden" value="{{ produit.id }}" name="produit_id" id="produit_id" />
+                        <button type="submit" value="Ajouter à une commande" class="btn btn-success" id="order-{{ produit.id }}" data-bs-toggle="modal" data-bs-target="#modalSearchOrder" data-bs-whatever="@mdo"><i class="bi-bag-plus"></i></button>
+                    {% else %}
+                        {% csrf_token %}
+                        <input type="number" name="qte" disabled value="0" class="form-control w-80" width="80" style="width:80px;">
+                        <button disabled type="submit" value="Ajouter au panier" class="btn btn-warning"><i class="bi-cart-plus"></i></button>
+                        <button disabled type="submit" value="Ajouter à une commande" class="btn btn-success"><i class="bi-bag-plus"></i></button>
+                    {% endif %}
+                    <a href="{{ produit.get_absolute_url }}" class="btn btn-primary"><i class="bi bi-info-circle"></i></a>
+                </td>
                 <script>
+                    document.querySelector("#order-{{ produit.id }}").addEventListener("click", event => {
+                        document.querySelector("#produit-id").value = {{ produit.id }};
+                    });
                     document.querySelector("#cart-{{ produit.id }}").addEventListener("click", event => {
                         let formData = new FormData();
                         let csrfTokenValue = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -63,11 +84,13 @@
                                 })
                     })
                 </script>
-                {% endif %}
-            </div>
-        </div>
+            {% else %}
+            <td class="d-flex justify-content-end">&nbsp;</td>
+            {% endif %}
+        </tr>
+        {% endif %}
     {% endfor %}
-    </section>
+    </table>
     {% if produits|length_is:"0" %}
         <div class="text-center">
             Aucun résultat !
@@ -79,7 +102,15 @@
 <nav aria-label="...">
 <ul class="pagination justify-content-center">
     {% if produits.has_previous %}
-        <li class="page-item"><a class="page-link" href="?page={{ produits.previous_page_number }}{{ getvars }}"><<</a></li>
+        <form action="?page={{ produits.previous_page_number }}" method="post">
+            {% csrf_token %}
+            <input type="hidden" value="{{ espece.slug }}" name="espece">
+            <input type="hidden" value="{{ variete.slug }}" name="variete">
+            <input type="hidden" value="{{ portegreffe.slug }}" name="portegreffe">
+            <input type="hidden" value="{{ spec.slug }}" name="spec">
+            <input type="hidden" value="{{ stock_bool }}" name="stock_bool">
+            <li class="page-item"><button type="submit" class="page-link"><<</button></li>
+        </form>
     {% else %}
         <li class="page-item disabled"><a class="page-link" href="#"><<</a></li>
     {% endif %}
@@ -90,12 +121,28 @@
         {% if produits.number == i %}
             <li class="page-item active"><span class="page-link" href="#">{{ i }}</span></li>
         {% elif i > produits.number|add:'-5' and i < produits.number|add:'10' %}
-            <li class="page-item"><a class="page-link" href="?page={{ i }}{{ getvars }}">{{ i }}</a></li>
+            <form action="?page={{ i }}" method="post">
+                {% csrf_token %}
+                <input type="hidden" value="{{ espece.slug }}" name="espece">
+                <input type="hidden" value="{{ variete.slug }}" name="variete">
+                <input type="hidden" value="{{ portegreffe.slug }}" name="portegreffe">
+                <input type="hidden" value="{{ spec.slug }}" name="spec">
+                <input type="hidden" value="{{ stock_bool }}" name="stock_bool">
+                <li class="page-item"><button type="submit" class="page-link">{{ i }}</button></li>
+            </form>
         {% endif %}
     {% endfor %}
     <!-- <span class="current">{{ commandes.number }} / {{ commandes.paginator.num_pages }}</span>-->
     {% if produits.has_next %}
-        <li class="page-item"><a class="page-link" href="?page={{ produits.next_page_number }}{{ getvars }}">>></a></li>
+        <form action="?page={{ produits.next_page_number }}" method="post">
+            {% csrf_token %}
+            <input type="hidden" value="{{ espece.slug }}" name="espece">
+            <input type="hidden" value="{{ variete.slug }}" name="variete">
+            <input type="hidden" value="{{ portegreffe.slug }}" name="portegreffe">
+            <input type="hidden" value="{{ spec.slug }}" name="spec">
+            <input type="hidden" value="{{ stock_bool }}" name="stock_bool">
+            <li class="page-item"><button type="submit" class="page-link">>></button></li>
+        </form>
     {% else %}
         <li class="page-item disabled"><a class="page-link" href="#">>></a></li>
     {% endif %}
@@ -113,6 +160,5 @@
         }
         return true;
     }
-
 </script>
 {% endblock %}
