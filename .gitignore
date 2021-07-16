@@ -133,3 +133,4 @@ dmypy.json
 # Own values
 /cypress
 cypress.json
+.DS*
