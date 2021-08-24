@@ -132,7 +132,8 @@
             </tr>
             {% endif %}
             <tr style="background-color:black; color:white; font-size:2.5rem; vertical-align:middle; padding:.4rem .2rem .1rem .2rem;">
-                <td colspan="2" style="text-align:left;">Montant total</td>
+                <td style="text-align:left;">Montant total</td>
+                <td style="text-align:right;">Qte : {{ order_qte }}</td>
                 <td style="text-align:right;">TTC</td>
                 <td style="text-align:right;">{{ total_global|floatformat:2 }} €</td>
             </tr>

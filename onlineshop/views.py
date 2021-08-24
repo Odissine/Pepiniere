@@ -53,34 +53,34 @@ def produit_list(request, espece_slug=None, variete_slug=None, portegreffe_slug=
             stock_bool = False
 
     especes = Espece.objects.all()
-    # varietes = Variete.objects.all()
+    varietes = Variete.objects.all()
     # varietes = Produit.objects.all()
 
-    # portegreffes = PorteGreffe.objects.all()
-    # specs = Spec.objects.all()
+    portegreffes = PorteGreffe.objects.all()
+    specs = Spec.objects.all()
     produits_list = Produit.objects.filter(available=True).order_by('espece', 'variete', 'portegreffe')
 
     if not request.user.is_authenticated:
         produits_list = produits_list.filter(stock_bis__gt=0)
 
-    varietes = create_tab_dict(produits_list, 'variete')
-    portegreffes = create_tab_dict(produits_list, 'portegreffe')
-    specs = create_tab_dict(produits_list, 'spec')
+    # varietes = create_tab_dict(produits_list, 'variete')
+    # portegreffes = create_tab_dict(produits_list, 'portegreffe')
+    # specs = create_tab_dict(produits_list, 'spec')
 
     if espece_slug:
         espece = get_object_or_404(Espece, slug=espece_slug)
         produits_list = produits_list.filter(espece=espece)
-        varietes = create_tab_dict(produits_list, 'variete')
+        # varietes = create_tab_dict(produits_list, 'variete')
 
     if variete_slug:
         variete = get_object_or_404(Variete, slug=variete_slug)
         produits_list = produits_list.filter(variete=variete)
-        portegreffes = create_tab_dict(produits_list, 'portegreffe')
+        # portegreffes = create_tab_dict(produits_list, 'portegreffe')
 
     if portegreffe_slug:
         portegreffe = get_object_or_404(PorteGreffe, slug=portegreffe_slug)
         produits_list = produits_list.filter(portegreffe=portegreffe)
-        specs = create_tab_dict(produits_list, 'spec')
+        # specs = create_tab_dict(produits_list, 'spec')
 
     if spec_slug:
         spec = get_object_or_404(Spec, slug=spec_slug)

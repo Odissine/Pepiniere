@@ -23,7 +23,6 @@ locale.setlocale(locale.LC_ALL, 'C')
 
 @login_required
 def order_list(request, date_before=None, date_after=None, statut_request=None, client_request=None):
-
     # orders_list = Commande.objects.filter(statut="En cours")
 
     date_before = request.GET.get('date_before')
@@ -90,7 +89,9 @@ def order_detail(request, id):
     frais_commandes = Frais.objects.all().order_by('prix')
     frais = commande.frais
     total_commande = 0
+    qte_commande = 0
     for order in orders:
+        qte_commande += order.qte
         total_commande += order.total_line
 
     remise_montant = total_commande * commande.remise / 100
@@ -131,6 +132,7 @@ def order_detail(request, id):
         'total_global': total_global,
         'total_global_tva': total_global_tva,
         'total_global_ht': total_global_ht,
+        'order_qte': qte_commande,
     }
 
     return render(request, 'order/detail.html', context)
@@ -265,7 +267,6 @@ def order_update_price(request, id):
 # MISE A JOUR DE LA REMISE SUR UNE COMMANDE (AJAX - CHANGE INPUT)
 @login_required
 def order_update_remise(request, id):
-
     remise = locale.atof(request.POST['remise'])
 
     Commande.objects.filter(pk=id).update(remise=remise)
@@ -305,7 +306,8 @@ def order_update_frais(request, id):
     message = "Frais modifié avec succès !"
     messages.success(request, message)
 
-    return JsonResponse({"prix_frais": frais_commande, "tva_frais": tva_frais, "frais_ht": frais_ht, "tva_montant_frais": tva_montant_frais, "tva_montant_global": tva_commande})
+    return JsonResponse({"prix_frais": frais_commande, "tva_frais": tva_frais, "frais_ht": frais_ht, "tva_montant_frais": tva_montant_frais,
+                         "tva_montant_global": tva_commande})
 
 
 # AJOUT D'UN PRODUIT SUR UNE COMMANDE
@@ -353,6 +355,7 @@ def order_remove(request, id):
 
     return redirect('order:order_detail', order.commande.id)
 
+
 # ANNULATION D'UNE COMMANDE AVEC MISE A JOUR DE LA DATE ET DU STATUT
 @login_required
 def order_cancel(request, id):
@@ -370,6 +373,7 @@ def order_cancel(request, id):
     message = "Commande annulée avec succès !"
     messages.success(request, message)
     return redirect('order:order_detail', id)
+
 
 # COMMANDE TERMINEE AVEC MISE A JOUR DE LA DATE ET DU STATUT
 @login_required
@@ -390,10 +394,12 @@ def order_end(request, id):
 
 
 def order_print(request, id, *args, **kwargs):
+    try:
+        mode = request.GET['mode']
+    except:
+        mode = "0"
 
-    mode = int(request.GET['mode'])
-
-    if mode == 1:
+    if mode == "1":
         path_pdf = 'pdf/facture.html'
         type_pdf = "Facture"
     else:
@@ -406,8 +412,11 @@ def order_print(request, id, *args, **kwargs):
     frais_commandes = Frais.objects.all()
     frais = commande.frais
     total_commande = 0
+    total_qte = 0
+
     for order in orders:
         total_commande += order.total_line
+        total_qte += order.qte
 
     remise_montant = total_commande * commande.remise / 100
     total_post_remise = total_commande - remise_montant
@@ -431,7 +440,7 @@ def order_print(request, id, *args, **kwargs):
     total_global_tva = tva_frais + tva_post_remise
     total_global_ht = frais_ht + total_ht_post_remise
 
-    image = settings.STATIC_ROOT+'/img/logo_facture.png'
+    image = settings.STATIC_ROOT + '/img/logo_facture.png'
 
     context = {
         'commande': commande,
@@ -450,6 +459,7 @@ def order_print(request, id, *args, **kwargs):
         'total_global_tva': total_global_tva,
         'total_global_ht': total_global_ht,
         'image': image,
+        'order_qte': total_qte,
     }
     html = template.render(context)
     pdf = render_to_pdf(path_pdf, context)

@@ -160,7 +160,9 @@
     </tr>
     {% endif %}
     <tr class="table-dark h4">
-        <td colspan="3" class="text-start">Montant total</td>
+        <td class="text-start">Montant total</td>
+        <td class="text-end">Total produits : </td>
+        <td class="text-start">{{ order_qte }}</td>
         <td class="text-end">TTC</td>
         <td colspan="2" class="num text-end" id="td_total_global">{{ total_global|floatformat:2 }} €</td>
     </tr>
@@ -197,6 +199,9 @@
         <button type="submit" class="btn btn-primary">Valider la commande</button>
         {% csrf_token %}
     </form>
+    {% endif %}
+    {% if commande.statut.nom == "Validée" or commande.statut.nom == "En cours" %}
+        <div class="col-md-auto"><a target="_blank" href="{% url 'order:order_print' commande.id %}?download=1" class="btn btn-warning"><i class="bi bi-clipboard-check"></i> Bon de commande</a></div>
     {% endif %}
     {% if commande.statut.nom == "Terminée" or commande.statut.nom == "Validée"%}
         <div class="col-md-auto"><a target="_blank" href="{% url 'order:order_print' commande.id %}?download=1&mode=1" class="btn btn-warning"><i class="bi bi-clipboard-check"></i> Facture</a></div>
