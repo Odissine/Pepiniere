@@ -1,0 +1,37 @@
+{% extends 'onlineshop/base.html' %}
+{% load static %}
+{% block content %}
+<div class="nav justify-content-between">
+<div class="h3">Export des produits</div>
+<div class="h3">{{ produits_list|length }} produits</div>
+</div>
+<div class="centered">
+    <table class="table table-striped border-collapse">
+    <tr>
+        <th scope="col">Espèce</th>
+        <th scope="col">Variété</th>
+        <th scope="col">Porte-Greffe</th>
+        <th scope="col">Prix</th>
+        <th scope="col">Stock</th>
+        <th scope="col">SI</th>
+    </tr>
+    {% for produit in produits %}
+        {% if produit.stock_bis > 0 or request.user.is_authenticated %}
+        <tr class="align-middle" {% if produit.stock_bis > 0 %} style="background:#D0F4D2;" {% endif %}>
+            <td class="align-middle">{{ produit.espece }}</td>
+            <td class="align-middle">{{ produit.variete }}</td>
+            <td class="align-middle">{{ produit.portegreffe }}</td>
+            <td class="align-middle">{{ produit.prix }} €</td>
+            <td class="align-middle">{{ produit.stock_bis }}</td>
+            <td class="align-middle">{{ produit.stock }}</td>
+        </tr>
+        {% endif %}
+    {% endfor %}
+    </table>
+    {% if produits|length_is:"0" %}
+        <div class="text-center">
+            Aucun résultat !
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
