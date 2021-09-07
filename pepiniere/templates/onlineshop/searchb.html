@@ -55,20 +55,17 @@
         </div>
     </div>
         {% csrf_token %}
+    {% if request.user.is_authenticated %}
+    <div class="row g-0">
+        <div class="form-check form-switch">
+            <input type="checkbox" {% if stock_bool is True %} checked {% endif %} value="True" name="stock_bool" id="stock_bool" class="form-check-input" />
+            <label class="form-check-label" for="stock_bool">En stock uniquement ?</label>
+        </div>
+    </div>
+    {% endif %}
     <div class="row">
-        {% if request.user.is_authenticated %}
-        <div class="col-md-4">
-            <div class="form-check form-switch">
-                <input type="checkbox" {% if stock_bool is True %} checked {% endif %} value="True" name="stock_bool" id="stock_bool" class="form-check-input" />
-                <label class="form-check-label" for="stock_bool">En stock uniquement ?</label>
-            </div>
-        </div>
-        {% else %}
-        <div class="col-md-4">
-        </div>
-        {% endif %}
-        <div class="col-md offset-md-7">
-            <input type="submit" value="GO" class="btn btn-warning" />
+        <div class="col-md d-grid gap-2">
+            <input type="submit" value="RECHERCHER" class="btn btn-warning" id="search-btn"/>
         </div>
     </div>
 

@@ -4,7 +4,7 @@
 {% include 'order/search.html' %}
 <div class="nav justify-content-between align-center">
 <div class="h3">Liste des commandes</div>
-<div class="h3">{{ orders_list|length }} commandes</div>
+<div class="h3" id="qty-find-order">{{ orders_list|length }} commandes</div>
 </div>
 <div class="row mb-2">
     {% for order in orders %}

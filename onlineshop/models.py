@@ -82,8 +82,8 @@ class Produit(models.Model):
     # image = models.ImageField(upload_to='produits/%Y/%m/%d', blank=True)
     description = models.TextField(blank=True)
     prix = models.DecimalField(max_digits=10, decimal_places=2, default=15.00)
-    stock = models.IntegerField(default=0, max_length=9000)
-    stock_bis = models.IntegerField(default=0, max_length=9000)
+    stock = models.IntegerField(default=0)
+    stock_bis = models.IntegerField(default=0)
     available = models.BooleanField(default=True)
 
     class Meta:
