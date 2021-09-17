@@ -334,7 +334,7 @@ def order_update_add_product(request):
         messages.success(request, message)
         return redirect('order:order_detail', order.id)
     else:
-        return false
+        return False
 
 
 # SUPPRESSION D'UN ITEM DE LA COMMANDE
@@ -392,7 +392,7 @@ def order_end(request, id):
     messages.success(request, message)
     return redirect('order:order_detail', id)
 
-
+@login_required
 def order_print(request, id, *args, **kwargs):
     try:
         mode = request.GET['mode']

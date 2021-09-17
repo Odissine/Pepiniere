@@ -134,5 +134,5 @@ dmypy.json
 /cypress
 cypress.json
 .DS*
-sql_command.py
+test/sql_command.py
 geckodriver.exe

@@ -79,17 +79,27 @@ WSGI_APPLICATION = 'pepiniere.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
+
+    #'default': {
+    #    'ENGINE': 'django.db.backends.sqlite3',
+    #    'NAME': str(BASE_DIR / 'db.sqlite3'),
+    #},
+
+    # LOCAL DEV MYSQL
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': str(BASE_DIR / 'db.sqlite3'),
-    }
+        'NAME': 'pepiniere',
+        'ENGINE': 'django.db.backends.mysql',
+        'USER': 'root',
+        'PASSWORD': 'Azerty2+',
+        'HOST': 'localhost',
+    },
     # 'default': {
-    #     'NAME': 'Odissine@pepiniere',
+    #     'NAME': 'root@pepiniere',
     #     'ENGINE': 'django.db.backends.mysql',
-    #     'USER': 'Odissine',
-    #     'PASSWORD': 'PyRe_2021',
-    #     'HOST': 'Odissine.mysql.pythonanywhere-services.com',
-    # }
+    #     'USER': 'root',
+    #     'PASSWORD': 'Square_1978.',
+    #     'HOST': '141.94.78.236',
+    # },
 }
 
 
