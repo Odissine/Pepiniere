@@ -137,3 +137,4 @@ cypress.json
 test/sql_command.py
 geckodriver.exe
 pepiniere/settings_private.py
+db.sqlite3
