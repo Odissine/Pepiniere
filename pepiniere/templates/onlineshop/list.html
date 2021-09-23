@@ -132,7 +132,6 @@
             </form>
         {% endif %}
     {% endfor %}
-    <!-- <span class="current">{{ commandes.number }} / {{ commandes.paginator.num_pages }}</span>-->
     {% if produits.has_next %}
         <form action="?page={{ produits.next_page_number }}" method="post">
             {% csrf_token %}
