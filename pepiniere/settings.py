@@ -12,16 +12,16 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import os
+import settings_private
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = settings_private.SECRET_KEY
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-$9joo5xa4fwnh8svy_%ax(8w#=qbs1-ne&)g$=j*7+ly3u@3zu'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -80,25 +80,17 @@ WSGI_APPLICATION = 'pepiniere.wsgi.application'
 
 DATABASES = {
 
-    #'default': {
-    #    'ENGINE': 'django.db.backends.sqlite3',
-    #    'NAME': str(BASE_DIR / 'db.sqlite3'),
-    #},
-
-    # LOCAL DEV MYSQL
     'default': {
-        'NAME': 'pepiniere',
-        'ENGINE': 'django.db.backends.mysql',
-        'USER': 'root',
-        'PASSWORD': 'Azerty2+',
-        'HOST': 'localhost',
+       'ENGINE': 'django.db.backends.sqlite3',
+       'NAME': str(BASE_DIR / 'db.sqlite3'),
     },
+
     # 'default': {
-    #     'NAME': 'root@pepiniere',
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'USER': 'root',
-    #     'PASSWORD': 'Square_1978.',
-    #     'HOST': '141.94.78.236',
+    #    'NAME': settings_private.DB_MySQL_NAME,
+    #    'ENGINE': 'django.db.backends.mysql',
+    #    'USER': settings_private.DB_MySQL_USER,
+    #    'PASSWORD': settings_private.DB_MySQL_PWD,
+    #    'HOST': settings_private.DB_MySQL_HOST,
     # },
 }
 
