@@ -21,4 +21,6 @@ urlpatterns = [
     path('search/client/', views.order_search_client, name='order_search_client'),
     path('search/order/', views.order_search_order, name='order_search_order'),
     path('print/<int:id>', views.order_print, name='order_print'),
+    path('etiquettes/', views.order_etiquettes, name='order_etiquettes'),
+    path('etiquettes/print', views.print_etiquettes, name='print_etiquettes'),
 ]

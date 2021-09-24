@@ -1,0 +1,45 @@
+{% extends 'onlineshop/base.html' %}
+{% load static %}
+{% block content %}
+{% include 'order/search.html' %}
+<div class="nav justify-content-between align-center">
+    <div class="h3">Liste des commandes à imprimer (étiquettes)</div>
+    <div class="h3" id="qty-find-order">{{ orders_list|length }} commandes</div>
+</div>
+<script language="JavaScript">
+function toggle(source) {
+    checkboxes = document.getElementsByName('checkorder');
+    for(var i=0, n=checkboxes.length;i<n;i++) {
+    checkboxes[i].checked = source.checked;
+  }
+}
+</script>
+<input type="checkbox" onClick="toggle(this)" /> TOUT SELECTIONNER <br/>
+<form class="d-grid gap-2 my-3" method="POST" action="{% url 'order:print_etiquettes' %}" target="_blank">
+    <table class="table">
+        <tbody>
+    {% for order in orders_list %}
+        {% if order.statut.nom == "Annulée" %}
+            <tr class=""><th scope="row">
+        {% elif order.statut.nom == "Terminée" %}
+            <tr class="table-success"><th scope="row table-success text-light">
+        {% elif order.statut.nom == "Validée" %}
+            <tr class="table-primary"><th scope="row table-primary text-light">
+        {% else %}
+            <tr class="table-success"><th scope="row table-warning">
+        {% endif %}
+            <input type="checkbox" name="checkorder" id="{{ order.id }}" value="{{ order.id }}">
+            FA-{{ order.id }}-{{ order.date|date:'Y' }} | {{ order.date|date:'d F Y @ H:i' }} | {{ order.qte_item }} articles | Client : {{ order.client.prenom }} {{ order.client.nom }} | {{ order.montant_total|floatformat:"2" }} €</th>
+        </tr>
+    {% endfor %}
+        </tbody>
+    </table>
+    {% if orders_list|length_is:"0" %}
+    <div class="text-center">Aucune commande !</div>
+    {% else %}
+        <input type="hidden" name="download" value="True" />
+        {% csrf_token %}
+        <button type="submit" class="btn btn-lg btn-primary">IMPRIMER</button>
+    {% endif %}
+</form>
+{% endblock %}

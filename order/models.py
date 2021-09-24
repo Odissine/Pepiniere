@@ -63,7 +63,7 @@ class Commande(models.Model):
 
     def montant_total(self):
         montant_remise = float(self.total) * float(self.remise) / 100
-        print(montant_remise)
+        # print(montant_remise)
         montant_frais = 0
         if not self.frais is None:
             montant_frais = self.frais.prix
@@ -73,8 +73,7 @@ class Commande(models.Model):
     def qte_item(self):
         items = Cartdb.objects.filter(commande=self)
         nb_item = len(items)
-        print(items)
-        print(items)
+        # print(items)
         return nb_item
 
 # Liste des produits commandés ... chaque produit appartient à une et une seule commande

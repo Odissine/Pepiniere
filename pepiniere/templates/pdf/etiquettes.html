@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+{% load static %}
+{% load i18n %}
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            font-family: var(--bs-font-sans-serif);
+            font-size: 1.5rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #212529;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .h1, h1 {
+            font-size: 2rem;
+        }
+        .h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+            margin-top: 0;
+            margin-bottom: .5rem;
+            font-weight: 500;
+            line-height: 1.2;
+        }
+        .table {
+            width: 100%;
+            margin-bottom: 1rem;
+            color: #212529;
+            vertical-align: top;
+            border-color: #dee2e6;
+        }
+        table tr td {
+            padding-left:90px;
+        }
+        .bg-success {
+            background-color: #198754 !important;
+        }
+        .text-light {
+            color: #f8f9fa !important;
+        }
+    </style>
+    <title>Editions etiquettes</title>
+</head>
+<body>
+    <div id="content" style="width:100%;">
+
+        <table>
+            <tbody>
+            {% for commande in commandes %}
+                <tr style="height: 71.81px; border-top:1px solid black; border-bottom:1px solid black;">
+                {% with client=commande.client %}
+                <td colspan="2">COMMANDE N°{{ commande.id}} | CLIENT : {{ client.nom }} {{ client.prenom }}
+                {% if commande.frais %}
+                    {% with frais=commande.frais %}
+                         | FRAIS : {{ frais.prix }} €
+                    {% endwith %}
+                {% endif %}
+                </td>
+                {% endwith %}
+                </tr>
+                {% for item in orders %}
+                    {% if item.commande == commande %}
+                        <tr style="height: 71.81px; border-top:1px solid black; border-bottom:1px solid black; width:100%">
+                        {% with produit=item.produit %}
+                            <td style="border-top:1px solid black; border-bottom:1px solid black; width:70%">COMMANDE N°{{ commande.id}} <br/>{{ produit.espece }} - {{ produit.variete }} - {{ produit.portegreffe }}</td>
+                            <td style="border-top:1px solid black; border-bottom:1px solid black; width:30%">{{ item.qte }}</td>
+                        {% endwith %}
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

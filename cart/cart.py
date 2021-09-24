@@ -15,10 +15,12 @@ class Cart(object):
 
     def add(self, produit, qte, override_qte=False):
         print(self.cart)
-        produit_id = str(produit.id)
+        print(qte)
+        print(produit)
 
+        produit_id = str(produit.id)
         if produit_id not in self.cart:
-            if qte > produit.stock:
+            if qte > produit.stock_bis:
                 message = "Stock insuffisant !"
                 tags = "warning"
             else:

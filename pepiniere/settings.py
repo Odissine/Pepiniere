@@ -80,18 +80,9 @@ WSGI_APPLICATION = 'pepiniere.wsgi.application'
 
 DATABASES = {
 
-    'default': {
-       'ENGINE': 'django.db.backends.sqlite3',
-       'NAME': str(BASE_DIR / 'db.sqlite3'),
-    },
-
-    # 'default': {
-    #    'NAME': settings_private.DB_MySQL_NAME,
-    #    'ENGINE': 'django.db.backends.mysql',
-    #    'USER': settings_private.DB_MySQL_USER,
-    #    'PASSWORD': settings_private.DB_MySQL_PWD,
-    #    'HOST': settings_private.DB_MySQL_HOST,
-    # },
+    # 'default': settings_private.DEFAULT, # SQLLITE
+    'default': settings_private.MYSQL_DEV,  # MYSQL DEV
+    # 'default': settings_private.MYSQL_PROD,  # MYSQL PROD
 }
 
 
