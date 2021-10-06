@@ -81,8 +81,8 @@ WSGI_APPLICATION = 'pepiniere.wsgi.application'
 DATABASES = {
 
     # 'default': settings_private.DEFAULT, # SQLLITE
-    'default': settings_private.MYSQL_DEV,  # MYSQL DEV
-    # 'default': settings_private.MYSQL_PROD,  # MYSQL PROD
+    # 'default': settings_private.MYSQL_DEV,  # MYSQL DEV
+    'default': settings_private.MYSQL_PROD,  # MYSQL PROD
 }
 
 
