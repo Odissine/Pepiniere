@@ -369,7 +369,7 @@ def order_update_add_product(request):
             print(item.produit)
             list_produits.append(item.produit)
 
-        if produit in list_produits:
+        if produit not in list_produits:
             cart_commande = Cartdb.objects.create(produit=produit, prix=15.0, qte=1, commande=order, total_line=15.0)
             cart_commande.save()
 
