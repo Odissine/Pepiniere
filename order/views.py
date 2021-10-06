@@ -10,11 +10,11 @@ from django.template.loader import get_template
 from django.conf import settings
 from .utils import render_to_pdf
 from .models import Commande, Client, Cartdb, Statut, Frais
-from onlineshop.models import Produit, Variete
+from onlineshop.models import Produit
 from cart.forms import CartAddProduitForm, CartUpdateForm, RemiseUpdateForm
 from .forms import OrderAddProduitOrder
 
-from datetime import datetime, date
+from datetime import datetime
 import io
 import locale
 
@@ -25,30 +25,17 @@ locale.setlocale(locale.LC_ALL, 'C')
 def order_list(request, date_before=None, date_after=None, statut_request=None, client_request=None):
     # orders_list = Commande.objects.filter(statut="En cours")
 
-    # Récupération des valeurs issues du formulaire
-    date_before = request.POST.get('date_before')
-    date_after = request.POST.get('date_after')
-    client_request = request.POST.get('client_request')
-    statut_request = request.POST.get('statut')
-    variete_request = request.POST.get('variete')
+    date_before = request.GET.get('date_before')
+    date_after = request.GET.get('date_after')
+    client_request = request.GET.get('client_request')
+    statut_request = request.GET.get('statut')
 
-    # RECUPERATION DES VARIETES DES COMMANDES PASSEES ______________________________________________
-    varietes_list = []
-    all_orders = Commande.objects.all()
-    for all_order in all_orders:
-        items = Cartdb.objects.filter(commande=all_order)
-        for item in items:
-            if item.produit.variete not in varietes_list:
-                varietes_list.append(item.produit.variete)
-    varietes_list = sorted(varietes_list, key=lambda x: x.nom)
-
-    # REQUETE SUR COMMANDE EN FONCTION DU STATUT ____________________________________________________
     if statut_request and statut_request != "All":
         statut_cmd = get_object_or_404(Statut, id=statut_request)
-        orders_obj = Commande.objects.filter(statut=statut_cmd).order_by('-date')
+        orders_list = Commande.objects.filter(statut=statut_cmd).order_by('-date')
         statut_request = int(statut_request)
     else:
-        orders_obj = Commande.objects.filter(statut__isnull=False).order_by('-date')
+        orders_list = Commande.objects.filter(statut__isnull=False).order_by('-date')
 
     clients = Client.objects.all()
     statuts = Statut.objects.all()
@@ -56,46 +43,17 @@ def order_list(request, date_before=None, date_after=None, statut_request=None, 
     client_cmd = None
     statut_cmd = None
 
-    # REQUETE SUR COMMANDE EN FONCTION DE LA VARIETE ________________________________________________
-    commandes_list = []
-
-    if variete_request  and variete_request != "All":
-        # Recuperation de l'objet Variete
-        variete_order = get_object_or_404(Variete, pk=variete_request)
-
-        # Recuperation des produits associés à cette variété
-        produits_variete = Produit.objects.filter(variete=variete_order)
-
-        for produit_variete in produits_variete:
-            orders_varietes = Cartdb.objects.filter(produit=produit_variete)
-            for order_variete in orders_varietes:
-                commandes_list.append(order_variete.commande)
-
-    # REQUETE SUR COMMANDE APRES LA DATE
     if date_after:
-        orders_obj = orders_obj.filter(date__gte=datetime.strptime(date_after, '%Y-%m-%d'))
+        orders_list = orders_list.filter(date__gte=datetime.strptime(date_after, '%Y-%m-%d'))
 
-    # REQUETE SUR COMMANDE AVANT LA DATE
     if date_before:
-        orders_obj = orders_obj.filter(date__lte=datetime.strptime(date_before, '%Y-%m-%d'))
+        orders_list = orders_list.filter(date__lte=datetime.strptime(date_before, '%Y-%m-%d'))
 
-    # REQUETE SUR COMMANDE D'UN CLIENT
     if client_request:
         client_cmd = get_object_or_404(Client, id=client_request)
-        orders_obj = orders_obj.filter(client=client_cmd)
+        orders_list = orders_list.filter(client=client_cmd)
 
-    orders_list = []
-    for x in orders_obj:
-        orders_list.append(x)
-
-    if len(commandes_list)>0:
-        nouveau = set(orders_list).intersection(commandes_list)
-        # Créer la nouvelle liste en utilisant la concaténation de liste
-        orders_list_objects = list(nouveau)
-    else:
-        orders_list_objects = orders_list
-
-    paginator = Paginator(orders_list_objects, 20)
+    paginator = Paginator(orders_list, 20)
     page = request.GET.get('page')
 
     try:
@@ -110,18 +68,14 @@ def order_list(request, date_before=None, date_after=None, statut_request=None, 
     context = {'client_cmd': client_cmd,
                'clients': clients,
                'orders': orders,
-               'orders_list': orders_list_objects,
+               'orders_list': orders_list,
                'date_after': date_after,
                'date_before': date_before,
                'statut_cmd': statut_cmd,
                'statut_request': statut_request,
                'statuts': statuts,
-               'varietes_list': varietes_list,
-               'variete_request': variete_request,
                'paginate': True
                }
-    # print(statut_request)
-    # print(type(statut_request))
     return render(request, 'order/list.html', context)
 
 
@@ -350,55 +304,50 @@ def order_update_frais(request, id):
     message = "Frais modifié avec succès !"
     messages.success(request, message)
 
-    return JsonResponse({"prix_frais": frais_commande, "tva_frais": tva_frais, "frais_ht": frais_ht,
-                         "tva_montant_frais": tva_montant_frais,
+    return JsonResponse({"prix_frais": frais_commande, "tva_frais": tva_frais, "frais_ht": frais_ht, "tva_montant_frais": tva_montant_frais,
                          "tva_montant_global": tva_commande})
 
 
 # AJOUT D'UN PRODUIT SUR UNE COMMANDE
 @login_required
 def order_update_add_product(request):
+    print("Je suis arrivé ici !!!! ----------------------------")
     if (request.POST.get("recipient-order")) != "" and (request.POST.get("produit-id")) != "":
         order_id = request.POST.get("recipient-order")
         produit_id = request.POST.get("produit-id")
         order = get_object_or_404(Commande, pk=order_id)
         produit = get_object_or_404(Produit, pk=produit_id)
-        items = Cartdb.objects.filter(commande=order)
-        list_produits = []
-        for item in items:
-            list_produits.append(item.produit)
 
-        if produit not in list_produits:
-            cart_commande = Cartdb.objects.create(produit=produit, prix=15.0, qte=1, commande=order, total_line=15.0)
-            cart_commande.save()
+        cart_commande = Cartdb.objects.create(produit=produit, prix=15.0, qte=1, commande=order, total_line=15.0)
+        cart_commande.save()
 
-            total = float(order.total) + 15.0
-            Commande.objects.filter(pk=order_id).update(total=total)
+        total = float(order.total) + 15.0
+        Commande.objects.filter(pk=order_id).update(total=total)
 
-            stock = produit.stock_bis - 1
-            # print(stock)
-            Produit.objects.filter(pk=produit_id).update(stock_bis=stock)
+        stock = produit.stock_bis - 1
+        Produit.objects.filter(pk=produit_id).update(stock_bis=stock)
 
-            message = "Ajout du produit effectué avec succès !"
-            messages.success(request, message)
-        else:
-            message = "Produit déjà présent dans la commande."
-            messages.warning(request, message)
+        message = "Ajout du produit effectué avec succès !"
+        messages.success(request, message)
         return redirect('order:order_detail', order.id)
     else:
-        return False
+        return false
 
 
 # SUPPRESSION D'UN ITEM DE LA COMMANDE
 @login_required
 def order_remove(request, id):
     order = get_object_or_404(Cartdb, id=id)
+    commande = get_object_or_404(Commande, pk=order.commande.id)
     item = Cartdb.objects.get(id=id)
     print("Quantité :", item.qte)
     produit = Cartdb.objects.get(pk=id).produit
     print("Produit concerné : ", produit)
     stock = produit.stock_bis + item.qte
+    total = commande.total - item.total_line
+    print("Nouveau Total ", total)
     print("Nouveau stock à mettre à jour : ", stock)
+    Commande.objects.filter(pk=order.commande.id).update(total=total)
     Produit.objects.filter(pk=produit.id).update(stock_bis=stock)
     Cartdb.objects.filter(pk=id).delete()
 
@@ -445,7 +394,6 @@ def order_end(request, id):
     return redirect('order:order_detail', id)
 
 
-@login_required
 def order_print(request, id, *args, **kwargs):
     try:
         mode = request.GET['mode']
@@ -516,7 +464,6 @@ def order_print(request, id, *args, **kwargs):
     }
     html = template.render(context)
     pdf = render_to_pdf(path_pdf, context)
-
     if pdf:
         # response = HttpResponse(pdf, content_type='application/pdf')
         response = HttpResponse(content_type='application/pdf')
@@ -526,7 +473,7 @@ def order_print(request, id, *args, **kwargs):
         filename = type_pdf + "_%s_%s.pdf" % (commande.id, commande.date.strftime('%Y'))
         content = "inline; filename=%s" % filename
         download = request.GET.get("download")
-        # download = False
+        download = False
         if download:
             content = "attachment; filename=%s" % filename
         response['Content-Disposition'] = content
@@ -561,126 +508,5 @@ def order_search_order(request):
 
     if order_id != "":
         orders = Commande.objects.filter(pk=order_id)
-    # print(orders)
 
     return JsonResponse({"orders_json": orders})
-
-
-@login_required
-def order_etiquettes(request):
-    date_before = request.POST.get('date_before')
-    date_after = request.POST.get('date_after')
-    client_request = request.POST.get('client_request')
-    statut_request = request.POST.get('statut')
-    variete_request = request.POST.get('variete')
-
-    # RECUPERATION DES VARIETES DES COMMANDES PASSEES ______________________________________________
-    varietes_list = []
-    all_orders = Commande.objects.all()
-    for all_order in all_orders:
-        items = Cartdb.objects.filter(commande=all_order)
-        for item in items:
-            if item.produit.variete not in varietes_list:
-                varietes_list.append(item.produit.variete)
-    varietes_list = sorted(varietes_list, key=lambda x: x.nom)
-
-    if statut_request and statut_request != "All":
-        statut_cmd = get_object_or_404(Statut, id=statut_request)
-        orders_obj = Commande.objects.filter(statut=statut_cmd).order_by('-date')
-        statut_request = int(statut_request)
-    else:
-        orders_obj = Commande.objects.filter(statut__isnull=False).order_by('-date')
-
-    clients = Client.objects.all()
-    statuts = Statut.objects.all()
-
-    client_cmd = None
-    statut_cmd = None
-
-    # REQUETE SUR COMMANDE EN FONCTION DE LA VARIETE ________________________________________________
-    commandes_list = []
-
-    if variete_request and variete_request != "All":
-        # Recuperation de l'objet Variete
-        variete_order = get_object_or_404(Variete, pk=variete_request)
-
-        # Recuperation des produits associés à cette variété
-        produits_variete = Produit.objects.filter(variete=variete_order)
-
-        for produit_variete in produits_variete:
-            orders_varietes = Cartdb.objects.filter(produit=produit_variete)
-            for order_variete in orders_varietes:
-                commandes_list.append(order_variete.commande)
-
-    if date_after:
-        orders_obj = orders_obj.filter(date__gte=datetime.strptime(date_after, '%Y-%m-%d'))
-
-    if date_before:
-        orders_obj = orders_obj.filter(date__lte=datetime.strptime(date_before, '%Y-%m-%d'))
-
-    if client_request:
-        client_cmd = get_object_or_404(Client, id=client_request)
-        orders_obj = orders_obj.filter(client=client_cmd)
-
-    orders_list = []
-    for x in orders_obj:
-        orders_list.append(x)
-
-    if len(commandes_list) > 0:
-        nouveau = set(orders_list).intersection(commandes_list)
-        # Créer la nouvelle liste en utilisant la concaténation de liste
-        orders_list_objects = list(nouveau)
-    else:
-        orders_list_objects = orders_list
-
-    context = {'client_cmd': client_cmd,
-               'clients': clients,
-               'orders_list': orders_list_objects,
-               'date_after': date_after,
-               'date_before': date_before,
-               'statut_cmd': statut_cmd,
-               'statut_request': statut_request,
-               'statuts': statuts,
-               'variete_request': variete_request,
-               'varietes_list': varietes_list,
-               'paginate': True
-               }
-    return render(request, 'order/etiquettes.html', context)
-
-
-def print_etiquettes(request):
-    if request.method == "POST":
-        query_order_list = request.POST.getlist('checkorder')
-        # for order in request.POST.getlist('checkorder'):
-        #     print(order)
-
-    commandes = Commande.objects.filter(pk__in=query_order_list)
-    orders = Cartdb.objects.filter(commande__in=commandes)
-    context = {
-        'commandes': commandes,
-        'orders': orders,
-    }
-
-    path_pdf = 'pdf/etiquettes.html'
-    template = get_template(path_pdf)
-    html = template.render(context)
-    pdf = render_to_pdf(path_pdf, context)
-
-    if pdf:
-        # response = HttpResponse(pdf, content_type='application/pdf')
-        response = HttpResponse(content_type='application/pdf')
-        result = generate_pdf(path_pdf, file_object=response, context=context)
-
-        # response = HttpResponse(html, content_type='text/html')
-        today = date.today()
-        filename = "Etiquettes_%s.pdf" % (today.strftime('%D%M%Y'))
-        content = "inline; filename=%s" % filename
-        download = request.POST["download"]
-        download = False
-        if download:
-            content = "attachment; filename=%s" % filename
-        response['Content-Disposition'] = content
-        # return response
-        return result
-
-    return HttpResponse("Not found")
