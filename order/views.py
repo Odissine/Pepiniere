@@ -76,8 +76,6 @@ def order_list(request, date_before=None, date_after=None, statut_request=None, 
                'statuts': statuts,
                'paginate': True
                }
-    print(statut_request)
-    print(type(statut_request))
     return render(request, 'order/list.html', context)
 
 
@@ -327,7 +325,6 @@ def order_update_add_product(request):
         Commande.objects.filter(pk=order_id).update(total=total)
 
         stock = produit.stock_bis - 1
-        print(stock)
         Produit.objects.filter(pk=produit_id).update(stock_bis=stock)
 
         message = "Ajout du produit effectué avec succès !"
@@ -341,12 +338,16 @@ def order_update_add_product(request):
 @login_required
 def order_remove(request, id):
     order = get_object_or_404(Cartdb, id=id)
+    commande = get_object_or_404(Commande, pk=order.commande.id)
     item = Cartdb.objects.get(id=id)
     print("Quantité :", item.qte)
     produit = Cartdb.objects.get(pk=id).produit
     print("Produit concerné : ", produit)
     stock = produit.stock_bis + item.qte
+    total = commande.total - item.total_line
+    print("Nouveau Total ", total)
     print("Nouveau stock à mettre à jour : ", stock)
+    Commande.objects.filter(pk=order.commande.id).update(total=total)
     Produit.objects.filter(pk=produit.id).update(stock_bis=stock)
     Cartdb.objects.filter(pk=id).delete()
 
@@ -507,6 +508,5 @@ def order_search_order(request):
 
     if order_id != "":
         orders = Commande.objects.filter(pk=order_id)
-    print(orders)
 
     return JsonResponse({"orders_json": orders})
