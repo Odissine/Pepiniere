@@ -32,10 +32,10 @@ def produit_list(request, espece_slug=None, variete_slug=None, portegreffe_slug=
     stock_bool = True
 
     if request.method == "POST":
-        print(request.POST)
+        # print(request.POST)
         if request.POST['espece']:
             espece_slug = request.POST['espece']
-            print(espece_slug)
+            # print(espece_slug)
 
         if request.POST['variete']:
             variete_slug = request.POST['variete']
@@ -54,18 +54,13 @@ def produit_list(request, espece_slug=None, variete_slug=None, portegreffe_slug=
 
     especes = Espece.objects.all()
     varietes = Variete.objects.all()
-    # varietes = Produit.objects.all()
-
     portegreffes = PorteGreffe.objects.all()
     specs = Spec.objects.all()
+
     produits_list = Produit.objects.filter(available=True).order_by('espece', 'variete', 'portegreffe')
 
     if not request.user.is_authenticated:
         produits_list = produits_list.filter(stock_bis__gt=0)
-
-    # varietes = create_tab_dict(produits_list, 'variete')
-    # portegreffes = create_tab_dict(produits_list, 'portegreffe')
-    # specs = create_tab_dict(produits_list, 'spec')
 
     if espece_slug:
         espece = get_object_or_404(Espece, slug=espece_slug)
@@ -135,10 +130,10 @@ def export_produits(request, espece_slug=None, variete_slug=None, portegreffe_sl
     stock_bool = True
 
     if request.method == "POST":
-        print(request.POST)
+        # print(request.POST)
         if request.POST['espece']:
             espece_slug = request.POST['espece']
-            print(espece_slug)
+            # print(espece_slug)
 
         if request.POST['variete']:
             variete_slug = request.POST['variete']

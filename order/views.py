@@ -25,7 +25,7 @@ locale.setlocale(locale.LC_ALL, 'C')
 def order_list(request, date_before=None, date_after=None, statut_request=None, client_request=None):
     # orders_list = Commande.objects.filter(statut="En cours")
 
-    # Récupération des valeurs du formulaire
+    # Récupération des valeurs issues du formulaire
     date_before = request.POST.get('date_before')
     date_after = request.POST.get('date_after')
     client_request = request.POST.get('client_request')
@@ -358,25 +358,32 @@ def order_update_frais(request, id):
 # AJOUT D'UN PRODUIT SUR UNE COMMANDE
 @login_required
 def order_update_add_product(request):
-    print("Je suis arrivé ici !!!! ----------------------------")
     if (request.POST.get("recipient-order")) != "" and (request.POST.get("produit-id")) != "":
         order_id = request.POST.get("recipient-order")
         produit_id = request.POST.get("produit-id")
         order = get_object_or_404(Commande, pk=order_id)
         produit = get_object_or_404(Produit, pk=produit_id)
+        items = Cartdb.objects.filter(commande=order)
+        list_produits = []
+        for item in items:
+            list_produits.append(item.produit)
 
-        cart_commande = Cartdb.objects.create(produit=produit, prix=15.0, qte=1, commande=order, total_line=15.0)
-        cart_commande.save()
+        if produit not in list_produits:
+            cart_commande = Cartdb.objects.create(produit=produit, prix=15.0, qte=1, commande=order, total_line=15.0)
+            cart_commande.save()
 
-        total = float(order.total) + 15.0
-        Commande.objects.filter(pk=order_id).update(total=total)
+            total = float(order.total) + 15.0
+            Commande.objects.filter(pk=order_id).update(total=total)
 
-        stock = produit.stock_bis - 1
-        # print(stock)
-        Produit.objects.filter(pk=produit_id).update(stock_bis=stock)
+            stock = produit.stock_bis - 1
+            # print(stock)
+            Produit.objects.filter(pk=produit_id).update(stock_bis=stock)
 
-        message = "Ajout du produit effectué avec succès !"
-        messages.success(request, message)
+            message = "Ajout du produit effectué avec succès !"
+            messages.success(request, message)
+        else:
+            message = "Produit déjà présent dans la commande."
+            messages.warning(request, message)
         return redirect('order:order_detail', order.id)
     else:
         return False

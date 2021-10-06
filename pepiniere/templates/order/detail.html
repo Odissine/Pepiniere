@@ -221,13 +221,13 @@
 
     function checkform(stock_bis, id)
     {
-        var qte = document.getElementById('id-qte-' + id);
+        var qte = document.getElementById('id-qte-'+id);
         var qte_old = document.getElementById('id-qte-old-' + id);
         var diff_qte = qte_old.value - qte.value
         var test_stock = diff_qte + stock_bis
         if (test_stock < 0)
         {
-            alert('Stock insuffisant (Max : ' + qte + ')');
+            alert('Stock insuffisant (Max : ' + stock_bis + ')');
             return false;
         }
         return true;

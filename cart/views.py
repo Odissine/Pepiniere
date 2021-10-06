@@ -59,9 +59,9 @@ def cart_update(request, produit_id):
     if form.is_valid():
         cd = form.cleaned_data
         produit = get_object_or_404(Produit, id=produit_id)
-        cart.update_qte(produit, cd['qte'])
+        message = cart.update_qte(produit, cd['qte'])
         cart.update_prix(produit, cd['prix'])
-        message = "Quantités/Produits mis(es) à jour avec succès !"
+        # message = "Quantités/Produits mis(es) à jour avec succès !"
         messages.success(request, message)
 
     return redirect('cart:cart_detail')

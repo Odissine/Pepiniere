@@ -14,9 +14,6 @@ class Cart(object):
         self.cart = cart
 
     def add(self, produit, qte, override_qte=False):
-        print(self.cart)
-        print(qte)
-        print(produit)
 
         produit_id = str(produit.id)
         if produit_id not in self.cart:
@@ -36,7 +33,7 @@ class Cart(object):
                 else:
                     self.cart[produit_id]['qte'] = qte
             else:
-                if self.cart[produit_id]['qte'] + qte > produit.stock:
+                if self.cart[produit_id]['qte'] + qte > produit.stock_bis:
                     message = "Stock insuffisant !"
                     tags = "warning"
                 else:
@@ -80,11 +77,21 @@ class Cart(object):
 
     def update_qte(self, produit, qte):
         produit_id = str(produit.id)
-        if produit_id in self.cart:
-            item = self.cart[produit_id]
-            item['qte'] = qte
-            self.save()
-        return self.cart.values()
+        print("Quantite : %s" % qte)
+        print("Stock : %s" % produit.stock_bis)
+        print("OK")
+        if qte > produit.stock_bis:
+            message = "Stock insuffisant !"
+            tags = "warning"
+        else:
+            if produit_id in self.cart:
+                item = self.cart[produit_id]
+                item['qte'] = qte
+                self.save()
+            message = "Quantité mise à jour !"
+            tags = "success"
+        # return self.cart.values()
+        return message, tags
 
     def update_prix(self, produit, prix):
         produit_id = str(produit.id)

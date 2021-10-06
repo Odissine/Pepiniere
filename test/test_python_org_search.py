@@ -44,8 +44,8 @@ class PythonOrgSearch(unittest.TestCase):
 
         qty_order_label = driver.find_element_by_id("qty-find-order").text
         qty_order = int(qty_order_label[0:-9])
-        print(qty_order_label)
-        print(qty_order)
+        # print(qty_order_label)
+        # print(qty_order)
         self.assertGreaterEqual(qty_order, 0, "ERROR : No product found !")
 
         assert "No results found." not in driver.page_source

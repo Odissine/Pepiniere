@@ -76,6 +76,7 @@ class Commande(models.Model):
         # print(items)
         return nb_item
 
+
 # Liste des produits commandés ... chaque produit appartient à une et une seule commande
 class Cartdb(models.Model):
     objects = models.Manager()
