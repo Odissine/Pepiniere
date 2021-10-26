@@ -5,8 +5,24 @@
 <head>
     <meta charset="UTF-8">
     <style>
+        @media print {
+            html, body {
+                width: 210mm;
+                height: 290mm;
+            }
+        }
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        @frame footer {
+            -pdf-frame-content: footerContent;
+            bottom: 0cm;
+            top:-1cm;
+        }
         body {
             margin: 0;
+            margin-top:-10px;
             font-family: var(--bs-font-sans-serif);
             font-size: 1.5rem;
             font-weight: 400;
@@ -44,14 +60,13 @@
     <title>Editions etiquettes</title>
 </head>
 <body>
-    <div id="content" style="width:100%;">
-
-        <table>
+    <div id="content" style="width:100%; margin:0; position:absolute; top:-10px;">
+        <table style="width:100%;">
             <tbody>
             {% for commande in commandes %}
                 <tr style="height: 71.81px; border-top:1px solid black; border-bottom:1px solid black;">
                 {% with client=commande.client %}
-                <td colspan="2">COMMANDE N°{{ commande.id}} | CLIENT : {{ client.nom }} {{ client.prenom }}
+                <td colspan="2">{{ commande.id}} | CLIENT : {{ client.nom }} {{ client.prenom }}
                 {% if commande.frais %}
                     {% with frais=commande.frais %}
                          | FRAIS : {{ frais.prix }} €
@@ -64,7 +79,7 @@
                     {% if item.commande == commande %}
                         <tr style="height: 71.81px; border-top:1px solid black; border-bottom:1px solid black; width:100%">
                         {% with produit=item.produit %}
-                            <td style="border-top:1px solid black; border-bottom:1px solid black; width:70%">COMMANDE N°{{ commande.id}} <br/>{{ produit.espece }} - {{ produit.variete }} - {{ produit.portegreffe }}</td>
+                            <td style="border-top:1px solid black; border-bottom:1px solid black; width:70%">{{ commande.id}} <br/>{{ produit.espece }} - {{ produit.variete }} - {{ produit.portegreffe }}</td>
                             <td style="border-top:1px solid black; border-bottom:1px solid black; width:30%">{{ item.qte }}</td>
                         {% endwith %}
                         </tr>

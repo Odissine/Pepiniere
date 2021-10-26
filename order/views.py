@@ -668,8 +668,8 @@ def print_etiquettes(request):
     path_pdf = 'pdf/etiquettes.html'
     template = get_template(path_pdf)
     html = template.render(context)
-    pdf = render_to_pdf(path_pdf, context)
-
+    # pdf = render_to_pdf(path_pdf, context)
+    pdf = False
     if pdf:
         # response = HttpResponse(pdf, content_type='application/pdf')
         response = HttpResponse(content_type='application/pdf')
@@ -686,5 +686,5 @@ def print_etiquettes(request):
         response['Content-Disposition'] = content
         # return response
         return result
-
-    return HttpResponse("Not found")
+    return render(request, 'pdf/etiquettes.html', context)
+    # return HttpResponse("Not found")
