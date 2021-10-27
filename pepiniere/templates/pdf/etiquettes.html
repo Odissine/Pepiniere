@@ -54,6 +54,7 @@
                 width:55%;
                 display:grid;
                 float:left;
+                text-align:left;
             }
             .commande-qte {
                 width:10%;
@@ -89,14 +90,10 @@
             text-align:center;
         }
         .commande-produit {
-            width:55%;
+            width:65%;
             display:grid;
             float:left;
-        }
-        .commande-qte {
-            width:10%;
-            display:grid;
-            float:left;
+            text-align:left;
         }
         @frame footer {
             -pdf-frame-content: footerContent;
@@ -114,7 +111,7 @@
 {% for commande in commandes %}
     {% with client=commande.client %}
     <div class="commande">
-        {{ commande.id}} | CLIENT : {{ client.nom }} {{ client.prenom }}
+        {{ commande.id}} | {{ client.nom }} {{ client.prenom }}
         {% if commande.frais %}
             {% with frais=commande.frais %}
                  | FRAIS : {{ frais.prix }} €
@@ -127,8 +124,7 @@
             <div class="item">
             {% with produit=item.produit %}
                 <div class="commande-item">{{ commande.id}}</div>
-                <div class="commande-produit">{{ produit.espece }} - {{ produit.variete }} - {{ produit.portegreffe }}</div>
-                <div class="commande-qte">{{ item.qte }}</div>
+                <div class="commande-produit">{{ item.qte }} &nbsp; x &nbsp; {{ produit.espece }} - {{ produit.variete }} - {{ produit.portegreffe }}</div>
             {% endwith %}
             </div>
         {% endif %}
