@@ -13,7 +13,7 @@ from .models import Commande, Client, Cartdb, Statut, Frais
 from onlineshop.models import Produit, Variete
 from cart.forms import CartAddProduitForm, CartUpdateForm, RemiseUpdateForm
 from .forms import OrderAddProduitOrder
-
+import pandas
 from datetime import datetime, date
 import io
 import locale
@@ -59,7 +59,7 @@ def order_list(request, date_before=None, date_after=None, statut_request=None, 
     # REQUETE SUR COMMANDE EN FONCTION DE LA VARIETE ________________________________________________
     commandes_list = []
 
-    if variete_request  and variete_request != "All":
+    if variete_request and variete_request != "All":
         # Recuperation de l'objet Variete
         variete_order = get_object_or_404(Variete, pk=variete_request)
 
@@ -88,7 +88,7 @@ def order_list(request, date_before=None, date_after=None, statut_request=None, 
     for x in orders_obj:
         orders_list.append(x)
 
-    if len(commandes_list)>0:
+    if len(commandes_list) > 0:
         nouveau = set(orders_list).intersection(commandes_list)
         # Créer la nouvelle liste en utilisant la concaténation de liste
         orders_list_objects = list(nouveau)
@@ -663,6 +663,7 @@ def print_etiquettes(request):
     context = {
         'commandes': commandes,
         'orders': orders,
+        'margin': id,
     }
 
     path_pdf = 'pdf/etiquettes.html'
@@ -688,3 +689,57 @@ def print_etiquettes(request):
         return result
     return render(request, 'pdf/etiquettes.html', context)
     # return HttpResponse("Not found")
+
+
+def export_etiquettes(request):
+    if request.method == "POST":
+        query_order_list = request.POST.getlist('checkorder')
+        # for order in request.POST.getlist('checkorder'):
+        #     print(order)
+        try:
+            from io import BytesIO as IO
+        except:
+            from io import StringIO as IO
+
+        excel_file = IO()
+        xlwriter = pandas.ExcelWriter(excel_file, engine='xlsxwriter')
+
+        workbook = xlwriter.book
+        worksheet = workbook.add_worksheet("Etiquettes")
+
+        format = workbook.add_format({
+            'bold': 1,
+            'align': 'center',
+            'valign': 'vcenter',
+            'font_size': 16
+        })
+
+        worksheet.set_column(0, 0, 25)
+        worksheet.set_column(1, 1, 78)
+        worksheet.set_default_row(57.75)
+        i = 0
+        row = 1
+        commandes = Commande.objects.filter(pk__in=query_order_list)
+        for commande in commandes:
+            info_commande = str(commande.id) + " | " + commande.client.nom + " " + commande.client.prenom
+
+            if commande.frais:
+                info_commande += " | FRAIS : " + str(commande.frais)
+            worksheet.write(row - 1, 1, info_commande, format)
+            row += 1
+
+            orders = Cartdb.objects.filter(commande=commande)
+            for order in orders:
+                worksheet.write(row - 1, 0, commande.id, format)
+                info_order = str(order.qte) + " x " + order.produit.espece.nom + "-" + order.produit.variete.nom + "-" + order.produit.portegreffe.nom
+                worksheet.write(row - 1, 1, info_order, format)
+                row += 1
+
+        xlwriter.save()
+        xlwriter.close()
+        excel_file.seek(0)
+        filename = 'Etiquettes'
+        response = HttpResponse(excel_file.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="' + filename + '.xlsx"'
+
+        return response

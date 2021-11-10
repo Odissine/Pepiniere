@@ -15,7 +15,7 @@ function toggle(source) {
 }
 </script>
 <input type="checkbox" onClick="toggle(this)" /> TOUT SELECTIONNER <br/>
-<form class="d-grid gap-2 my-3" method="POST" action="{% url 'order:print_etiquettes' %}" target="_blank">
+<form class="d-grid gap-2 my-3" method="POST" action="{% url 'order:export_etiquettes' %}" target="_blank">
     <table class="table">
         <tbody>
     {% for order in orders_list %}
