@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, HttpResponse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from .models import Espece, Variete, PorteGreffe, Spec, Produit
 from cart.forms import CartAddProduitForm
@@ -6,7 +6,8 @@ from account.decorators import unauthenticated_user
 from account.decorators import allowed_users
 from django.utils.text import slugify
 from django.http import JsonResponse
-
+import xlsxwriter
+import io
 
 def create_tab_dict(items, menu):
 
@@ -209,3 +210,4 @@ def export_produits(request, espece_slug=None, variete_slug=None, portegreffe_sl
                }
 
     return render(request, 'onlineshop/export.html', context)
+

@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.contrib import messages
+from django.contrib.auth.models import User
 from django.db import connection
 from django.contrib.auth.decorators import login_required
 from django_xhtml2pdf.utils import generate_pdf
@@ -10,13 +11,14 @@ from django.template.loader import get_template
 from django.conf import settings
 from .utils import render_to_pdf
 from .models import Commande, Client, Cartdb, Statut, Frais
-from onlineshop.models import Produit, Variete
+from onlineshop.models import *
 from cart.forms import CartAddProduitForm, CartUpdateForm, RemiseUpdateForm
 from .forms import OrderAddProduitOrder
 import pandas
 from datetime import datetime, date
 import io
 import locale
+import xlsxwriter
 
 locale.setlocale(locale.LC_ALL, 'C')
 
@@ -743,3 +745,286 @@ def export_etiquettes(request):
         response['Content-Disposition'] = 'attachment; filename="' + filename + '.xlsx"'
 
         return response
+
+
+# ###########################################################################################################################################
+# EXPORT
+# ###########################################################################################################################################
+def export_commandes_xls(request):
+    """
+    Export Excel de l'ensemble des commandes du site
+    """
+    output = io.BytesIO()
+
+    # Create a workbook and add a worksheet.
+    workbook = xlsxwriter.Workbook(output)
+    worksheet_commandes = workbook.add_worksheet("COMMANDES")
+    worksheet_produits = workbook.add_worksheet("PRODUITS")
+
+    cell_format_date = workbook.add_format()
+    cell_format_date.set_num_format('dd/mm/yyyy hh:mm')
+
+    # COMMANDES
+    worksheet_commandes.write(0, 0, 'ID')
+    worksheet_commandes.write(0, 1, 'DATE')
+    worksheet_commandes.write(0, 2, 'CLIENT')
+    worksheet_commandes.write(0, 3, 'REMISE')
+    worksheet_commandes.write(0, 4, 'STATUT')
+    worksheet_commandes.write(0, 5, 'TOTAL')
+    worksheet_commandes.write(0, 6, 'DATE_UPDATE')
+    worksheet_commandes.write(0, 7, 'TVA')
+    worksheet_commandes.write(0, 8, 'FRAIS')
+    worksheet_commandes.write(0, 9, 'FDP')
+
+    commandes = Commande.objects.all()
+    row = 1
+    for commande in commandes:
+        print(commande.id)
+        worksheet_commandes.write(row, 0, commande.id)
+        worksheet_commandes.write_datetime(row, 1, commande.date.replace(tzinfo=None), cell_format_date)
+        worksheet_commandes.write(row, 2, commande.client.id)
+        if not commande.remise is None:
+            worksheet_commandes.write(row, 3, commande.remise)
+        worksheet_commandes.write(row, 4, commande.statut.id)
+        worksheet_commandes.write(row, 5, commande.total)
+        if not commande.date_update is None:
+            worksheet_commandes.write_datetime(row, 6, commande.date_update.replace(tzinfo=None), cell_format_date)
+        if not commande.tva is None:
+            worksheet_commandes.write(row, 7, commande.tva)
+        if not commande.frais is None:
+            worksheet_commandes.write(row, 8, commande.frais.id)
+        if not commande.fdp is None:
+            worksheet_commandes.write(row, 9, commande.fdp)
+        row += 1
+
+    # PRODUITS
+    worksheet_produits.write(0, 0, 'ID')
+    worksheet_produits.write(0, 1, 'QTE')
+    worksheet_produits.write(0, 2, 'PRIX')
+    worksheet_produits.write(0, 3, 'COMMANDE')
+    worksheet_produits.write(0, 4, 'PRODUIT')
+
+    produits = Cartdb.objects.all()
+    row = 1
+    for produit in produits:
+        worksheet_produits.write(row, 0, produit.id)
+        worksheet_produits.write(row, 1, produit.qte)
+        worksheet_produits.write(row, 2, produit.prix)
+        worksheet_produits.write(row, 3, produit.commande.id)
+        worksheet_produits.write(row, 4, produit.produit.id)
+        row += 1
+
+    workbook.close()
+    output.seek(0)
+
+    filename = 'ExportCommandes.xlsx'
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+
+    return response
+
+
+def export_clients_xls(request):
+    """
+    Export Excel de l'ensemble des clients
+    """
+    output = io.BytesIO()
+
+    # Create a workbook and add a worksheet.
+    workbook = xlsxwriter.Workbook(output)
+    worksheet_clients = workbook.add_worksheet("CLIENTS")
+    worksheet_users = workbook.add_worksheet("USER")
+
+    cell_format_date = workbook.add_format()
+    cell_format_date.set_num_format('dd/mm/yyyy hh:mm')
+
+    # CLIENTS
+    worksheet_clients.write(0, 0, 'ID')
+    worksheet_clients.write(0, 1, 'NOM')
+    worksheet_clients.write(0, 2, 'PRENOM')
+    worksheet_clients.write(0, 3, 'ADRESSE')
+    worksheet_clients.write(0, 4, 'CP')
+    worksheet_clients.write(0, 5, 'VILLE')
+    worksheet_clients.write(0, 6, 'TEL')
+    worksheet_clients.write(0, 7, 'MAIL')
+    worksheet_clients.write(0, 8, 'COMMENTAIRE')
+    worksheet_clients.write(0, 9, 'REMISE')
+    worksheet_clients.write(0, 10, 'USER')
+
+    clients = Client.objects.all()
+    row = 1
+    for client in clients:
+        worksheet_clients.write(row, 0, client.id)
+        worksheet_clients.write(row, 1, client.nom)
+        worksheet_clients.write(row, 2, client.prenom)
+        worksheet_clients.write(row, 3, client.adresse)
+        worksheet_clients.write(row, 4, client.cp)
+        worksheet_clients.write(row, 5, client.ville)
+        worksheet_clients.write(row, 6, client.tel)
+        worksheet_clients.write(row, 7, client.mail)
+        worksheet_clients.write(row, 8, client.commentaire)
+        if not client.remise is None:
+            worksheet_clients.write(row, 9, client.remise)
+        if not client.user is None:
+            worksheet_clients.write(row, 10, client.user.id)
+        row += 1
+
+    # USERS
+    worksheet_users.write(0, 0, 'ID')
+    worksheet_users.write(0, 1, 'NOM')
+    worksheet_users.write(0, 2, 'PRENOM')
+    worksheet_users.write(0, 3, 'USERNAME')
+    worksheet_users.write(0, 4, 'MAIL')
+    worksheet_users.write(0, 5, 'SUPERUSER')
+    worksheet_users.write(0, 6, 'STAFF')
+    worksheet_users.write(0, 7, 'ACTIF')
+    worksheet_users.write(0, 8, 'DATE CREATION')
+    worksheet_users.write(0, 9, 'LAST LOGIN')
+
+    row = 1
+    users = User.objects.all()
+    for user in users:
+        worksheet_users.write(row, 0, user.id)
+        if not user.last_name is None:
+            worksheet_users.write(row, 1, user.last_name)
+        if not user.first_name is None:
+            worksheet_users.write(row, 2, user.first_name)
+        worksheet_users.write(row, 3, user.username)
+        worksheet_users.write(row, 4, user.email)
+        worksheet_users.write(row, 5, user.is_superuser)
+        worksheet_users.write(row, 6, user.is_staff)
+        worksheet_users.write(row, 7, user.is_active)
+
+        worksheet_users.write_datetime(row, 8, user.date_joined.replace(tzinfo=None), cell_format_date)
+        if not user.last_login is None:
+            worksheet_users.write_datetime(row, 9, user.last_login.replace(tzinfo=None), cell_format_date)
+        row += 1
+
+    workbook.close()
+    output.seek(0)
+
+    filename = 'ExportClients.xlsx'
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+
+    return response
+
+
+# ----------------------------------------------------------------------------------------------------------------------------------------
+# MANAGE GLOBAL
+# ----------------------------------------------------------------------------------------------------------------------------------------
+def export_produits_xls(request):
+    output = io.BytesIO()
+
+    # Create a workbook and add a worksheet.
+    workbook = xlsxwriter.Workbook(output)
+    worksheet_produits = workbook.add_worksheet("PRODUITS")
+    worksheet_especes = workbook.add_worksheet("ESPECES")
+    worksheet_varietes = workbook.add_worksheet("VARIETES")
+    worksheet_portegreffes = workbook.add_worksheet("PORTE-GREFFES")
+    worksheet_specialites = workbook.add_worksheet("SPECIALITES")
+
+    # PRODUITS
+    worksheet_produits.write(0, 0, 'ID')
+    worksheet_produits.write(0, 1, 'NOM')
+    worksheet_produits.write(0, 2, 'SLUG')
+    worksheet_produits.write(0, 3, 'DESCRIPTION')
+    worksheet_produits.write(0, 4, 'PRIX')
+    worksheet_produits.write(0, 5, 'STOCK')
+    worksheet_produits.write(0, 6, 'STOCK BIS')
+    worksheet_produits.write(0, 7, 'AVAILABLE')
+    worksheet_produits.write(0, 8, 'ESPECE')
+    worksheet_produits.write(0, 9, 'VARIETE')
+    worksheet_produits.write(0, 10, 'PORTEGREFFE')
+    worksheet_produits.write(0, 11, 'SPEC')
+    # worksheet_produits.write(0, 12, 'GAF')
+
+    produits = Produit.objects.all()
+    row = 1
+    for produit in produits:
+        worksheet_produits.write(row, 0, produit.id)
+        worksheet_produits.write(row, 1, produit.nom)
+        worksheet_produits.write(row, 2, produit.slug)
+        worksheet_produits.write(row, 3, produit.description)
+        worksheet_produits.write(row, 4, produit.prix)
+        worksheet_produits.write(row, 5, produit.stock)
+        worksheet_produits.write(row, 6, produit.stock_bis)
+        worksheet_produits.write(row, 7, produit.available)
+        worksheet_produits.write(row, 8, produit.espece.id)
+        worksheet_produits.write(row, 9, produit.variete.id)
+        worksheet_produits.write(row, 10, produit.portegreffe.id)
+        if not produit.spec is None:
+            worksheet_produits.write(row, 11, produit.spec.id)
+        # worksheet_produits.write(row, 12, produit.gaf)
+
+        row += 1
+
+    # ESPECES
+    worksheet_especes.write(0, 0, 'ID')
+    worksheet_especes.write(0, 1, 'NOM')
+    worksheet_especes.write(0, 2, 'SLUG')
+
+    produits = Espece.objects.all()
+    row = 1
+    for produit in produits:
+        worksheet_especes.write(row, 0, produit.id)
+        worksheet_especes.write(row, 1, produit.nom)
+        worksheet_especes.write(row, 2, produit.slug)
+        row += 1
+
+    # VARIETES
+    worksheet_varietes.write(0, 0, 'ID')
+    worksheet_varietes.write(0, 1, 'NOM')
+    worksheet_varietes.write(0, 2, 'SLUG')
+
+    produits = Variete.objects.all()
+    row = 1
+    for produit in produits:
+        worksheet_varietes.write(row, 0, produit.id)
+        worksheet_varietes.write(row, 1, produit.nom)
+        worksheet_varietes.write(row, 2, produit.slug)
+        row += 1
+
+    # PORTEGREFFES
+    worksheet_portegreffes.write(0, 0, 'ID')
+    worksheet_portegreffes.write(0, 1, 'NOM')
+    worksheet_portegreffes.write(0, 2, 'SLUG')
+
+    produits = PorteGreffe.objects.all()
+    row = 1
+    for produit in produits:
+        worksheet_portegreffes.write(row, 0, produit.id)
+        worksheet_portegreffes.write(row, 1, produit.nom)
+        worksheet_portegreffes.write(row, 2, produit.slug)
+        row += 1
+
+    # SPECS
+    worksheet_specialites.write(0, 0, 'ID')
+    worksheet_specialites.write(0, 1, 'NOM')
+    worksheet_specialites.write(0, 2, 'SLUG')
+
+    produits = Spec.objects.all()
+    row = 1
+    for produit in produits:
+        worksheet_specialites.write(row, 0, produit.id)
+        worksheet_specialites.write(row, 1, produit.nom)
+        worksheet_specialites.write(row, 2, produit.slug)
+        row += 1
+
+    workbook.close()
+    output.seek(0)
+
+    filename = 'ExportProduits.xlsx'
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+
+    return response

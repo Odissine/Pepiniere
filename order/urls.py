@@ -23,4 +23,7 @@ urlpatterns = [
     path('print/<int:id>', views.order_print, name='order_print'),
     path('etiquettes/', views.order_etiquettes, name='order_etiquettes'),
     path('etiquettes/print', views.print_etiquettes, name='print_etiquettes'),
+    path('export_xls/order', views.export_commandes_xls, name='export-commandes-xls'),
+    path('export_xls/clients', views.export_clients_xls, name='export-clients-xls'),
+    path('export_xls/produit/', views.export_produits_xls, name='export-produits-xls'),
 ]
