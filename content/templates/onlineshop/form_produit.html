@@ -1,0 +1,118 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}La Pépinière - Administration{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="card-header bg-primary bg-opacity-50 text-black">
+                    <div class="row align-items-center">
+                        <h5 class="col-8 h3 mb-0">{% if data %}Modifier un Produit{% else %}Ajouter un Produit{% endif %}</h5>
+                    </div>
+                </div>
+                <form class="form-horizontal" action="{% if produit %}{% url 'onlineshop:edit-produit' produit_id %}{% else %}{% url 'onlineshop:add-produit' %}{% endif %}" method="post" accept-charset="utf-8">
+                    {% csrf_token %}
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.nom.label }}</span>
+                                {{ form.nom }}
+                                {% if form.nom.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.nom.label }}" data-bs-html="true" data-bs-content="{{ form.nom.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.espece.label }}</span>
+                                {{ form.espece }}
+                                {% if form.espece.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.espece.label }}" data-bs-html="true" data-bs-content="{{ form.espece.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.variete.label }}</span>
+                                {{ form.variete }}
+                                {% if form.variete.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.variete.label }}" data-bs-html="true" data-bs-content="{{ form.variete.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.portegreffe.label }}</span>
+                                {{ form.portegreffe }}
+                                {% if form.portegreffe.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.portegreffe.label }}" data-bs-html="true" data-bs-content="{{ form.portegreffe.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.spec.label }}</span>
+                                {{ form.spec }}
+                                {% if form.spec.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.spec.label }}" data-bs-html="true" data-bs-content="{{ form.spec.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.stock.label }}</span>
+                                {{ form.stock }}
+                                {% if form.stock.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.stock.label }}" data-bs-html="true" data-bs-content="{{ form.stock.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <label>{{ form.gaf.label }}</label>
+                            <div class="form-check form-switch">
+                                {{ form.gaf }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-sm-6 d-grid gap-2">
+                            <a href="{{ previous_page }}" class="d-grid gap-2">
+                                <button type="button" class="btn btn-secondary">RETOUR</button>
+                            </a>
+                        </div>
+                        <div class="col-sm-6 d-grid gap-2">
+                            <input type="submit" value="{% if produit %}MODIFIER{% else %}AJOUTER{% endif %}" class="btn btn-primary" id="search-btn"/>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

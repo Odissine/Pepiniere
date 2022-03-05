@@ -1,0 +1,83 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}La Pépinière - Administration{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header py-2 border-bottom border-primary">
+        <div class="row align-items-center">
+            <div class="col-md-auto h3 mb-0">{% if produit %}Modifier le produit de la commande {% else %}Ajouter un produit à la commande {% endif %}{{ order_id }}</div>
+            <div class="col">
+                <a class="bx-pull-right" href="{{ previous_page}}">
+                    <button class="btn btn-secondary" type="button">Retour</button>
+                </a>
+            </div>
+        </div>
+    </div>
+    <form class="form-horizontal" action="{% if produit %}{% url 'order:edit-produit-order' order_id produit_id %}{% else %}{% url 'order:add-produit-order' order_id %}{% endif %}" method="post" accept-charset="utf-8">
+    <div class=" card-body mt-3">
+        {% csrf_token %}
+        <div class="row g-2">
+            <div class="col-12 mb-2 input-group">
+                <div class="input-group-prepend col-2">
+                    <span class="input-group-text col-12 ">{{ form.produit.label }}</span>
+                </div>
+                {{ form.produit }}
+            </div>
+        </div>
+        <div class="row g-2">
+            <div class="col-12 mb-2 input-group">
+                <div class="input-group-prepend col-2">
+                    <span class="input-group-text col-12">{{ form.qte.label }}</span>
+                </div>
+                {{ form.qte }}
+                <div class="input-group-text" id="qteMax">
+                    Max : {% if produit %}{{ produit.stock_bis }}{% else %}--{% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="row g-2">
+            <div class="col mb-2 input-group">
+                <div class="input-group-prepend col-2">
+                    <span class="input-group-text">{{ form.prix.label }}</span>
+                </div>
+                {{ form.prix }}
+                <div class="input-group-text">
+                    €
+                </div>
+            </div>
+        </div>
+        <div class="d-grid gap-2 my-3">
+            <input type="submit" value="{% if produit %}MODIFIER{% else %}AJOUTER{% endif %}" class="btn btn-primary" id="search-btn"/>
+        </div>
+    </div>
+    </form>
+</div>
+<script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        $('#id_produit').select2().on("select2:select", function (e) {
+            var selected_element = $(e.currentTarget);
+            var select_val = selected_element.val();
+            getStockFromProduit(select_val);
+        });
+    });
+
+    function getStockFromProduit(arg) {
+        let formData = new FormData();
+        let csrfTokenValue = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        const request = new Request('/order/order/check/'+arg, {
+            method: 'POST',
+            body: formData,
+            headers: {'X-CSRFToken': csrfTokenValue}
+        });
+
+        fetch(request)
+            .then(response => response.json())
+                .then(result => {
+                    document.querySelector('#qteMax').innerHTML = "Max : " + result['total'];
+        })
+    }
+</script>
+{% endblock %}

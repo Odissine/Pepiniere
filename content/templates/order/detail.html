@@ -1,0 +1,326 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load mathfilters %}
+{% load calcul_order %}
+{% block title %}La Pépinière - Commande{% endblock %}
+{% block content %}
+{% with client=commande.client %}
+{% language 'fr' %}
+<button type="button" class="btn btn-primary bx-pull-right" onclick="add_product_order({{ commande.id }})">Ajouter un produit</button>
+<h1>Commande FA-{{ commande.id }}-{{ commande.date|date:'Y' }}</h1>
+<h4>{{ commande.client.prenom }} {{ commande.client.nom }} du {{ commande.date|date:'d F Y' }}</h4>
+{% endlanguage %}
+{% endwith %}
+<!-- HEADER TABLE --------------------------------------------------------------------->
+<div class="row align-items-center fw-bold ">
+    <div class="py-2 {% if commande.statut.nom == 'Annulée' %}bg-secondary text-black{% endif %}{% if commande.statut.nom == 'Terminée' %}bg-success text-light{% endif %}{% if commande.statut.nom == 'Validée' %}bg-primary text-light{% endif %}{% if commande.statut.nom == 'En cours' %}bg-warning text-black{% endif %} col-4">PRODUIT</div>
+    <div class="py-2 {% if commande.statut.nom == 'Annulée' %}bg-secondary text-black{% endif %}{% if commande.statut.nom == 'Terminée' %}bg-success text-light{% endif %}{% if commande.statut.nom == 'Validée' %}bg-primary text-light{% endif %}{% if commande.statut.nom == 'En cours' %}bg-warning text-black{% endif %} col-2 text-end">QUANTITE</div>
+    <div class="py-2 {% if commande.statut.nom == 'Annulée' %}bg-secondary text-black{% endif %}{% if commande.statut.nom == 'Terminée' %}bg-success text-light{% endif %}{% if commande.statut.nom == 'Validée' %}bg-primary text-light{% endif %}{% if commande.statut.nom == 'En cours' %}bg-warning text-black{% endif %} col-2 text-end">PU (TTC)</div>
+    <div class="py-2 {% if commande.statut.nom == 'Annulée' %}bg-secondary text-black{% endif %}{% if commande.statut.nom == 'Terminée' %}bg-success text-light{% endif %}{% if commande.statut.nom == 'Validée' %}bg-primary text-light{% endif %}{% if commande.statut.nom == 'En cours' %}bg-warning text-black{% endif %} col-3 text-end">TOTAL</div>
+    <div class="py-2 {% if commande.statut.nom == 'Annulée' %}bg-secondary text-black{% endif %}{% if commande.statut.nom == 'Terminée' %}bg-success text-light{% endif %}{% if commande.statut.nom == 'Validée' %}bg-primary text-light{% endif %}{% if commande.statut.nom == 'En cours' %}bg-warning text-black{% endif %} col-1 bg-transparent"></div>
+</div>
+<!-- PRODUCTS LIST --------------------------------------------------------------------->
+{% for produit in produits %}
+<form class="" method="post" name="qteForm{{ produit.id }}" id="qteForm{{ produit.id }}" action="{% url 'order:order-update-qte-prix' produit.id %}" onSubmit="return checkform({{ produit.produit.stock_bis }}, {{ produit.id }})">
+<div class="row align-items-center {% if not forloop.last %}border-bottom{% endif %}" id="{{ rowcolors }}">
+    <div class="py-2 {% cycle 'bg-transparent' 'bg-secondary bg-opacity-25' as rowcolors %} col-4 align-middle" >
+        <a class="btn" href="{% url 'onlineshop:produit-detail' produit.produit.id %}">{{ produit.produit.nom }}</a>
+    </div>
+    <div class="py-2 {% cycle 'bg-transparent' 'bg-secondary bg-opacity-25' as rowcolors %} col-2 align-middle text-end">
+        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" %}
+        <span class="">{{ produit.qte }}</span>
+        {% else %}
+        <div class="text-end bx-pull-right">
+            <input type="number" name="qte" value="{{ produit.qte }}" min="1" max="{{ produit.produit.stock_bis }}" required id="id-qte-{{ produit.id }}" class="form-control" width="95" style="width:95px;" />
+        </div>
+        {% csrf_token %}
+        <input type="number" hidden name="qte_old" value="{{ produit.qte }}" id="id-qte-old-{{ produit.id }}"/>
+        <input type="submit" hidden />
+        <script>
+            document.getElementById('id-qte-{{ produit.id }}').validity.rangeOverflow;
+        </script>
+        {% endif %}
+    </div>
+    <div class="py-2 {% cycle 'bg-transparent' 'bg-secondary bg-opacity-25' as rowcolors %} col-2 align-middle text-end">
+        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" %}
+        <span class="">{{ produit.prix }} €</span>
+        {% else %}
+        <div class="text-end bx-pull-right input-group">
+            <input type="text" name="prix" value="{{ produit.prix|floatformat:'2' }}" min="1" step="1" required id="id-prix-{{ produit.id }}" class="form-control" width="95" style="width:95px;" />
+            <span class="input-group-text">€</span>
+        </div>
+        {% csrf_token %}
+        <input type="submit" hidden />
+        {% endif %}
+    </div>
+    <div class="py-3 {% cycle 'bg-transparent' 'bg-secondary bg-opacity-25' as rowcolors %} col-3 align-middle text-end" style="height:54px !important;">{{ produit.prix|mul:produit.qte }} €</div>
+    <div class="py-2 col-1 text-end align-middle">
+        {% if commande.statut.nom != "Annulée" or commande.statut.nom != "Terminée" %}
+        <button onclick="delete_this_product({{ produit.id }}, '{{ produit.produit.nom }}');" type="button" class="btn btn-sm p-0"><i class="bi-trash text-danger fs-4 float-start"></i></button>
+        <button type="submit" class="btn float-end btn-sm p-0" id="editQte{{ produit.id }}"><i class="bi-pencil-square text-warning fs-4"></i></button>
+        {% endif %}
+    </div>
+</div>
+</form>
+<script>
+$(document).ready(function(){
+    $("#editQte{{ produit.id }}").click(function() {
+        $("#qteForm{{ produit.id }}").submit();
+     });
+});
+</script>
+{% endfor %}
+
+<!-- TOTAL AVANT REMISE TABLE --------------------------------------------------------------------->
+<div class="row text-light align-items-center">
+    <div class="bg-dark py-3 col-8 align-middle">TOTAL (AVANT REMISE)</div>
+    <div class="bg-dark py-3 col-3 align-middle text-end">{{ commande.id|total_order }} €</div>
+    <div class="col-1"></div>
+</div>
+
+<!-- REMISE  -------------------------------------------------------------------------------------->
+<form class="" method="post" name="remiseForm" id="remiseForm" action="{% url 'order:order-update-remise' commande.id %}">
+<div class="row align-items-center">
+    <div class="col-6 bg-opacity-10 bg-success align-middle text-start py-3">Remise</div>
+    <div class="col-2 bg-opacity-10 bg-success align-middle py-2">
+        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Validée" or commande.statut.nom == "Terminée" %}
+        {{ commande.remise }} %
+        {% else %}
+
+            <div class="input-group">
+                <input type="text" name="remise" value="{{ commande.remise }}" min="0" max="100" required="" id="remise" class="form-control" width="95" style="width:95px;" />
+                <div class="input-group-text">%</div>
+            </div>
+            {% csrf_token %}
+            <input type="submit" hidden />
+            <script>
+                document.getElementById('remise').validity.rangeOverflow;
+            </script>
+        {% endif %}
+    </div>
+    <div class="col-3 bg-opacity-10 bg-success align-middle text-end py-3">{{ commande.id|remise_order|floatformat:2 }} €</div>
+    <div class="col-1 text-end">
+        {% if commande.statut.nom != "Annulée" or commande.statut.nom != "Terminée" %}
+            <button type="submit" class="btn float-end" id="editRemise"><i class="bi-pencil-square text-warning fs-4"></i></button>
+        {% endif %}
+    </div>
+</div>
+</form>
+
+<!-- TOTAL APRES REMISE TABLE --------------------------------------------------------------------->
+<div class="row align-items-center">
+    <div class="py-3 bg-dark text-light  col-7 align-middle">TOTAL (APRES REMISE)</div>
+    <div class="py-3 bg-dark text-light  col-1 align-middle text-end">TTC</div>
+    <div class="py-3 bg-dark text-light  col-3 align-middle text-end">{{ commande.id|total_post_remise|floatformat:2 }} €</div>
+    <div class="col-1"></div>
+</div>
+
+<!-- TOTAL HT ------------------------------------------------------------------------------------->
+<div class="row align-items-center">
+    <div class="py-2 bg-opacity-10 bg-danger col-8 align-middle text-end">HT</div>
+    <div class="py-2 bg-opacity-10 bg-danger col-3 align-middle text-end">{{ commande.id|total_ht|floatformat:2 }} €</div>
+    <div class="col-1"></div>
+</div>
+
+<!-- TVA ------------------------------------------------------------------------------------------>
+<div class="row align-items-center ">
+    <div class="py-2 bg-opacity-10 bg-warning col-7 align-middle text-end">({{ commande.tva.tva }} %)</div>
+    <div class="py-2 bg-opacity-10 bg-warning col-1 align-middle text-end">TVA</div>
+    <div class="py-2 bg-opacity-10 bg-warning col-3 align-middle text-end">{{ commande.id|total_tva|floatformat:2 }} €</div>
+    <div class="col-1"></div>
+</div>
+<!-- FRAIS ------------------------------------------------------------------------------------------>
+<form class="" method="post" name="fraisForm" id="fraisForm" action="{% url 'order:order-update-frais' commande.id %}">
+<div class="row align-items-center py-2">
+    <div class="col-7 align-middle text-start">
+        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Validée" or commande.statut.nom == "Terminée" %}
+        {{ commande.frais.nom }}
+        {% else %}
+        <select id="frais" class="form-select bg-transparent" name="frais_type">
+            <option value="">Aucun frais</option>
+            {% for item in frais %}
+            <option value="{{ item.id }}" {% if item.id == commande.frais.id %} selected {% endif %}>{{ item.nom }} (TVA : {{ item.tva.tva|floatformat:0 }}%)</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+    </div>
+    <div class="col-1 align-middle text-end">TTC</div>
+    <div class="col-3 align-middle text-end">
+        {% if commande.statut != "Annulée" and commande.statut != "Terminée" %}
+            <div class="input-group">
+                <input type="text" name="fraisMontant" value="{{ commande.montant_frais }}" min="0" id="fraisMontant" class="form-control" width="95" style="width:95px;" aria-label="Montant des frais" />
+                <span class="input-group-text">€</span>
+                {% csrf_token %}
+                <input type="submit" hidden />
+            </div>
+        {% endif %}
+    </div>
+    <div class="col-1">
+        {% if commande.statut.nom != "Annulée" or commande.statut.nom != "Terminée" %}
+            <button type="submit" class="btn float-end" id="editFrais"><i class="bi-pencil-square text-warning fs-4"></i></button>
+        {% endif %}
+    </div>
+</div>
+</form>
+
+<!-- FRAIS HT ------------------------------------------------------------------------------------------>
+<div class="row align-items-center">
+    <div class="py-2 bg-opacity-10 bg-danger col-8 align-middle text-end">HT</div>
+    <div class="py-2 bg-opacity-10 bg-danger col-3 align-middle text-end">{{ commande.id|frais_ht|floatformat:2 }} €</div>
+    <div class="col-1"></div>
+</div>
+
+<!-- FRAIS TVA ------------------------------------------------------------------------------------------>
+<div class="row align-items-center">
+    <div class="py-2 bg-opacity-10 bg-warning col-7 align-middle text-end">({{ commande.frais.tva.tva|floatformat:2 }} %)</div>
+    <div class="py-2 bg-opacity-10 bg-warning col-1 align-middle text-end">TVA</div>
+    <div class="py-2 bg-opacity-10 bg-warning col-3 align-middle text-end">{{ commande.id|frais_tva|floatformat:2 }} €</div>
+    <div class="col-1"></div>
+</div>
+
+<!-- MONTANT TOTAL -------------------------------------------------------------------------------------->
+<div class="row align-items-center">
+    <div class="bg-dark text-light py-2 col-4 align-middle text-start">MONTANT TOTAL</div>
+    <div class="bg-dark text-light py-2 col-3 align-middle text-end">PRODUITS : {{ commande.id|qte_order }}</div>
+    <div class="bg-dark text-light py-2 col-1 align-middle text-end">TTC : </div>
+    <div class="bg-dark text-light py-2 col-3 align-middle text-end">{{ commande.id|total_global_ttc|floatformat:2 }} €</div>
+    <div class="col-1"></div>
+</div>
+
+<!-- MONTANT TOTAL HT ----------------------------------------------------------------------------------->
+<div class="row align-items-center">
+    <div class="py-2 bg-opacity-10 bg-danger col-8 align-middle text-end">HT</div>
+    <div class="py-2 bg-opacity-10 bg-danger col-3 align-middle text-end">{{ commande.id|total_global_tva|floatformat:2 }} €</div>
+    <div class="col-1"></div>
+</div>
+
+<!-- MONTANT TOTAL TVA ---------------------------------------------------------------------------------->
+<div class="row align-items-center">
+    <div class="bg-opacity-10 bg-warning py-2 col-8 align-middle text-end">TVA</div>
+    <div class="bg-opacity-10 bg-warning py-2 col-3 align-middle text-end">{{ commande.id|total_global_ht|floatformat:2 }} €</div>
+    <div class="col-1"></div>
+</div>
+<br/>
+<div class="bx-pull-left">
+    <div class="col-md-auto"><a href="{% url 'order:order-list' %}" class="btn btn-secondary"> Retour </a></div>
+</div>
+<div class="d-grid gap-2 d-md-flex justify-content-md-end">
+    <!-- SI COMMANDE AUTRE QUE ANNULEE -->
+    {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée"  %}
+    <form method="post" name="cancel-form-cart" id="cancel-form-cart" action="{% url 'order:order-cancel' commande.id %}">
+        <button type="submit" class="btn btn-outline-danger me-md-2">Annuler la commande</button>
+        {% csrf_token %}
+    </form>
+    {% endif %}
+    <!-- SI COMMANDE VALIDEE -->
+    {% if commande.statut.nom == "Validée" %}
+    <form method="post" name="end-form-cart" id="end-form-cart" action="{% url 'order:order-end' commande.id %}">
+        <button type="submit" class="btn btn-success me-md-2">Terminer la commande</button>
+        {% csrf_token %}
+    </form>
+    {% endif %}
+    <!-- SI COMMANDE EN COURS -->
+    {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Validée" and commande.statut.nom != "Terminée" %}
+    <form method="post" name="valid-form-cart" id="valid-form-cart" action="{% url 'order:order-valid' commande.id %}">
+        <button type="submit" class="btn btn-primary">Valider la commande</button>
+        {% csrf_token %}
+    </form>
+    {% endif %}
+    {% if commande.statut.nom == "Validée" or commande.statut.nom == "En cours" %}
+        <div class="col-md-auto"><a target="_blank" href="{% url 'order:order-print' commande.id %}?download=1" class="btn btn-warning"><i class="bi bi-clipboard-check"></i> Bon de commande</a></div>
+    {% endif %}
+    {% if commande.statut.nom == "Terminée" or commande.statut.nom == "Validée"%}
+        <div class="col-md-auto"><a target="_blank" href="{% url 'order:order-print' commande.id %}?download=1&mode=1" class="btn btn-warning"><i class="bi bi-clipboard-check"></i> Facture</a></div>
+    {% endif %}
+</div>
+<div class="modal modal-danger fade in" id="modal-delete" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-light">
+                <h4 class="modal-title">Supprimer le produit de la commande ?</h4>
+                <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="body-delete">
+            </div>
+            <div class="modal-body">Cela remettra les stocks à jour pour le produit supprimé.</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="" id="button-delete">
+                    <button type="button" class="btn btn-danger">Supprimer</button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal modal-primary fade in" id="modal-add-product" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-light">
+                <h4 class="modal-title">Ajouter un produit à la commande</h4>
+                <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <form action="{% url 'order:add-produit-order' commande.id False %}" method="POST">
+            <div class="modal-body" id="body-add-product" style="overflow:hidden;">
+                {{ form.produit.label }}
+                {{ form.produit }}
+                {{ form.prix.label }}
+                {{ form.prix }}
+                {{ form.qte.label }}
+                {{ form.qte }}
+                {% csrf_token %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="" id="button-add-product">
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </a>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+function virgule(val)
+{
+    montant = parseFloat(val).toFixed(2);
+    montant = montant.toString().replace('.',',');
+    return montant;
+}
+
+function checkform(stock_bis, id)
+{
+    var qte = document.getElementById('id-qte-'+id);
+    var qte_old = document.getElementById('id-qte-old-' + id);
+    var diff_qte = qte_old.value - qte.value
+    var test_stock = diff_qte + stock_bis
+    if (test_stock < 0)
+    {
+        alert('Stock insuffisant (Max : ' + stock_bis + ')');
+        return false;
+    }
+    return true;
+}
+function delete_this_product(product_id, nom) {
+    var url = "{% url 'order:order-product-remove' 'XXX' %}"
+    var html;
+    html = "Cela va supprimer le produit suivant de la commande : <strong>" + nom + "</strong>"
+    url = url.replace('XXX', product_id);
+    $('#modal-delete').modal('toggle');
+    $('#body-delete').html(html);
+    $('#button-delete').attr('href',url);
+}
+
+function add_product_order(order_id) {
+    $('#modal-add-product').modal('toggle');
+}
+$(document).ready(function() {
+    $('#id_produit').select2({
+        dropdownParent: $('#id_produit').parent()
+    });
+    $('#id_produit').removeAttr('tabindex');
+    $.fn.modal.Constructor.prototype._enforceFocus = function() {};
+
+});
+</script>
+{% endblock %}

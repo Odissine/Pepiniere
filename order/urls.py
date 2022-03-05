@@ -1,26 +1,72 @@
 from django.urls import path
 from django.conf.urls import url
-from . import views
+from order import views
 
 app_name = 'order'
 
 urlpatterns = [
-    path('', views.order_list, name='order_list'),
-    path('list/', views.order_list, name='order_list'),
-    path('add/', views.order_update_add_product, name='order_update_add_product'),
-    path('detail/<int:id>', views.order_detail, name='order_detail'),
-    path('valid/<int:id>', views.order_valid, name='order_valid'),
-    path('update/<int:id>', views.order_update, name='order_update'),
-    path('updatepq/<int:id>', views.order_update_qte_prix, name='order_update_qte_prix'),
-    path('updateprice/<int:id>', views.order_update_price, name='order_update_price'),
-    path('updateremise/<int:id>', views.order_update_remise, name='order_update_remise'),
-    path('updatefrais/<int:id>', views.order_update_frais, name='order_update_frais'),
-    path('remove/<int:id>', views.order_remove, name='order_remove'),
-    path('cancel/<int:id>', views.order_cancel, name='order_cancel'),
-    path('end/<int:id>', views.order_end, name='order_end'),
-    path('search/client/', views.order_search_client, name='order_search_client'),
-    path('search/order/', views.order_search_order, name='order_search_order'),
-    path('print/<int:id>', views.order_print, name='order_print'),
-    path('etiquettes/', views.order_etiquettes, name='order_etiquettes'),
-    path('etiquettes/print', views.print_etiquettes, name='print_etiquettes'),
+    path('', views.order_list, name='order-list'),
+    path('list/', views.order_list, name='order-list'),
+    path('add/', views.order_update_add_product, name='order-update-add-product'),
+    path('detail/<int:id>', views.order_detail, name='order-detail'),
+    path('valid/<int:id>', views.order_valid, name='order-valid'),
+    path('updatepq/<int:id>', views.order_update_qte_prix, name='order-update-qte-prix'),
+    path('updateremise/<int:id>', views.order_update_remise, name='order-update-remise'),
+    path('updatefrais/<int:id>', views.order_update_frais, name='order-update-frais'),
+    path('product/remove/<id>', views.order_product_remove, name='order-product-remove'),
+    path('cancel/<int:id>', views.order_cancel, name='order-cancel'),
+    path('end/<int:id>', views.order_end, name='order-end'),
+    path('search/client/', views.order_search_client, name='order-search-client'),
+    path('search/order/', views.order_search_order, name='order-search-order'),
+    path('print/<int:id>', views.order_print, name='order-print'),
+    path('etiquettes/', views.order_etiquettes, name='order-etiquettes'),
+    path('etiquettes/print', views.print_etiquettes, name='print-etiquettes'),
+
+    # ADMIN
+    path("administration/", views.order_administration, name="order-administration"),
+
+    # COMMANDES
+    path("order/manage", views.manage_order, name="manage-order"),
+    path('order/add/<order_id>/<manage>', views.add_produit_order, name='add-produit-order'),
+    path('order/edit/<int:order_id>', views.edit_order, name='edit-order'),
+    path('order/edit/produit/<order_id>/<produit_id>', views.edit_produit_order, name='edit-produit-order'),
+    path('order/delete/<order_id>', views.delete_order, name='delete-order'),
+    path('order/cancel/<order_id>', views.cancel_order, name='cancel-order'),
+    path('order/validate/<order_id>', views.validate_order, name='validate-order'),
+    path('order/finish/<order_id>', views.finish_order, name='finish-order'),
+    path('order/delete/produit/<order_id>/<produit_id>', views.delete_produit_order, name='delete-produit-order'),
+    path('order/check/<produit_id>', views.get_produit_stock, name='get-produit-stock'),
+
+    # CLIENTS
+    path("client/manage", views.manage_client, name="manage-client"),
+    path('client/add/', views.add_client, name='add-client'),
+    path('client/edit/<client_id>', views.edit_client, name='edit-client'),
+    path('client/delete/<client_id>', views.delete_client, name='delete-client'),
+
+    path('divers/manage/', views.manage_divers, name='manage-divers'),
+    # TVA
+    path('tva/add/', views.add_tva, name='add-tva'),
+    path('tva/edit/<tva_id>', views.edit_tva, name='edit-tva'),
+    path('tva/delete/<tva_id>', views.delete_tva, name='delete-tva'),
+    path('tva/default/<tva_id>', views.default_tva, name='default-tva'),
+
+    # FRAIS
+    path('frais/add/', views.add_frais, name='add-frais'),
+    path('frais/edit/<frais_id>', views.edit_frais, name='edit-frais'),
+    path('frais/delete/<frais_id>', views.delete_frais, name='delete-frais'),
+
+    # STATUT
+    path('statut/add/', views.add_statut, name='add-statut'),
+    path('statut/edit/<statut_id>', views.edit_statut, name='edit-statut'),
+    path('statut/delete/<statut_id>', views.delete_statut, name='delete-statut'),
+
+    path('export_commandes/', views.export_commandes_xls, name='export-commandes-xls'),
+    path('import_commandes/', views.import_commandes_xls, name='import-commandes-xls'),
+
+    path('export_clients/', views.export_clients_xls, name='export-clients-xls'),
+    path('import_clients/', views.import_clients_xls, name='import-clients-xls'),
+
+    path('export_divers/', views.export_divers_xls, name='export-divers-xls'),
+    path('import_divers/', views.import_divers_xls, name='import-divers-xls'),
+
 ]

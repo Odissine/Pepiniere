@@ -1,0 +1,37 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}La Pépinière - Administration{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="card-header bg-primary bg-opacity-50 text-black">
+                    <div class="row align-items-center">
+                        <h5 class="col-8 h3 mb-0">{% if data %}Modifier une Espèce{% else %}Ajouter une Espèce{% endif %}</h5>
+                    </div>
+                </div>
+                <form class="form-horizontal" action="{% if data %}{% url 'onlineshop:edit-data' categorie data_id %}{% else %}{% url 'onlineshop:add-data' categorie %}{% endif %}" method="post" accept-charset="utf-8">
+                    {% csrf_token %}
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            {{ form.nom }}
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-sm-6 d-grid gap-2">
+                            <a href="{{ previous_page }}" class="d-grid gap-2">
+                                <button type="button" class="btn btn-secondary">RETOUR</button>
+                            </a>
+                        </div>
+                        <div class="col-sm-6 d-grid gap-2">
+                            <input type="submit" value="{% if data %}MODIFIER{% else %}AJOUTER{% endif %}" class="btn btn-primary" id="search-btn"/>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}La Pépinière - Administration{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-6">
+        <div class="card">
+            <div class="card-header">Gestion des produits</div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href=""><button type="button" class="list-group-item list-group-item-action">Gérer les Produits</button></a>
+                    <a href=""><button type="button" class="list-group-item list-group-item-action">Gérer les Espèces</button></a>
+                    <a href=""><button type="button" class="list-group-item list-group-item-action">Gérer les Variétés</button></a>
+                    <a href=""><button type="button" class="list-group-item list-group-item-action">Gérer les Porte-Greffes</button></a>
+                    <a href=""><button type="button" class="list-group-item list-group-item-action">Gérer les Spécialités</button></a>
+                </div>
+            </div>
+          </div>
+    </div>
+
+    <div class="col-6">
+        <div class="card">
+            <div class="card-header">Gestion des commandes</div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href=""><button type="button" class="list-group-item list-group-item-action">Gérer la TVA</button></a>
+                    <a href="{% url 'order:manage-frais' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Frais</button></a>
+                </div>
+            </div>
+          </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -12,7 +12,7 @@ class ClientAdmin(admin.ModelAdmin):
 
 @admin.register(Commande)
 class CommandeAdmin(admin.ModelAdmin):
-    list_display = ['id', 'total', 'date', 'statut', 'date_update']
+    list_display = ['id', 'date', 'statut', 'date_update']
     list_display_links = ['id', 'date']
     list_filter = ['statut']
     list_editable = ['statut']
@@ -32,9 +32,9 @@ class Statut(admin.ModelAdmin):
 
 @admin.register(Frais)
 class Frais(admin.ModelAdmin):
-    list_display = ['nom', 'prix', 'tva']
-    list_display_links = ['nom', 'prix', 'tva']
+    list_display = ['nom', 'tva']
+    list_display_links = ['nom', 'tva']
     list_filter = ['tva']
     fieldsets = [
-        (None, {'fields': ['nom', 'prix', 'tva']})
+        (None, {'fields': ['nom', 'tva']})
     ]  # list columns

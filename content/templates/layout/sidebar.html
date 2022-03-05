@@ -1,0 +1,69 @@
+{% load static %}
+{% load my_templatetag %}
+{% load bootstrap5 %}
+<aside id="sidebar" class="sidebar color-a">
+    <ul class="sidebar-nav" id="sidebar-nav">
+      <li class="nav-item">
+        <a class="nav-link " href="{% url 'onlineshop:produit-list' %}">
+          <i class="bi bi-home"></i>
+          <span>Accueil</span>
+        </a>
+      </li><!-- End Dashboard Nav -->
+      {% if user.is_authenticated %}
+      <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#jeux-nav" data-bs-toggle="collapse" href="#" aria-expanded="false">
+          <i class="bi bi-menu-button-wide"></i><span>Menu</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="jeux-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav" style="">
+          <li>
+            <a href="{% url 'onlineshop:produit-list' %}">
+              <i class="bi bi-circle"></i><span>Produits</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'order:order-list' %}">
+              <i class="bi bi-circle"></i><span>Commandes</span>
+            </a>
+          </li>
+        </ul>
+      </li><!-- End Jeux Nav -->
+      {% endif %}
+      {% if user.is_authenticated %}
+      <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#admin-nav" data-bs-toggle="collapse" href="#" aria-expanded="false">
+          <i class="bi bi-journal-text"></i><span>Administration</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="admin-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+          <li class="nav-heading">GESTION</li>
+          <li>
+            <a href="{% url 'onlineshop:onlineshop-administration' %}">
+              <i class="bi bi-circle"></i><span>Gérer les Produits</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'order:order-administration' %}">
+              <i class="bi bi-circle"></i><span>Gérer les Commandes</span>
+            </a>
+          </li>
+        </ul>
+      </li>
+      <!-- End Admin Nav -->
+      {% endif %}
+      {% if user|mode_admin %}
+      <li class="nav-item bg-success">
+        <a class="nav-link text-light bg-success" href="{% url 'onlineshop:full-admin' %}">
+          <i class="bi bi-fingerprint text-light"></i>
+          <span>SORTIR DU MODE FULL ADMIN</span>
+        </a>
+      </li>
+      {% else %}
+      <li class="nav-item bg-danger">
+        <a class="nav-link text-light bg-danger" href="{% url 'onlineshop:full-admin' %}">
+          <i class="bi bi-fingerprint text-light"></i>
+          <span>ACCES FULL ADMIN</span>
+        </a>
+      </li>
+      {% endif %}
+      <!-- End Dashboard Nav -->
+    </ul>
+  </aside>

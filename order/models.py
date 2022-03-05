@@ -1,6 +1,18 @@
 from django.db import models
 from django.contrib.auth.models import User
 from onlineshop.models import Produit
+from django.utils import timezone
+
+
+class Tva(models.Model):
+    objects = models.Manager()
+    tva = models.DecimalField(max_digits=10, decimal_places=2, null=False, unique=True)
+    active = models.BooleanField(default=False)
+    default = models.BooleanField(default=False)
+
+    def __str__(self):
+        taux_tva = '%s %%' % (self.tva)
+        return taux_tva
 
 
 class Client(models.Model):
@@ -12,9 +24,14 @@ class Client(models.Model):
     ville = models.CharField(max_length=250, blank=True)
     tel = models.CharField(max_length=20, blank=True)
     mail = models.CharField(max_length=250, blank=False)
-    commentaire = models.TextField(blank=True)
-    remise = models.DecimalField(max_digits=5, decimal_places=2, default=0, blank=True)
-    user = models.ForeignKey(User, related_name='client', on_delete=models.SET_NULL, blank=True, null=True)
+    commentaire = models.TextField(blank=True, null=True)
+    remise = models.DecimalField(max_digits=5, decimal_places=2, default=0, blank=True, null=True)
+    activate = models.BooleanField(default=True),
+    user = models.ForeignKey(User, related_name='Clients', on_delete=models.SET_NULL, blank=True, null=True)
+
+    def __str__(self):
+        full_data = '%s %s (%s)' % (self.nom, self.prenom, self.mail)
+        return full_data
 
     def get_fullname(self):
         full_name = '%s %s' % (self.nom, self.prenom)
@@ -31,44 +48,30 @@ class Statut(models.Model):
 class Frais(models.Model):
     objects = models.Manager()
     nom = models.CharField(max_length=250, db_index=True, null=False, blank=False)
-    prix = models.DecimalField(max_digits=10, decimal_places=2, null=False)
-    tva = models.DecimalField(max_digits=10, decimal_places=2, default=20.00)
+    tva = models.ForeignKey(Tva, related_name='Frais', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.nom
 
 
 class Commande(models.Model):
     objects = models.Manager()
-    date = models.DateTimeField(auto_now_add=True)
-    client = models.ForeignKey(Client, related_name='commande', on_delete=models.CASCADE)
+    date = models.DateTimeField(default=timezone.now)
+    date_update = models.DateTimeField(default=timezone.now)
+    client = models.ForeignKey(Client, related_name='Commandes', on_delete=models.CASCADE)
     remise = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    statut = models.ForeignKey(Statut, related_name='commande', on_delete=models.CASCADE)
-    # statut = models.CharField(max_length=250, db_index=True, null=False, blank=False, default='En cours')
-    total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    date_update = models.DateTimeField(auto_now=True)
-    tva = models.DecimalField(max_digits=10, decimal_places=2, default=10.00, blank=True)
-    frais = models.ForeignKey(Frais, related_name='commande', on_delete=models.SET_NULL, blank=True, null=True)
-    fdp = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    statut = models.ForeignKey(Statut, related_name='Commandes', on_delete=models.CASCADE)
+    tva = models.ForeignKey(Tva, related_name='Commandes', on_delete=models.CASCADE)
+    frais = models.ForeignKey(Frais, related_name='Commandes', on_delete=models.SET_NULL, blank=True, null=True)
+    montant_frais = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
 
     def __str__(self):
-        return self.client.get_fullname()
+        return '%s - %s - %s' % (self.date, self.client.get_fullname(), self.statut)
 
-    def add_frais(self, frais):
-        if frais == 0:
-            self.frais = None
-            # self.fdp = 0
-        else:
-            frais_obj = Frais.objects.get(pk=frais)
-            self.frais = frais_obj
-            # self.fdp = frais
-        self.save()
-
-    def montant_total(self):
-        montant_remise = float(self.total) * float(self.remise) / 100
-        # print(montant_remise)
-        montant_frais = 0
-        if not self.frais is None:
-            montant_frais = self.frais.prix
-        somme = float(self.total) - float(montant_remise) + float(montant_frais)
-        return somme
+    def total_avant_remise(self):
+        obj = Commande.objects.all().select_related('Cartdbs')
+        for qte in obj.qte.all():
+            print(qte)
 
     def qte_item(self):
         items = Cartdb.objects.filter(commande=self)
@@ -80,24 +83,17 @@ class Commande(models.Model):
 # Liste des produits commandés ... chaque produit appartient à une et une seule commande
 class Cartdb(models.Model):
     objects = models.Manager()
-    produit = models.ForeignKey(Produit, related_name='cartdb', on_delete=models.CASCADE)
+    produit = models.ForeignKey(Produit, related_name='Cartdbs', on_delete=models.CASCADE)
     qte = models.IntegerField(default=1)
     prix = models.DecimalField(max_digits=10, decimal_places=2, default=15.00)
-    commande = models.ForeignKey(Commande, related_name='cartdb', on_delete=models.CASCADE)
-    total_line = models.DecimalField(max_digits=10, decimal_places=2, default=15.00)
+    commande = models.ForeignKey(Commande, related_name='Cartdbs', on_delete=models.CASCADE)
 
-    def add_cartdb(self, produit, qte, prix, commande, total_line):
-        cartdb = self.create(produit=produit, qte=qte, prix=prix, commande=commande, total_line=total_line)
+    def add_cartdb(self, produit, qte, prix, commande):
+        cartdb = self.create(produit=produit, qte=qte, prix=prix, commande=commande)
         return cartdb
 
-    # def total_line(self):
-    #     total = self.prix * self.qte
-    #     return total
-    #
-    # def __len__(self, commande):
-    #     cartdb = Cartdb.objects.filter(commande=commande)
-    #     return sum(item['qte'] for item in self.cartdb.values())
-    #
-    # def get_total_prix(self, commande):
-    #     cartdb = Cartdb.objects.filter(commande=commande)
-    #     return sum(Decimal(item['prix']) * Decimal(item['qte']) for item in self.cartdb.values())
+
+class AccessMode(models.Model):
+    objects = models.Manager()
+    user = models.ForeignKey(User, related_name='AccessModes', on_delete=models.CASCADE)
+    admin = models.BooleanField(default=False)

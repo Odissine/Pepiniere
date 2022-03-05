@@ -19,7 +19,7 @@ class Cart(object):
         if produit_id not in self.cart:
             if qte > produit.stock_bis:
                 message = "Stock insuffisant !"
-                tags = "warning"
+                tags = "error"
             else:
                 message = "Produit ajouté au panier"
                 tags = "success"

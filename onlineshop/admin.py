@@ -29,9 +29,9 @@ class SpecAdmin(admin.ModelAdmin):
 
 @admin.register(Produit)
 class ProduitAdmin(admin.ModelAdmin):
-    list_display = ['nom', 'slug', 'prix', 'stock', 'stock_bis', 'available', 'espece', 'variete', 'portegreffe']
-    list_filter = ['available', 'prix', 'espece', 'portegreffe']
-    list_editable = ['prix', 'stock', 'available', 'stock_bis']
+    list_display = ['nom', 'slug', 'prix', 'stock', 'stock_bis', 'available', 'espece', 'variete', 'portegreffe', 'gaf']
+    list_filter = ['available', 'prix', 'espece', 'portegreffe', 'gaf']
+    list_editable = ['prix', 'stock', 'available', 'stock_bis', 'gaf']
     prepopulated_fields = {'nom': ('espece', 'variete', 'portegreffe', 'spec'), 'slug': ('nom',),}
     list_per_page = 200
     search_fields = ('nom',)

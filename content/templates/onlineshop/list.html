@@ -1,0 +1,174 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% load my_templatetag %}
+{% block content %}
+{% if produits|length > 0 or request.user.is_authenticated %}
+{% include 'onlineshop/search.html' %}
+{% include 'onlineshop/modal_search_order.html' %}
+<div class="nav justify-content-between">
+    <div class="h3">Liste des produits</div>
+    <div class="h3" id="qty_find_product">{{ produits_list|length }} produits</div>
+</div>
+<div class="centered">
+    <table class="table table-striped border-collapse">
+    <thead>
+        <th scope="col">ESPECE</th>
+        <th scope="col">VARIETE</th>
+        <th scope="col">PORTE-GREFFE</th>
+        <th scope="col">STOCK EN COURS</th>
+        {% if request.user.is_authenticated %}
+        <th scope="col">STOCK FINAL</th>
+        <th scope="col">STOCK FUTUR</th>
+        {% endif %}
+        <th scope="col-3">&nbsp;</th>
+    </thead>
+        {{ admin_mode }}
+    {% for produit in produits %}
+        {% if produit.stock_bis > 0 or request.user.is_authenticated %}
+        <tr class="align-middle" {% if produit.stock_bis > 0 %} style="background:#D0F4D2;" {% endif %}>
+            <td class="align-middle">{% if produit.gaf %}<i class="bi bi-patch-check-fill text-primary"></i> {% endif %}{{ produit.espece }}</td>
+            <td class="align-middle">{{ produit.variete }}</td>
+            <td class="align-middle">{{ produit.portegreffe }}</td>
+            <td class="align-middle">{{ produit.stock_bis }}</td>
+            {% if request.user.is_authenticated %}
+            <td class="align-middle">{{ produit.stock }}</td>
+            <td class="align-middle">{{ produit.stock_future }}</td>
+            <td class="d-flex justify-content-end">
+            {% csrf_token %}
+            {% if produit.stock_bis > 0 or request.user|mode_admin %}
+                <input type="number" name="qte" value="1" min="1" max="{{ produit.stock_bis }}" required="" id="id-qte-{{ produit.id}}" class="form-control w-80 mx-1" width="80" style="width:80px;">
+                <button type="submit" value="Ajouter au panier" class="btn btn-warning mx-1" id="cart-{{ produit.id }}"><i class="bi-cart-plus"></i></button>
+                <input type="hidden" value="{{ produit.id }}" name="produit_id" id="produit_id" />
+                <button type="submit" value="Ajouter à une commande" class="btn btn-success mx-1" id="order-{{ produit.id }}" data-bs-toggle="modal" data-bs-target="#modalSearchOrder" data-bs-whatever="@mdo"><i class="bi-bag-plus"></i></button>
+            {% else %}
+                <input type="number" name="qte" disabled value="0" class="form-control w-80" width="80" style="width:80px;">
+                <button disabled type="submit" value="Ajouter au panier" class="btn btn-warning mx-1"><i class="bi-cart-plus"></i></button>
+                <button disabled type="submit" value="Ajouter à une commande" class="btn btn-success mx-1"><i class="bi-bag-plus"></i></button>
+            {% endif %}
+                <a href="{% url 'onlineshop:produit-detail' produit.id %}" class="btn btn-primary mx-1"><i class="bi bi-info-circle"></i></a>
+            </td>
+            {% if produit.stock_bis > 0 %}
+            <script>
+                document.querySelector("#order-{{ produit.id }}").addEventListener("click", event => {
+                    document.querySelector("#produit-id").value = {{ produit.id }};
+                });
+                document.querySelector("#cart-{{ produit.id }}").addEventListener("click", event => {
+                    testThisFunction({{ produit.id }});
+                })
+            </script>
+            {% endif %}
+            {% else %}
+            <td class="d-flex justify-content-end">&nbsp;</td>
+            {% endif %}
+        </tr>
+        {% endif %}
+    {% endfor %}
+    </table>
+</div>
+{% if paginate %}
+<div class="clearfix"></div>
+<nav aria-label="...">
+<ul class="pagination justify-content-center">
+{% if produits.has_previous %}
+    <form action="?page={{ produits.previous_page_number }}" method="post">
+        {% csrf_token %}
+        <input type="hidden" value="{{ espece }}" name="especes">
+        <input type="hidden" value="{{ variete }}" name="varietes">
+        <input type="hidden" value="{{ portegreffe }}" name="portegreffes">
+        <input type="hidden" value="{{ spec }}" name="specs">
+        <input type="hidden" value="{{ stock }}" name="stock">
+        <li class="page-item"><button type="submit" class="page-link"><<</button></li>
+    </form>
+{% else %}
+    <li class="page-item disabled"><a class="page-link" href="#"><<</a></li>
+{% endif %}
+{% if produits.number|add:'-4' > 1 %}
+    <li class="page-item"><a class="page-link" href="?page={{ produits.number|add:'-5' }}{{ getvars }}">...</a></li>
+{% endif %}
+{% for i in produits.paginator.page_range %}
+    {% if produits.number == i %}
+        <li class="page-item active"><span class="page-link" href="#">{{ i }}</span></li>
+    {% elif i > produits.number|add:'-5' and i < produits.number|add:'10' %}
+        <form action="?page={{ i }}" method="post">
+            {% csrf_token %}
+            <input type="hidden" value="{{ espece.slug }}" name="espece">
+            <input type="hidden" value="{{ variete.slug }}" name="variete">
+            <input type="hidden" value="{{ portegreffe.slug }}" name="portegreffe">
+            <input type="hidden" value="{{ spec.slug }}" name="spec">
+            <input type="hidden" value="{{ stock_bool }}" name="stock_bool">
+            <li class="page-item"><button type="submit" class="page-link">{{ i }}</button></li>
+        </form>
+    {% endif %}
+{% endfor %}
+{% if produits.has_next %}
+    <form action="?page={{ produits.next_page_number }}" method="post">
+        {% csrf_token %}
+        <input type="hidden" value="{{ espece.slug }}" name="espece">
+        <input type="hidden" value="{{ variete.slug }}" name="variete">
+        <input type="hidden" value="{{ portegreffe.slug }}" name="portegreffe">
+        <input type="hidden" value="{{ spec.slug }}" name="spec">
+        <input type="hidden" value="{{ stock_bool }}" name="stock_bool">
+        <li class="page-item"><button type="submit" class="page-link">>></button></li>
+    </form>
+{% else %}
+    <li class="page-item disabled"><a class="page-link" href="#">>></a></li>
+{% endif %}
+</ul>
+</nav>
+{% endif %}
+{% else %}
+<div class="text-center h2 py-5">Il n'y a plus d'arbres disponibles pour cette année :)<br/>Rendez-vous en avril pour le nouvel inventaire !</div>
+{% endif %}
+<script>
+    function checkform(qte, id)
+    {
+        var stock = document.getElementById('id-qte-' + id);
+        if (stock.value > qte)
+        {
+            alert('Stock insuffisant (Max : ' + qte + ')');
+            return false;
+        }
+        return true;
+    }
+
+    function testThisFunction(arg) {
+        let formData = new FormData();
+        let csrfTokenValue = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        formData.append('qte', document.querySelector("#id-qte-"+arg).value);
+
+        const request = new Request('/cart/add_ajax/'+arg, {
+            method: 'POST',
+            body: formData,
+            headers: {'X-CSRFToken': csrfTokenValue}
+        });
+
+        fetch(request)
+            .then(response => response.json())
+                .then(result => {
+                    document.querySelector('#lblCartCount').innerHTML = result['total'];
+                    // document.querySelector('#lblCartCount').style.display = "block";
+                    document.querySelector("#cartLink").href = "/cart/";
+                    document.querySelector('#errorMessageAjax').style.display = "block";
+                    document.querySelector('#textErrorMessageAjax').innerHTML = result['messages'];
+                    // document.querySelector('#errorMessage').style.display = "block";
+                    let y =  window.scrollY;
+                    // document.querySelector('#toastPlacementAjax').setAttribute('style', 'z-index:100; top:' + y + 'px !important');
+
+                    if (result['tags'] === "success") {
+                        $('#errorMessageAjax').addClass('alert-success bg-success');
+                    } else {
+                        $('#errorMessageAjax').addClass('alert-danger bg-danger');
+                    }
+
+                    $('#errorMessageAjax').addClass('show');
+                    $('#errorMessageAjax').removeClass('hide');
+                    function hideMsg () {
+                        $('#errorMessageAjax').fadeOut();
+                        $('#errorMessageAjax').removeClass('show');
+                        $('#errorMessageAjax').addClass('hide');
+                    }
+                    setTimeout(hideMsg,5000);
+        })
+    }
+</script>
+{% endblock %}

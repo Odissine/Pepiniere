@@ -1,0 +1,203 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}La Pépinière - Administration{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header py-2 border-bottom border-primary">
+        <div class="row align-items-center">
+            <div class="col-md-auto h3 mb-0">Administration (TVA, Frais, Statut)</div>
+            <div class="col">
+                <a class="bx-pull-right" href="{{ previous_page}}">
+                    <button class="btn btn-secondary" type="button">Retour</button>
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+<div class="row">
+<!-- TVA -->
+    <div class="col-6">
+        <div class="card">
+            <div class="card-header">
+                Gestion des taux de TVA
+                <a type="button" class="btn btn-success fw-bolder bx-pull-right" style="font-size: .8rem;" href="{% url 'order:add-tva' %}">
+                    <i class="bi bi-plus me-1"></i> Nouveau
+                </a>
+            </div>
+            <div class="card-body">
+
+                <div class="row border-bottom border-primary align-items-center py-2 fw-bolder">
+                    <div class="col-9">TVA</div>
+                    <div class="col-3">
+
+                    </div>
+                </div>
+                {% for tva in tvas %}
+                <div class="row align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}{% if tva.default == True %} bg-primary bg-opacity-25 {% endif %}{% if tva.active == False %} bg-secondary bg-opacity-25 {% endif %}">
+                    <div class="col-9">{{ tva.tva }} %</div>
+                    <div class="col-3 text-end">
+                        <button onclick="delete_this_tva({{ tva.id }},'{{ tva.tva }}')" class="btn btn-danger btn-sm" type="button"><i class="bi bi-trash"></i></button>
+                        <a href="{% url 'order:edit-tva' tva.id %}"><button class="btn btn-warning btn-sm" type="button"><i class="bi bi-pencil"></i></button></a>
+                        {% if tva.default == False %}
+                        <a href="{% url 'order:default-tva' tva.id %}"><button class="btn btn-info btn-sm" type="button"><i class="bi bi-check"></i></button></a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+<!-- FRAIS -->
+        <div class="card">
+            <div class="card-header">
+                Gestion des Frais
+                <a type="button" class="btn btn-success fw-bolder bx-pull-right" style="font-size: .8rem;" href="{% url 'order:add-frais' %}">
+                    <i class="bi bi-plus me-1"></i> Nouveau
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row border-bottom border-primary align-items-center py-2 fw-bolder">
+                    <div class="col-5">NOM</div>
+                    <div class="col-4">TVA</div>
+                    <div class="col-3"></div>
+                </div>
+                {% for f in frais %}
+                <div class="row align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                    <div class="col-5">{{ f.nom }}</div>
+                    <div class="col-4">{{ f.tva }}</div>
+                    <div class="col-3 text-end">
+                        <button onclick="delete_this_frais({{ f.id }},'{{ f.nom }}')" class="btn btn-danger btn-sm" type="button"><i class="bi bi-trash"></i></button>
+                        <a href="{% url 'order:edit-frais' f.id %}"><button class="btn btn-warning btn-sm" type="button"><i class="bi bi-pencil"></i></button></a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+<!-- STATUT -->
+    <div class="col-6">
+        <div class="card">
+            <div class="card-header">
+                Gestion des Status
+                <a type="button" class="btn btn-success fw-bolder bx-pull-right" style="font-size: .8rem;" href="{% url 'order:add-statut' %}">
+                    <i class="bi bi-plus me-1"></i> Nouveau
+                </a>
+            </div>
+            <div class="card-body">
+
+                <div class="row border-bottom border-primary align-items-center py-2 fw-bolder">
+                    <div class="col-9">STATUT</div>
+                    <div class="col-3">
+
+                    </div>
+                </div>
+                {% for statut in statuts %}
+                <div class="row align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                    <div class="col-9">{{ statut.nom }}</div>
+                    <div class="col-3 text-end">
+                        <button onclick="delete_this_statut({{ statut.id }},'{{ statut.nom }}')" class="btn btn-danger btn-sm" type="button"><i class="bi bi-trash"></i></button>
+                        <a href="{% url 'order:edit-statut' statut.id %}"><button class="btn btn-warning btn-sm" type="button"><i class="bi bi-pencil"></i></button></a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE SUPPRESSION DU TAUX DE TVA ----------------------------------------------------------------------------------->
+<div class="modal modal-danger fade in" id="modal-delete-tva" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-light">
+                <h4 class="modal-title">Supprimer ce taux de TVA ?</h4>
+                <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="delete-tva-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="" id="button-delete-tva">
+                    <button type="button" class="btn btn-danger">Supprimer</button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE SUPPRESSION DU FRAIS ----------------------------------------------------------------------------------->
+<div class="modal modal-danger fade in" id="modal-delete-frais" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-light">
+                <h4 class="modal-title">Supprimer ce taux de TVA ?</h4>
+                <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="delete-frais-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="" id="button-delete-frais">
+                    <button type="button" class="btn btn-danger">Supprimer</button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE SUPPRESSION DU TAUX DE TVA ----------------------------------------------------------------------------------->
+<div class="modal modal-danger fade in" id="modal-delete-statut" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-light">
+                <h4 class="modal-title">Supprimer ce taux de TVA ?</h4>
+                <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="delete-statut-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="" id="button-delete-statut">
+                    <button type="button" class="btn btn-danger">Supprimer</button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function delete_this_tva(tva_id, nom) {
+        var url = "{% url 'order:delete-tva' 'XXX' %}"
+        var html;
+        html = "Cela va supprimer le taux de tva : <strong>" + nom + "</strong>"
+        console.log(nom)
+        url = url.replace('XXX', tva_id);
+        $('#modal-delete-tva').modal('toggle');
+        $('#delete-tva-body').html(html);
+        $('#button-delete-tva').attr('href',url);
+    };
+
+    function delete_this_frais(frais_id, nom) {
+        var url = "{% url 'order:delete-frais' 'XXX' %}"
+        var html;
+        html = "Cela va supprimer le type de frais : <strong>" + nom + "</strong>"
+        console.log(nom)
+        url = url.replace('XXX', frais_id);
+        $('#modal-delete-frais').modal('toggle');
+        $('#delete-frais-body').html(html);
+        $('#button-delete-frais').attr('href',url);
+    };
+
+    function delete_this_statut(frais_id, nom) {
+        var url = "{% url 'order:delete-frais' 'XXX' %}"
+        var html;
+        html = "Cela va supprimer le statut : <strong>" + nom + "</strong>"
+        console.log(nom)
+        url = url.replace('XXX', frais_id);
+        $('#modal-delete-statut').modal('toggle');
+        $('#delete-statut-body').html(html);
+        $('#button-delete-statut').attr('href',url);
+    };
+</script>
+{% endblock %}

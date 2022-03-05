@@ -6,7 +6,7 @@ from django.utils.text import slugify
 class Espece(models.Model):
     objects = models.Manager()
     nom = models.CharField(max_length=200, db_index=True)
-    slug = models.SlugField(max_length=200, unique=True)
+    slug = models.SlugField(max_length=200, unique=True, null=True)
 
     class Meta:
         ordering = ('nom',)
@@ -17,13 +17,13 @@ class Espece(models.Model):
         return self.nom
 
     def get_absolute_url(self):
-        return reverse('onlineshop:produit_list_by_espece', args=[self.slug])
+        return reverse('onlineshop:produit-list_by_espece', args=[self.slug])
 
 
 class Variete(models.Model):
     objects = models.Manager()
     nom = models.CharField(max_length=200, db_index=True)
-    slug = models.SlugField(max_length=200, unique=True)
+    slug = models.SlugField(max_length=200, unique=True, null=True)
 
     class Meta:
         ordering = ('nom',)
@@ -34,13 +34,13 @@ class Variete(models.Model):
         return self.nom
 
     def get_absolute_url(self):
-        return reverse('onlineshop:produit_list_by_variete', args=[self.slug])
+        return reverse('onlineshop:produit-list_by_variete', args=[self.slug])
 
 
 class PorteGreffe(models.Model):
     objects = models.Manager()
     nom = models.CharField(max_length=200, db_index=True)
-    slug = models.SlugField(max_length=200, unique=True)
+    slug = models.SlugField(max_length=200, unique=True, null=True)
 
     class Meta:
         ordering = ('nom',)
@@ -51,13 +51,13 @@ class PorteGreffe(models.Model):
         return self.nom
 
     def get_absolute_url(self):
-        return reverse('onlineshop:produit_list_by_portegreffe', args=[self.slug])
+        return reverse('onlineshop:produit-list_by_portegreffe', args=[self.slug])
 
 
 class Spec(models.Model):
     objects = models.Manager()
     nom = models.CharField(max_length=200, db_index=True)
-    slug = models.SlugField(max_length=200, unique=True)
+    slug = models.SlugField(max_length=200, unique=True, null=True)
 
     class Meta:
         ordering = ('nom',)
@@ -68,23 +68,24 @@ class Spec(models.Model):
         return self.nom
 
     def get_absolute_url(self):
-        return reverse('onlineshop:produit_list_by_spec', args=[self.slug])
+        return reverse('onlineshop:produit-list_by_spec', args=[self.slug])
 
 
 class Produit(models.Model):
     objects = models.Manager()
-    espece = models.ForeignKey(Espece, related_name='produits', on_delete=models.CASCADE)
-    variete = models.ForeignKey(Variete, related_name='produits', on_delete=models.CASCADE)
-    portegreffe = models.ForeignKey(PorteGreffe, related_name='produits', on_delete=models.CASCADE)
-    spec = models.ForeignKey(Spec, related_name='produits', on_delete=models.CASCADE, blank=True, null=True)
+    espece = models.ForeignKey(Espece, related_name='Produits', on_delete=models.CASCADE)
+    variete = models.ForeignKey(Variete, related_name='Produits', on_delete=models.CASCADE)
+    portegreffe = models.ForeignKey(PorteGreffe, related_name='Produits', on_delete=models.CASCADE)
+    spec = models.ForeignKey(Spec, related_name='Produits', on_delete=models.CASCADE, blank=True, null=True)
     nom = models.CharField(max_length=200, db_index=True)
-    slug = models.SlugField(max_length=200, db_index=True)
-    # image = models.ImageField(upload_to='produits/%Y/%m/%d', blank=True)
-    description = models.TextField(blank=True)
+    slug = models.SlugField(max_length=200, db_index=True, blank=True)
+    description = models.TextField(blank=True, null=True)
     prix = models.DecimalField(max_digits=10, decimal_places=2, default=15.00)
     stock = models.IntegerField(default=0)
     stock_bis = models.IntegerField(default=0)
+    stock_future = models.IntegerField(default=0)
     available = models.BooleanField(default=True)
+    gaf = models.BooleanField(default=False)
 
     class Meta:
         ordering = ('nom',)
@@ -108,7 +109,32 @@ class Produit(models.Model):
         return self.spec
 
     def get_absolute_url(self):
-        return reverse('onlineshop:produit_detail', args=[self.id, self.slug])
+        return reverse('onlineshop:produit-detail', args=[self.id, self.slug])
 
     def get_prix(self):
         return self.prix
+
+
+class ProduitTest(models.Model):
+    objects = models.Manager()
+    espece = models.ForeignKey(Espece, related_name='ProduitTests', on_delete=models.CASCADE)
+    variete = models.ForeignKey(Variete, related_name='ProduitTests', on_delete=models.CASCADE)
+    portegreffe = models.ForeignKey(PorteGreffe, related_name='ProduitTests', on_delete=models.CASCADE)
+    spec = models.ForeignKey(Spec, related_name='ProduitTests', on_delete=models.CASCADE, blank=True, null=True)
+    nom = models.CharField(max_length=200, db_index=True)
+    slug = models.SlugField(max_length=200, db_index=True, blank=True)
+    description = models.TextField(blank=True, null=True)
+    prix = models.DecimalField(max_digits=10, decimal_places=2, default=15.00)
+    stock = models.IntegerField(default=0)
+    stock_bis = models.IntegerField(default=0)
+    available = models.BooleanField(default=True)
+    gaf = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ('nom',)
+        index_together = (('id', 'slug'),)
+        verbose_name = 'produit'
+        verbose_name_plural = 'produits'
+
+    def __str__(self):
+        return self.nom

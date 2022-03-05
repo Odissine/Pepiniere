@@ -1,0 +1,52 @@
+<div class="col-lg-12 card pt-2">
+
+    <form class="form-horizontal" action="{% url formAction %}" method="post" accept-charset="utf-8">
+        {% csrf_token %}
+        <a class="link-secondary" aria-expanded="false" aria-controls="search-card" data-bs-toggle="collapse" href="#search-card">
+            <h2 class="ms-3"><i class="bi bi-search"></i> Recherche</h2>
+        </a>
+        <div class="collapse card-body" id="search-card">
+            <div class="row g-2 mb-2">
+                <div class="col-md-6">
+                    {{ form.especes.label }}
+                    {{ form.especes }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.varietes.label }}
+                    {{ form.varietes }}
+                </div>
+            </div>
+            <div class="row g-2 mb-2">
+                <div class="col-md-6">
+                    {{ form.portegreffes.label }}
+                    {{ form.portegreffes }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.specs.label }}
+                    {{ form.specs }}
+                </div>
+            </div>
+            {% if request.user.is_authenticated %}
+            <div class="row g-2 mb-2">
+                <div class="col-md-6">
+                    <div class="form-check form-switch ">
+                        {{ form.stock }}
+                        <label class="" style="position:relative; top:12px; left:10px;">{{ form.stock.label }}</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch ">
+                        {{ form.gaf }}
+                        <label class="" style="position:relative; top:12px; left:10px;">{{ form.gaf.label }}</label>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            <div class="row g-2">
+                <div class="col-md d-grid gap-2">
+                    <input type="submit" value="RECHERCHER" class="btn btn-warning" id="search-btn"/>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

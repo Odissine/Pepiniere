@@ -1,0 +1,10 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% block title %}La Pépinière - Page introuvable !{% endblock %}
+{% block content %}
+<div class="container text-center">
+    <h1 id="title-error-text">Page introuvable (Erreur 404)</h1>
+    <img src="{% static 'img/404.png' %}" width="400"/>
+    <!-- <div>Envoyer le rapport d'erreur par mail ?</div> -->
+</div>
+{% endblock %}
