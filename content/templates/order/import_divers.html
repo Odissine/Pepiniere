@@ -1,0 +1,51 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}La Pépinière - Administration{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form action="{% url 'order:import-divers-xls' %}" class="form-horizontal" method="post" accept-charset="utf-8" enctype="multipart/form-data" id="import-commande-form">
+                    <div class="card-header bg-primary bg-opacity-50 text-black">
+                        <div class="row align-items-center">
+                            <h5 class="col-8 h3 mb-0">Importer la liste de commandes</h5>
+                        </div>
+                    </div>
+                    {% csrf_token %}
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <input type="file" name="myfile" class="form-control" required="">
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="Fichier Excel" data-bs-html="true" data-bs-content="Import du fichier excel exporté dans l'outil pour écraser les infos existantes !"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input type="checkbox" class="form-check-input" name="delete_data">
+                                <label class="" style="position:relative; top:12px; left:10px;">Remplacer les données existantes par celles du fichier (Supprime et remplace) ?</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-sm-6 d-grid gap-2">
+                            <a href="{{ previous_page }}" class="d-grid gap-2">
+                                <button type="button" class="btn btn-secondary">RETOUR</button>
+                            </a>
+                        </div>
+                        <div class="col-sm-6 d-grid gap-2">
+                            <button type="submit" value="IMPORTER" class="btn btn-primary" id="search-btn" onclick="unhideloader();">IMPORTER</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function unhideloader() {
+        document.getElementById("loading").style.display = "block";
+    };
+</script>
+{% endblock %}

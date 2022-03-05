@@ -8,7 +8,7 @@ def unauthenticated_user(view_func):
         if request.user.is_authenticated:
             return view_func(request, *args, **kwargs)
         else:
-            return redirect('produit_list')
+            return redirect('produit-list')
     return wrapper_func
 
 

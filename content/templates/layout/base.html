@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+{% load static %}
+{% load bootstrap5 %}
+{% load i18n %}
+{% load auth_extras %}
+{% get_current_language as language_code %}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>La petite pépinière</title>
+  <meta content="" name="description">
+  <meta content="" name="keywords">
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" href="{% static 'img/leaf.png' %}" />
+
+
+  <!-- Google Fonts -->
+  <!--
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+  -->
+  <!-- Vendor CSS Files -->
+  <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/quill/quill.snow.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/quill/quill.bubble.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/remixicon/remixicon.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/simple-datatables/style.css' %}" rel="stylesheet">
+  <link href="{% static 'css/select2.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/select2-bootstrap-5-theme.min.css' %}" rel="stylesheet">
+  <!-- Template Main CSS File -->
+  <link href="{% static 'css/style.css' %}" rel="stylesheet">
+  <link rel='stylesheet' href="{% static 'css/datepicker.min.css' %}">
+  <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+  <script src="{% static 'js/select2.min.js' %}"></script>
+
+</head>
+<body>
+  <!--
+  <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+  -->
+  <!-- ======= Header ======= -->
+  {% include 'layout/header.html' %}
+  <!-- End Header -->
+  <!-- ======= Sidebar ======= -->
+  {% include 'layout/sidebar.html' %}
+  <!-- End Sidebar-->
+  {% if messages %}
+  {% for message in messages %}
+  <div id="errorMessage" class="fixed-top alert {% if message.tags == 'error' %}alert-danger bg-danger{% else %}alert-success bg-success{% endif %} text-light alert-dismissible fade show" style="top:60px;" role="alert" data-bs-html="true">
+    {{ message.message }}
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {% endfor %}
+  {% endif %}
+  <div id="errorMessageAjax" class="fixed-top alert {% if message.tags == 'error' %}alert-danger bg-danger{% else %}alert-success bg-success{% endif %} text-light alert-dismissible hide" style="top:60px; display: none;" role="alert" data-bs-html="true">
+    <div id="textErrorMessageAjax"></div>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  <main id="main" class="main">
+    <div id="loading">
+        <span class="position-absolute top-50 start-50 spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    </div>
+    <!--
+    <div class="pagetitle">
+      <div class="h1">{{ context_header.title }}</div>
+    </div>
+    -->
+    <!-- End Page Title -->
+    <section class="section dashboard">
+      {% block content %}
+      {% endblock %}
+    </section>
+  </main><!-- End #main -->
+
+  <!-- ======= Footer ======= -->
+  <footer id="footer" class="footer">
+    <div class="copyright">
+      &copy; Copyright <strong><span>La Petite Pepiniere</span></strong>. Tous droits réservés
+    </div>
+    <div class="credits">
+      <!-- All the links in the footer should remain intact. -->
+      <!-- You can delete the links only if you purchased the pro version. -->
+      <!-- Licensing information: https://bootstrapmade.com/license/ -->
+      <!-- Purchase the pro version with working PHP/AJAX contact form: https://bootstrapmade.com/nice-admin-bootstrap-admin-html-template/ -->
+      Créé par <a href="mailto:cyril.henry@gmail.com">Cyril HENRY</a>
+    </div>
+  </footer><!-- End Footer -->
+  <!--
+  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+  -->
+  <!-- Vendor JS Files -->
+  <script src="{% static 'vendor/apexcharts/apexcharts.min.js' %}"></script>
+  <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'vendor/chart.js/chart.min.js' %}"></script>
+  <script src="{% static 'vendor/echarts/echarts.min.js' %}"></script>
+  <script src="{% static 'vendor/quill/quill.min.js' %}"></script>
+  <script src="{% static 'vendor/simple-datatables/simple-datatables.js' %}"></script>
+  <script src="{% static 'vendor/tinymce/tinymce.min.js' %}"></script>
+  <script src="{% static 'vendor/php-email-form/validate.js' %}"></script>
+  <script src="{% static 'js/popper.min.js' %}"></script>
+  <script src="{% static 'js/toastr.min.js' %}"></script>
+  <script src="{% static 'js/select-menu.js' %}"></script>
+
+  <script src="{% static 'js/datepicker-full.min.js' %}"></script>
+
+  <!-- Template Main JS File -->
+  <script src="{% static 'js/main.js' %}"></script>
+  <script>
+      $(document).ready(function() {
+          $('.js-example-basic-single').select2();
+
+          $('#loading').fadeOut(800);
+
+          $('#errorMessage').addClass('show');
+          $('#errorMessage').removeClass('hide');
+          $('#errorMessageAjax').addClass('show');
+          $('#errorMessageAjax').removeClass('hide');
+          function hideMsg () {
+              $('#errorMessage').fadeOut();
+              $('#errorMessage').removeClass('show');
+              $('#errorMessage').addClass('hide');
+              $('#errorMessageAjax').fadeOut();
+              $('#errorMessageAjax').removeClass('show');
+              $('#errorMessageAjax').addClass('hide');
+          }
+          setTimeout(hideMsg,5000);
+      });
+
+    const getDatePickerTitle = elem => {
+      // From the label or the aria-label
+      const label = elem.nextElementSibling;
+      let titleText = '';
+      if (label && label.tagName === 'LABEL') {
+        titleText = label.textContent;
+      } else {
+        titleText = elem.getAttribute('aria-label') || '';
+      }
+      return titleText;
+    }
+
+    const elems = document.querySelectorAll('.datepicker_input');
+    for (const elem of elems) {
+      const datepicker = new Datepicker(elem, {
+        format: 'dd/mm/yyyy', // UK format
+        title: getDatePickerTitle(elem)
+      });
+    }
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+      return new bootstrap.Popover(popoverTriggerEl)
+    })
+
+  </script>
+</body>
+</html>

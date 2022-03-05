@@ -1,0 +1,45 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}La Pépinière - Administration{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header py-2 border-bottom border-primary">
+        <div class="row align-items-center">
+            <div class="col-md-auto h3 mb-0">{% if tva %}Modifier un taux de TVA{% else %}Ajouter un taux de TVA{% endif %}</div>
+            <div class="col">
+                <a class="bx-pull-right" href="{{ previous_page}}">
+                    <button class="btn btn-secondary" type="button">Retour</button>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class=" card-body mt-3">
+        <form class="form-horizontal" action="{% if tva %}{% url 'order:edit-tva' tva_id %}{% else %}{% url 'order:add-tva' %}{% endif %}" method="post" accept-charset="utf-8">
+        {% csrf_token %}
+            <div class="row g-2">
+                <div class="col mb-2 input-group">
+                    <div class="input-group-text">{{ form.tva.label }}</div>
+                    {{ form.tva }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-5 mb-2 input-group">
+                    <label class="input-group-text bg-opacity-100 bg-white border-0" >{{ form.default.label }}</label>
+                    <div class="form-check form-switch ">{{ form.default }}</div>
+                </div>
+                <div class="col-auto mb-2 input-group">
+                    <label class="input-group-text bg-opacity-100 bg-white border-0" >{{ form.active.label }}</label>
+                    <div class="form-check form-switch ">{{ form.active }}</div>
+                </div>
+            </div>
+
+            <div class="row g-2">
+                <div class="d-grid gap-2 my-3">
+                    <input type="submit" value="{% if tva %}MODIFIER{% else %}AJOUTER{% endif %}" class="btn btn-primary" id="search-btn"/>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

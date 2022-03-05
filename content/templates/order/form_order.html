@@ -1,0 +1,150 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}La Pépinière - Administration{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header py-2 border-bottom border-primary">
+        <div class="row align-items-center">
+            <div class="col-md-auto h3 mb-0">{% if order %}Modifier la commande {{ order.id }}{% endif %}</div>
+            <div class="col">
+                <a class="bx-pull-right" href="{{ previous_page}}">
+                    <button class="btn btn-secondary" type="button">Retour</button>
+                </a>
+            </div>
+        </div>
+    </div>
+    <form class="form-horizontal" action="{% url 'order:edit-order' order_id %}" method="post" accept-charset="utf-8">
+    <div class=" card-body mt-3">
+        {% csrf_token %}
+        <div class="row g-2">
+            <div class="col-6 mb-2 input-group">
+                <div class="input-group-prepend col-2">
+                    <span class="input-group-text col-12 ">{{ form.client.label }}</span>
+                </div>
+                {{ form.client }}
+            </div>
+            <div class="col-6 mb-2 input-group">
+                <div class="input-group-prepend col-2">
+                    <span class="input-group-text col-12">{{ form.remise.label }}</span>
+                </div>
+                {{ form.remise }}
+            </div>
+        </div>
+        <div class="row g-2">
+            <div class="col mb-2 input-group">
+                <div class="input-group-prepend col-2">
+                    <span class="input-group-text">{{ form.statut.label }}</span>
+                </div>
+                {{ form.statut }}
+            </div>
+        </div>
+        <div class="row g-2">
+            <div class="col-6 mb-2 input-group">
+                <div class="input-group-prepend col-2">
+                    <span class="input-group-text">{{ form.date.label }}</span>
+                </div>
+                {{ form.date }}
+            </div>
+            <div class="col-6 mb-2 input-group">
+                <div class="input-group-prepend col-2">
+                    <span class="input-group-text">{{ form.tva.label }}</span>
+                </div>
+                {{ form.tva }}
+            </div>
+        </div>
+        <div class="row g-2">
+            <div class="col-6 mb-2 input-group">
+                <div class="input-group-prepend col-2">
+                    <span class="input-group-text">{{ form.frais.label }}</span>
+                </div>
+                {{ form.frais }}
+            </div>
+            <div class="col-6 mb-2 input-group">
+                <div class="input-group-prepend col-2">
+                    <span class="input-group-text">{{ form.montant_frais.label }}</span>
+                </div>
+                {{ form.montant_frais }}
+            </div>
+        </div>
+        <div class="d-grid gap-2 my-3">
+            <input type="submit" value="MODIFIER" class="btn btn-primary" id="search-btn"/>
+        </div>
+    </div>
+    </form>
+    <form class="form-horizontal" action="{% url 'order:edit-order' order_id %}" method="post" accept-charset="utf-8">
+    <div class="card-header py-2 border-bottom border-primary">
+        <div class="row align-items-center">
+            <div class="col-md-auto h3 mb-0">Produits</div>
+            {% if order.statut.nom != "Annulée" and order.statut.nom != "Terminée" %}
+            <div class="col">
+                <a class="bx-pull-right" href="{% url 'order:add-produit-order' order.id True %}">
+                    <button class="btn btn-success" type="button"><i class="bi bi-plus me-1"></i> Nouveau</button>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row fw-bold bg-secondary bg-opacity-10 py-2">
+            <div class="col-4">PRODUITS</div>
+            <div class="col-4">ESPECES/VARIETES/PORTES-GREFFE</div>
+            <div class="col-1">QTE</div>
+            <div class="col-1">PRIX</div>
+            <div class="col-2"></div>
+        </div>
+    {% for produit in produits %}
+        <div class="row py-2">
+            <div class="col-4">{{ produit.produit.nom }}</div>
+            <div class="col-4">{{ produit.produit.espece.nom }}/{{ produit.produit.variete.nom }}/{{ produit.produit.portegreffe.nom }}</div>
+            <div class="col-1">{{ produit.qte }}</div>
+            <div class="col-1">{{ produit.prix }}</div>
+            <div class="col-2 text-end">
+                {% if order.statut.nom != "Annulée" and order.statut.nom != "Terminée" %}
+                <button onclick="delete_this_produit('{{ order.id }}', '{{ produit.produit.id }}', '{{ produit.produit.nom }}')" class="btn btn-danger btn-sm" type="button"><i class="bi bi-trash"></i></button>
+                <a href="{% url 'order:edit-produit-order' order.id produit.produit.id %}"><button class="btn btn-warning btn-sm" type="button"><i class="bi bi-pencil"></i></button></a>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+    <div class="col-sm-12 d-grid gap-2 my-2">
+        <a href="{{ previous_page }}" class="d-grid gap-2">
+            <button type="button" class="btn btn-secondary">RETOUR</button>
+        </a>
+    </div>
+    </div>
+    </form>
+</div>
+<!-- MODAL DE SUPPRESSION DE LA COMMANDE ----------------------------------------------------------------------------------->
+<div class="modal modal-danger fade in" id="modal-delete" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-light">
+                <h4 class="modal-title">Supprimer ce produit ?</h4>
+                <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="body-delete">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="" id="button-delete">
+                    <button type="button" class="btn btn-danger">Supprimer</button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function delete_this_produit(order_id, produit_id, nom) {
+        var url = "{% url 'order:delete-produit-order' 'XXX' 'YYY' %}"
+        var html;
+        html = "Cela va supprimer le produit [<strong>" + nom + "</strong>] de la commande {{ order_id }} et remettre les stocks à jour."
+        console.log(nom)
+        url = url.replace('YYY', produit_id);
+        url = url.replace('XXX', order_id);
+        $('#modal-delete').modal('toggle');
+        $('#body-delete').html(html);
+        $('#button-delete').attr('href',url);
+    };
+</script>
+{% endblock %}

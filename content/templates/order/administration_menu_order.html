@@ -1,0 +1,57 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}La Pépinière - Administration{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header py-2 border-bottom border-primary">
+        <div class="row align-items-center">
+            <div class="col-md-auto h3 mb-0">Administration Commandes</div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-6">
+        <div class="card">
+            <div class="card-header bg-secondary bg-opacity-25 text-black">
+                <div class="row align-items-center">
+                    <h5 class="col-12 h4 mb-0">Gestion des commandes</h5>
+                </div>
+            </div>
+            <div class="card-body py-2">
+                <div class="list-group">
+                    <a href="{% url 'order:manage-order' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Commandes</button></a>
+                    <a href="{% url 'order:manage-client' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Clients</button></a>
+                    <a href="{% url 'order:manage-divers' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Frais, la TVA, les Statuts</button></a>
+                    <a href="{% url 'order:order-etiquettes' %}"><button type="button" class="list-group-item list-group-item-action">Imprimer les étiquettes</button></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6">
+        <div class="card">
+            <div class="card-header bg-secondary bg-opacity-25 text-black">
+                <div class="row align-items-center">
+                    <h5 class="col-12 h4 mb-0">Import / Export</h5>
+                </div>
+            </div>
+            <div class="card-body py-2">
+                <div class="h5 text-primary">Export</div>
+                <div class="list-group">
+                    <a href="{% url 'order:export-commandes-xls' %}"><button type="button" class="list-group-item list-group-item-action">Exporter les Commandes</button></a>
+                    <a href="{% url 'order:export-clients-xls' %}"><button type="button" class="list-group-item list-group-item-action">Exporter les Clients</button></a>
+                    <a href="{% url 'order:export-divers-xls' %}"><button type="button" class="list-group-item list-group-item-action">Exporter TVA / Frais / Statut</button></a>
+                </div>
+            </div>
+            <div class="card-body py-2">
+                <div class="h5 text-primary">Import</div>
+                <div class="list-group">
+                    <a href="{% url 'order:import-commandes-xls' %}"><button type="button" class="list-group-item list-group-item-action">Importer les Commandes</button></a>
+                    <a href="{% url 'order:import-clients-xls' %}"><button type="button" class="list-group-item list-group-item-action">Importer les Clients</button></a>
+                    <a href="{% url 'order:import-divers-xls' %}"><button type="button" class="list-group-item list-group-item-action">Importer TVA / Frais / Statut</button></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

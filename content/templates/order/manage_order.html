@@ -1,0 +1,148 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load mathfilters %}
+{% load total_order %}
+{% block title %}La Pépinière - Administration{% endblock %}
+{% block content %}
+{% include 'order/search.html' %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header container-fluid align-middle">
+                <a type="button" class="btn btn-secondary fw-bolder bx-pull-left" style="font-size: .8rem;" href="{{ previous_page}}">Retour</a>
+                <span class="h3">Gestion des Commandes</span>
+            </div>
+            <div class="card-body">
+                <div class="row border-bottom border-primary align-items-center py-2 fw-bolder">
+                    <div class="col-3">DATE</div>
+                    <div class="col-2">STATUT</div>
+                    <div class="col-3">CLIENT</div>
+                    <div class="col-1">TOTAL</div>
+                    <div class="col-3"></div>
+                </div>
+                <div id="accordionFlushExample" class="accordion accordion-flush">
+                    {% for commande in commandes %}
+                    <div class="{% if commande.statut.nom == 'Terminée' %}bg-success bg-opacity-10 {% elif commande.statut.nom == 'Validée' %}bg-primary bg-opacity-10 {% elif commande.statut.nom == 'Annulée' %}bg-danger bg-opacity-10 {% endif %} row align-items-center py-2 collapsed" data-bs-target="#flush-collapse{{ commande.id }}" data-bs-toggle="collapse" aria-expanded="false" aria-controls="flush-collapse{{ commande.id }}">
+                        <div class="col-3" style="cursor:pointer">
+                            {{ commande.date|date:"l d F Y" }}
+                        </div>
+                        <div class="col-2" style="cursor:pointer">
+                            {{ commande.statut }}
+                        </div>
+                        <div class="col-3" style="cursor:pointer">
+                            {{ commande.client.prenom }} {{ commande.client.nom }}
+                        </div>
+                        <div class="col-1" style="cursor:pointer">
+                            {{ commande.id|total_order }} €
+                        </div>
+                        <div class="col-3 text-end px-5">
+                            <button onclick="delete_this_order('{{ commande.id }}','{{ commande.date }}')" class="btn btn-danger btn-sm" type="button"><i class="bi bi-trash"></i></button>
+                            <a href="{% url 'order:edit-order' commande.id %}"><button class="btn btn-warning btn-sm" type="button"><i class="bi bi-pencil"></i></button></a>
+                            {% if commande.statut.nom != "Annulée" %}
+                            <a href="{% url 'order:cancel-order' commande.id %}"><button class="btn btn-secondary btn-sm" type="button"><i class="bi bi-x"></i></button></a>
+                            {% endif %}
+                            {% if commande.statut.nom != "Terminée" %}
+                            <a href="{% url 'order:finish-order' commande.id %}"><button class="btn btn-success btn-sm" type="button"><i class="bi bi-check"></i></button></a>
+                            {% endif %}
+                            {% if commande.statut.nom != "Validée" %}
+                            <a href="{% url 'order:validate-order' commande.id %}"><button class="btn btn-primary btn-sm" type="button"><i class="bi bi-arrow-return-left"></i></button></a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div id="flush-collapse{{ commande.id }}" class="accordion-collapse collapse" aria-labelledby="flush-heading{{ commande.id }}" data-bs-parent="#accordionFlushExample">
+                        <div class="accordion-body">
+                            {% for k,items in produits_commande.items %}
+                                {% if k == commande.id %}
+                                <div class="row">
+                                    <div class="col-4 fw-bold bg-primary bg-opacity-10">Produit</div>
+                                    <div class="col-2 fw-bold bg-primary bg-opacity-10">Qte</div>
+                                    <div class="col-2 fw-bold bg-primary bg-opacity-10">Prix</div>
+                                    <div class="col-4 fw-bold bg-primary bg-opacity-10">Total</div>
+                                    {% for item in items %}
+                                    <div class="col-4">{{ item.produit }}</div>
+                                    <div class="col-2">{{ item.qte }}</div>
+                                    <div class="col-2">{{ item.prix }}</div>
+                                    <div class="col-4">{{ item.qte|mul:item.prix }}</div>
+                                    {% endfor %}
+                                    <div class=""></div>
+                                    <div class=""></div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="{% if not forloop.last %} border-bottom {% endif %}"></div>
+                    {% endfor %}
+
+                    {% if paginate %}
+                        <div class="clearfix"></div>
+                        <nav aria-label="...">
+                            <ul class="pagination justify-content-center">
+                            {% if commandes.has_previous %}
+                                <li class="page-item"><a href="?page={{ commandes.previous_page_number }}" class="page-link"><<</a></li>
+                            {% else %}
+                                <li class="page-item disabled"><a class="page-link" href="#"><<</a></li>
+                            {% endif %}
+                            {% if commandes.number|add:'-4' > 1 %}
+                                <li class="page-item"><a class="page-link" href="?page={{ commandes.number|add:'-5' }}{{ getvars }}">...</a></li>
+                            {% endif %}
+                            {% for i in commandes.paginator.page_range %}
+                                {% if commandes.number == i %}
+                                    <li class="page-item active"><span class="page-link" href="#">{{ i }}</span></li>
+                                {% elif i > commandes.number|add:'-5' and i < commandes.number|add:'10' %}
+                                    <li class="page-item"><a href="?page={{ i }}" class="page-link">{{ i }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            {% if commandes.has_next %}
+                                <li class="page-item"><a href="?page={{ commandes.next_page_number }}" class="page-link">>></a></li>
+                            {% else %}
+                                <li class="page-item disabled"><a class="page-link" href="#">>></a></li>
+                            {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+
+                    <div class="col-sm-12 d-grid gap-2 mt-2">
+                        <a href="{{ previous_page }}" class="d-grid gap-2">
+                            <button type="button" class="btn btn-secondary">RETOUR</button>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL DE SUPPRESSION DE LA COMMANDE ----------------------------------------------------------------------------------->
+<div class="modal modal-danger fade in" id="modal-delete" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-light">
+                <h4 class="modal-title">Supprimer cette commande ?</h4>
+                <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="body-delete">
+            </div>
+            <div class="modal-body">Cela remettra les stocks à jour sur l'ensemble des produits contenus dans la commande puis supprimera la commande</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="" id="button-delete">
+                    <button type="button" class="btn btn-danger">Supprimer</button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function delete_this_order(order_id, nom) {
+        var url = "{% url 'order:delete-order' 'XXX' %}"
+        var html;
+        html = "{{ context_header.javascript }} : <strong>" + nom + "</strong>"
+        console.log(nom)
+        url = url.replace('XXX', order_id);
+        $('#modal-delete').modal('toggle');
+        $('#body-delete').html(html);
+        $('#button-delete').attr('href',url);
+    };
+</script>
+{% endblock %}

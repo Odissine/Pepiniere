@@ -1,0 +1,136 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load mathfilters %}
+{% load order %}
+{% block title %}La Pépinière - Administration{% endblock %}
+{% block content %}
+{% include 'order/searchClient.html' %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header container-fluid align-middle">
+                <a type="button" class="btn btn-secondary fw-bolder bx-pull-left" style="font-size: .8rem;" href="{{ previous_page }}">Retour
+                </a>
+                <span class=h3>Gestion des Clients</span>
+                <a type="button" class="btn btn-success fw-bolder bx-pull-right" style="font-size: .8rem;" href="{% url 'order:add-client' %}">
+                    <i class="bi bi-plus me-1"></i> Nouveau
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row border-bottom border-primary align-items-center py-2 fw-bolder">
+                    <div class="col-2">NOM</div>
+                    <div class="col-2">PRENOM</div>
+                    <div class="col-3">MAIL</div>
+                    <div class="col-2">CP</div>
+                    <div class="col-1">CMD</div>
+                    <div class="col-2"></div>
+                </div>
+                {% for client in clients %}
+                <div class="row align-items-center py-2">
+                    <div class="col-2">
+                        {{ client.nom }}
+                    </div>
+                    <div class="col-2">
+                        {{ client.prenom }}
+                    </div>
+                    <div class="col-3">
+                        {{ client.mail }}
+                    </div>
+                    <div class="col-2">
+                        {{ client.cp }}
+                    </div>
+                    <div class="col-1">
+                        {{ count_order|get_item:client.id }}
+                    </div>
+                    <div class="col-2 text-end px-5">
+                        <button onclick="delete_this_client({{ client.id }},'{{ client.prenom }} {{ client.nom }}', {{ count_order|get_item:client.id }})" class="btn btn-danger btn-sm" type="button"><i class="bi bi-trash"></i></button>
+                        <a href="{% url 'order:edit-client' client.id %}"><button class="btn btn-warning btn-sm" type="button"><i class="bi bi-pencil"></i></button></a>
+                    </div>
+                </div>
+                <div class="{% if not forloop.last %} border-bottom {% endif %}"></div>
+                {% endfor %}
+
+                {% if paginate %}
+                    <div class="clearfix"></div>
+                    <nav aria-label="...">
+                        <ul class="pagination justify-content-center">
+                        {% if clients.has_previous %}
+                            <li class="page-item"><a href="?page={{ clients.previous_page_number }}" class="page-link"><<</a></li>
+                        {% else %}
+                            <li class="page-item disabled"><a class="page-link" href="#"><<</a></li>
+                        {% endif %}
+                        {% if clients.number|add:'-4' > 1 %}
+                            <li class="page-item"><a class="page-link" href="?page={{ clients.number|add:'-5' }}{{ getvars }}">...</a></li>
+                        {% endif %}
+                        {% for i in clients.paginator.page_range %}
+                            {% if clients.number == i %}
+                                <li class="page-item active"><span class="page-link" href="#">{{ i }}</span></li>
+                            {% elif i > clients.number|add:'-5' and i < clients.number|add:'10' %}
+                                <li class="page-item"><a href="?page={{ i }}" class="page-link">{{ i }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if clients.has_next %}
+                            <li class="page-item"><a href="?page={{ clients.next_page_number }}" class="page-link">>></a></li>
+                        {% else %}
+                            <li class="page-item disabled"><a class="page-link" href="#">>></a></li>
+                        {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+
+                <div class="col-sm-12 d-grid gap-2 mt-2">
+                    <a href="{{ previous_page }}" class="d-grid gap-2">
+                        <button type="button" class="btn btn-secondary">RETOUR</button>
+                    </a>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL DE SUPPRESSION DE L'ESPECE ----------------------------------------------------------------------------------->
+<div class="modal modal-danger fade in" id="modal-delete-client" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-light">
+                <h4 class="modal-title" id="modal-title-delete">Désactiver/Supprimer ce client ?</h4>
+                <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="delete-client-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="" id="button-delete-client">
+                    <button type="button" class="btn btn-danger" id="button-delete">Supprimer</button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function delete_this_client(client_id, nom, count) {
+        var url = "{% url 'order:delete-client' 'XXX' %}"
+        var html;
+        var button;
+        var title;
+        if (count > 0) {
+            html = "Êtes vous sûr de vouloir DESACTIVER le client : <strong>" + nom + "</strong>"
+            button = "Désactiver"
+            title = "Désactiver ce client ?"
+        } else {
+            html = "Êtes vous sûr de vouloir SUPPRIMER le client : <strong>" + nom + "</strong>"
+            button = "Supprimer"
+            title = "Supprimer ce client ?"
+        }
+        console.log(nom)
+        url = url.replace('XXX', client_id);
+        $('#modal-delete-client').modal('toggle');
+        $('#delete-client-body').html(html);
+        $('#button-delete-client').attr('href',url);
+        $('#button-delete').html(button);
+        $('#modal-title-delete').html(title);
+    };
+</script>
+
+{% endblock %}

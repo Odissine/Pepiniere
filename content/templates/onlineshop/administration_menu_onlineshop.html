@@ -1,0 +1,54 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}La Pépinière - Administration{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-6">
+        <div class="card">
+            <div class="card-header bg-primary bg-opacity-50 text-black">
+                <div class="row align-items-center">
+                    <h5 class="col-8 h4 mb-0">Gestion des produits</h5>
+                </div>
+            </div>
+            <div class="card-body py-2">
+                <div class="list-group">
+                    <a href="{% url 'onlineshop:manage-produit' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Produits</button></a>
+                    <a href="{% url 'onlineshop:manage-data' 'espece' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Espèces</button></a>
+                    <a href="{% url 'onlineshop:manage-data' 'variete' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Variétés</button></a>
+                    <a href="{% url 'onlineshop:manage-data' 'portegreffe' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Porte-Greffes</button></a>
+                    <a href="{% url 'onlineshop:manage-data' 'spec' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Spécialités</button></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6">
+        <div class="card">
+            <div class="card-header bg-primary bg-opacity-50 text-black">
+                <div class="row align-items-center">
+                    <h5 class="col-8 h4 mb-0">Import / Export Excel</h5>
+                </div>
+            </div>
+            <div class="card-body py-2">
+                <div class="list-group">
+                    <a href="{% url 'onlineshop:export-produits-xls' %}"><button type="button" class="list-group-item list-group-item-action">Exporter les Produits</button></a>
+                    <a href="{% url 'onlineshop:export-produits-xls-custom' %}"><button type="button" class="list-group-item list-group-item-action">Export personnalisé des Produits</button></a>
+                    <a href="{% url 'onlineshop:import-produits-xls' %}"><button type="button" class="list-group-item list-group-item-action">Importer les Produits</button></a>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header bg-danger bg-opacity-75 text-light">
+                <div class="row align-items-center">
+                    <h5 class="col-8 h4 mb-0">Réinitialisation des Stocks</h5>
+                </div>
+            </div>
+            <div class="card-body py-2">
+                <div class="list-group">
+                    <a href="{% url 'onlineshop:reset-stock' %}"><button type="button" class="list-group-item list-group-item-action">Remettre à Zero les stocks</button></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

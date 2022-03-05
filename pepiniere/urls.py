@@ -19,19 +19,19 @@ from django.conf import settings
 from django.conf.urls.static import static
 from onlineshop.views import produit_list
 from django.views.static import serve
-from django.conf.urls import url
+from django.conf.urls import re_path
 
 
 urlpatterns = [
-    path('', produit_list, name='produit_list'),
-    path('produit/', include('onlineshop.urls', namespace='onlineshop')),
-    path('export/', include('onlineshop.urls', namespace='export')),
+    path('', produit_list, name='produit-list'),
+    path('produits/', include('onlineshop.urls', namespace='onlineshop')),
+    # path('export/', include('onlineshop.urls', namespace='export')),
     path('admin/', admin.site.urls),
     path('cart/', include('cart.urls', namespace='cart')),
     path('account/', include('account.urls', namespace='account')),
     path('order/', include('order.urls', namespace='order')),
-    url(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
-    url(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
 ]
 
 # handler404 = 'onlineshop.views.page_not_found_view'

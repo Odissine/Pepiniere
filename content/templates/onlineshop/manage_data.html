@@ -1,0 +1,76 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}La Pépinière - Administration{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary bg-opacity-50 text-black">
+                <div class="row align-items-center">
+                    <h5 class="col-1 text-start mb-0">
+                        <a class="bx-pull-left" href="{{ previous_page}}">
+                            <button class="btn btn-light" type="button">Retour</button>
+                        </a>
+                    </h5>
+                    <h5 class="col-8 h3 mb-0">Gestion des {{ title }}</h5>
+                    <h5 class="col-3 text-end mb-0">
+                        <a class="bx-pull-right" href="{% url 'onlineshop:add-data' categorie %}">
+                            <button class="btn btn-light" type="button"><i class="bi bi-plus me-1"></i> Nouveau</button>
+                        </a>
+                    </h5>
+                </div>
+            </div>
+            <div class="card-body">
+                {% for data in datas %}
+                <div class="row align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %} ">
+                    <div class="col-8">{{ data.nom }}</div>
+                    <div class="col-4 text-end">
+                        <button onclick="delete_this_espece({{ data.id }},'{{ data.nom }}', '{{ categorie }}')" class="btn btn-danger btn-sm" type="button"><i class="bi bi-trash"></i></button>
+                        <a href="{% url 'onlineshop:edit-data' categorie data.id %}"><button class="btn btn-warning btn-sm" type="button"><i class="bi bi-pencil"></i></button></a>
+                    </div>
+                </div>
+                {% endfor %}
+                <div class="col-sm-12 d-grid gap-2 mt-2">
+                    <a href="{{ previous_page }}" class="d-grid gap-2">
+                        <button type="button" class="btn btn-secondary">RETOUR</button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL DE SUPPRESSION DE L'ESPECE ----------------------------------------------------------------------------------->
+<div class="modal modal-danger fade in" id="modal-delete-espece" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-light">
+                <h4 class="modal-title">Supprimer cette {{ categorie }} ?</h4>
+                <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="delete-espece-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="" id="button-delete-espece">
+                    <button type="button" class="btn btn-danger">Supprimer</button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function delete_this_espece(data_id, nom, categorie) {
+        var url = "{% url 'onlineshop:delete-data' 'ZZZ' 'XXX' %}"
+        var html;
+        html = "{{ context_header.javascript }} : <strong>" + nom + "</strong>"
+        console.log(nom)
+        url = url.replace('XXX', data_id);
+        url = url.replace('ZZZ', categorie);
+        $('#modal-delete-espece').modal('toggle');
+        $('#delete-espece-body').html(html);
+        $('#button-delete-espece').attr('href',url);
+    };
+</script>
+
+{% endblock %}

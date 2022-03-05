@@ -1,0 +1,76 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}La Pépinière - Administration{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header py-2 border-bottom border-primary">
+        <div class="row align-items-center">
+            <div class="col-md-auto h3 mb-0">{% if data %}Modifier un Frais{% else %}Ajouter un Frais{% endif %}</div>
+            <div class="col">
+                <a class="bx-pull-right" href="{{ previous_page}}">
+                    <button class="btn btn-secondary" type="button">Retour</button>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class=" card-body mt-3">
+        <form class="form-horizontal" action="{% if frais_id %}{% url 'order:edit-frais' frais_id %}{% else %}{% url 'order:add-frais' %}{% endif %}" method="post" accept-charset="utf-8">
+        {% csrf_token %}
+            <div class="row g-2">
+                <div class="col-6 mb-2 input-group">
+                    <div class="input-group-text">{{ form.prenom.label }}</div>
+                    {{ form.prenom }}
+                </div>
+                <div class="col-6 mb-2 input-group">
+                    <div class="input-group-text">{{ form.nom.label }}</div>
+                    {{ form.nom }}
+                </div>
+            </div>
+            <div class="row g-2">
+                <div class="col mb-2 input-group">
+                    <div class="input-group-text">{{ form.adresse.label }}</div>
+                    {{ form.adresse }}
+                </div>
+            </div>
+            <div class="row g-2">
+                <div class="col-6 mb-2 input-group">
+                    <div class="input-group-text">{{ form.cp.label }}</div>
+                    {{ form.cp }}
+                </div>
+                <div class="col-6 mb-2 input-group">
+                    <div class="input-group-text">{{ form.ville.label }}</div>
+                    {{ form.ville }}
+                </div>
+            </div>
+            <div class="row g-2">
+                <div class="col-6 mb-2 input-group">
+                    <div class="input-group-text">{{ form.tel.label }}</div>
+                    {{ form.tel }}
+                </div>
+                <div class="col-6 mb-2 input-group">
+                    <div class="input-group-text">{{ form.mail.label }}</div>
+                    {{ form.mail }}
+                </div>
+            </div>
+            <div class="row g-2">
+                <div class="col mb-2 input-group">
+                    <div class="input-group-text">{{ form.remise.label }}</div>
+                    {{ form.remise }}
+                </div>
+            </div>
+            <div class="row g-2">
+                <div class="col mb-2 input-group">
+                    <div class="input-group-text">{{ form.commentaire.label }}</div>
+                    {{ form.commentaire }}
+                </div>
+            </div>
+            <div class="row g-2">
+                <div class="d-grid gap-2 my-3">
+                    <input type="submit" value="{% if frais %}MODIFIER{% else %}AJOUTER{% endif %}" class="btn btn-primary" id="search-btn"/>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

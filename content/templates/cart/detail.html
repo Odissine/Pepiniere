@@ -1,0 +1,172 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% block title %}La Pépinière - Panier{% endblock %}
+{% block content %}
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Rechercher d'un client</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="mb-3">
+            <label for="recipient-nom" class="col-form-label">Nom : </label>
+            <input type="text" class="form-control" id="recipient-nom">
+          </div>
+          <div class="mb-3">
+            <label for="recipient-prenom" class="col-form-label">Prénom : </label>
+            <input type="text" class="form-control" id="recipient-prenom">
+          </div>
+        </form>
+          <div id="result-search-client">
+          </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="search-button-modal-client">Recherche</button>
+      </div>
+    </div>
+  </div>
+</div>
+<h1>Panier</h1>
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th class="text-left">PRODUIT</th>
+            <th>QUANTITE</th>
+            <th>PRIX UNITAIRE</th>
+            <th>TOTAL</th>
+            <th class="col-md-1"></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for item in cart %}
+    {% with produit=item.produit %}
+    <tr>
+        <td class="align-middle">
+            <a class="btn" href="{% url 'onlineshop:produit-detail' produit.id %}">{{ produit.nom }}</a>
+        </td>
+        <form class="was-validated" method="post" name="qteForm{{ produit.id }}" id="qteForm{{ produit.id }}" action="{% url 'cart:cart-update' produit.id %}" onSubmit="return checkform({{ produit.stock_bis }}, {{ produit.id }})">
+        <td class="align-middle">
+
+                <input type="number" name="qte" value="{{ item.qte }}" min="1" max="{{ produit.stock_bis }}" required id="id-qte-{{ produit.id }}" class="form-control" width="95" style="width:95px;" />
+                {% csrf_token %}
+
+                <script>
+                    document.getElementById('id-qte-{{ produit.id }}').validity.rangeOverflow;
+                </script>
+
+        </td>
+        <td class="align-middle">
+            <span class="input-symbol-euro">
+                <input type="text" name="prix" value="{{ item.prix|floatformat:2 }}" min="0" required id="id-prix-{{ produit.id }}" class="form-control" width="95" style="width:95px;" />
+            </span>
+            <input type="submit" hidden />
+        </td>
+        </form>
+        <td class="align-middle">{{ item.total|floatformat:'2' }} €</td>
+        <td class="align-middle">
+            <button type="submit" class="btn btn-warning btn-sm float-start" id="editQte{{ produit.id }}"><i class="bi-pencil"></i></button>
+            <form action="{% url 'cart:cart-remove' produit.id %}" method="POST">
+                <button type="submit" class="btn btn-danger btn-sm float-end"><i class="bi-trash"></i></button>
+            {% csrf_token %}
+            </form>
+        </td>
+    </tr>
+    <script>
+        $(document).ready(function(){
+            $("#editQte{{ produit.id }}").click(function() {
+                $("#qteForm{{ produit.id }}").submit();
+             });
+        });
+    </script>
+    {% endwith %}
+    {% endfor %}
+    <tr class="table-dark h4">
+        <td colspan="3" class="text-left">Total</td>
+        <td colspan="3" class="num">{{ cart.get_total_prix|floatformat:'2' }} €</td>
+    </tr>
+
+    </tbody>
+</table>
+<div class="input-group mb-3">
+
+    <!-- <select id="client" name="client" class="form-select">
+            <option selected value=>Client</option>
+        {% for client in clients %}
+            <option value="{{ client.id }}">{{ client.prenom }} {{ client.nom }}</option>
+        {% endfor %}
+    </select>
+    -->
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" data-bs-whatever="@mdo">Choisir un client</button>
+    <input type="text" value="" id="nom-client-search" name="nom-client-search" class="form-control" disabled/>
+
+
+</div>
+<div class=" row">
+    <div class="d-flex col-10 text-start">
+        <a href="{% url 'onlineshop:produit-list' %}" class="btn btn-warning me-2">Continuer les achats </a>
+        <form method="post" action="{% url 'cart:cart-valid' %}">
+            <input type="hidden" value="" id="client" name="client" />
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success me-2">Créer la commande (Valider le panier)</button>
+        </form>
+        <form method="post" action="{% url 'cart:pre-cart-valid' %}">
+            <input type="hidden" value="" id="pre_client" name="pre_client" />
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary me-2">Créer une pré-commande (N+1)</button>
+        </form>
+    </div>
+    <div class="col-2 text-end">
+        <a href="{% url 'cart:cart-cancel' %}" class="btn btn-outline-danger">Vider le panier ...</a>
+    </div>
+</div>
+<script>
+    function checkform(qte, id)
+    {
+        var stock = document.getElementById('id-qte-' + id);
+        if (stock.value > qte)
+        {
+            alert('Stock insuffisant (Max : ' + qte + ')');
+            return false;
+        }
+        return true;
+    }
+    document.querySelector("#search-button-modal-client").addEventListener("click", event => {
+        let formData = new FormData();
+        let csrfTokenValue = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        formData.append('recipient-nom', document.querySelector("#recipient-nom").value);
+        formData.append('recipient-prenom', document.querySelector("#recipient-prenom").value);
+
+        const request = new Request('/order/search/client/', {
+            method: 'POST',
+            body: formData,
+            headers: {'X-CSRFToken': csrfTokenValue}
+        });
+        fetch(request)
+        .then(response => response.json())
+            .then(result => {
+                var clients = result['clients_json'];
+                var result_html = "<div class='list-group'>";
+                for (var i = 0; i < clients.length; i++){
+                    var obj = clients[i];
+                    var id = obj['id'];
+                    var nom = obj['nom'];
+                    var prenom = obj['prenom'];
+                    var mail = obj['mail'];
+                    result_html += "<a href='#' class='list-group-item list-group-item-action list-group-item-light' onclick=\"add_client('" + id + "', '" + nom + "', '" + prenom + "', '" + mail + "');\" data-bs-dismiss='modal'><i class='bi bi-person'></i> " + nom + " " + prenom + " (" + mail + ")</a>"
+                }
+                result_html += "</div>"
+                document.querySelector("#result-search-client").innerHTML = result_html;
+        })
+    })
+
+    function add_client(id, nom, prenom, mail) {
+        document.querySelector("#client").value = id;
+        document.querySelector("#pre_client").value = id;
+        document.querySelector("#nom-client-search").value = nom + " " + prenom + " (" + mail + ")";
+    };
+    </script>
+{% endblock %}

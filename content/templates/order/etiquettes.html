@@ -1,0 +1,64 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% load total_order %}
+{% block content %}
+{% include 'order/search.html' %}
+<div class="nav justify-content-between align-center">
+    <div class="h3">Liste des commandes à imprimer (étiquettes)</div>
+    <div class="h3" id="qty-find-order">{{ orders|length }} commandes</div>
+</div>
+<script>
+function toggle(source) {
+    checkboxes = document.getElementsByName('checkorder');
+    for (var i=0, n=checkboxes.length;i<n;i++) {
+        checkboxes[i].checked = source.checked;
+    }
+}
+</script>
+<input type="checkbox" class="checkbox" onClick="toggle(this)" /> TOUT SELECTIONNER <br/>
+<form class="d-grid gap-2 my-3" method="POST" action="{% url 'order:print-etiquettes' %}" target="_blank">
+    <table class="table">
+        <thead>
+            <th></th>
+            <th>ID</th>
+            <th>DATE</th>
+            <th>ARTICLES</th>
+            <th>CLIENTS</th>
+            <th>MONTANT</th>
+            <th>STATUT</th>
+        </thead>
+        <tbody>
+    {% for order in orders %}
+        {% if order.statut.nom == "Annulée" %}
+        <tr class="table-danger">
+        {% elif order.statut.nom == "Terminée" %}
+        <tr class="table-success">
+        {% elif order.statut.nom == "Validée" %}
+        <tr class="table-primary">
+        {% elif order.statut.nom == "En cours" %}
+        <tr class="table-warning">
+        {% else %}
+        <tr class="table-info">
+        {% endif %}
+        <td>
+            <input type="checkbox" name="checkorder" id="{{ order.id }}" value="{{ order.id }}" />
+        </td>
+        <td>FA-{{ order.id }}-{{ order.date|date:'Y' }}</td>
+        <td>{{ order.date|date:'d F Y @ H:i' }}</td>
+        <td>{{ order.qte_item }} articles</td>
+        <td>{{ order.client.prenom }} {{ order.client.nom }}</td>
+        <td>{{ order.id|total_order|floatformat:"2" }} €</td>
+        <td>{{ order.statut }}</td>
+        </tr>
+    {% endfor %}
+        </tbody>
+    </table>
+    {% if orders_list|length_is:"0" %}
+    <div class="text-center">Aucune commande !</div>
+    {% else %}
+        <input type="hidden" name="download" value="True" />
+        {% csrf_token %}
+        <button type="submit" class="btn btn-lg btn-primary">IMPRIMER</button>
+    {% endif %}
+</form>
+{% endblock %}
