@@ -94,13 +94,13 @@ def change_password(request, user, token):
         user = User.objects.get(id=user)
     except:
         messages.error(request, "Vous n'êtes pas autorisé à modifier le mot de passe.")
-        return render(request, "account/login.html")
+        return redirect("account:login")
 
     try:
         token = TokenLogin.objects.get(user=user, token=token)
     except:
         messages.error(request, "Vous n'êtes pas autorisé à modifier le mot de passe.")
-        return render(request, "account/login.html")
+        return redirect("account:login")
 
     if request.POST:
         if request.POST.get('pass1') == request.POST.get('pass2') and request.POST.get('pass1') != "":
@@ -109,7 +109,7 @@ def change_password(request, user, token):
                 user = User.objects.get(id=user)
             except:
                 messages.error(request, "Vous n'êtes pas autorisé à modifier le mot de passe.")
-                return render(request, "account/login.html")
+                return redirect("account:login")
 
             user.set_password(request.POST.get('pass1'))
             user.save()
@@ -129,7 +129,7 @@ def change_password(request, user, token):
             send_mail("La petite pépinière - Nouveau mot de passe", email_html, '', '', [user.email], [])
 
             messages.success(request, format_html("Votre mot de passe a bien été réinitialisé."))
-            return render(request, "account/login.html")
+            return redirect("account:login")
         else:
             messages.error(request, format_html("Les mots de passe ne correspondent pas !<br> Veuillez réessayer."))
             return redirect('account:reset', user.id, token.token)

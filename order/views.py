@@ -1392,7 +1392,12 @@ def export_divers_xls(request):
 @login_required
 @staff_member_required
 def order_administration(request):
-    inventaire_actif = Inventaire.objects.get(start_date__lte=datetime.now(), end_date__gte=datetime.now())
+    print(datetime.now())
+    try:
+        inventaire_actif = Inventaire.objects.get(start_date__lte=datetime.now(), end_date__gte=datetime.now())
+    except:
+        messages.error(request, "Veuillez créer une période de commande avant toute chose !")
+        return redirect('order:manage-inventaire')
 
     pre_orders = Commande.objects.filter(statut__nom="Pré-commande")
     waiting_orders = Commande.objects.exclude(statut__nom__in=["Terminée", "Annulée"]).exclude(inventaire=inventaire_actif)
@@ -2195,7 +2200,7 @@ def import_divers_xls(request):
             filename = fs.save(myfile.name, myfile)
             uploaded_file_url = fs.url(filename)
             excel_file = uploaded_file_url
-            message = ""
+            message = format_html("Fichier Divers importé avec succès<br>")
 
             wb = load_workbook(filename=settings.CONTENT_DIR + excel_file, read_only=True)
             ws = wb['TVA']
@@ -2213,9 +2218,9 @@ def import_divers_xls(request):
                     default=ws.cell(row=i, column=3).value,
                     active=ws.cell(row=i, column=4).value,
                 )
-                message = format_html("Fichier Divers importé avec succès (" + str(max_row) + " Taux de TVA importés)<br/>")
                 obj.save()
 
+            message = format_html("- " + str(max_row) + " Taux de TVA importés : <br/>")
             ws = wb['FRAIS']
             max_col = ws.max_column
             max_row = ws.max_row
@@ -2230,9 +2235,9 @@ def import_divers_xls(request):
                     nom=ws.cell(row=i, column=2).value,
                     tva=Tva.objects.get(id=ws.cell(row=i, column=3).value),
                 )
-                message = message + format_html("Fichier Divers importé avec succès (" + str(max_row) + " Frais importés)<br/>")
                 obj.save()
 
+            message = message + format_html("- " + str(max_row) + " Frais importés<br/>")
             ws = wb['STATUT']
             max_col = ws.max_column
             max_row = ws.max_row
@@ -2246,8 +2251,8 @@ def import_divers_xls(request):
                     id=ws.cell(row=i, column=1).value,
                     nom=ws.cell(row=i, column=2).value,
                 )
-                message = message + format_html("Fichier Divers importé avec succès (" + str(max_row) + " Statuts importés)<br>")
                 obj.save()
+            message = message + format_html("F- " + str(max_row) + " Statuts importés<br>")
 
             messages.success(request, message)
             wb.close()
