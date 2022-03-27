@@ -1330,6 +1330,7 @@ def export_divers_xls(request):
     worksheet_tva = workbook.add_worksheet("TVA")
     worksheet_frais = workbook.add_worksheet("FRAIS")
     worksheet_statut = workbook.add_worksheet("STATUT")
+    worksheet_inventaire = workbook.add_worksheet("INVENTAIRE")
 
     cell_format_date = workbook.add_format()
     cell_format_date.set_num_format('dd/mm/yyyy hh:mm')
@@ -1338,7 +1339,7 @@ def export_divers_xls(request):
     worksheet_tva.write(0, 0, 'ID')
     worksheet_tva.write(0, 1, 'TAUX')
     worksheet_tva.write(0, 2, 'DEFAUT')
-    worksheet_tva.write(0, 2, 'ACTIF')
+    worksheet_tva.write(0, 2, 'ACTIVE')
 
     tvas = Tva.objects.all()
     row = 1
@@ -1371,6 +1372,17 @@ def export_divers_xls(request):
         for statut in statuts:
             worksheet_statut.write(row, 0, statut.id)
             worksheet_statut.write(row, 1, statut.nom)
+            row += 1
+
+        # INVENTAIRE
+        worksheet_inventaire.write(0, 0, 'ID')
+        worksheet_inventaire.write(0, 1, 'NOM')
+        inventaires = Inventaire.objects.all()
+        row = 1
+        for inventaire in inventaires:
+            worksheet_inventaire.write(row, 0, inventaire.id)
+            worksheet_inventaire.write(row, 1, inventaire.start_date)
+            worksheet_inventaire.write(row, 2, inventaire.end_date)
             row += 1
 
     workbook.close()
@@ -2201,12 +2213,11 @@ def import_divers_xls(request):
             uploaded_file_url = fs.url(filename)
             excel_file = uploaded_file_url
             message = format_html("Fichier Divers importé avec succès<br>")
-
             wb = load_workbook(filename=settings.CONTENT_DIR + excel_file, read_only=True)
+
             ws = wb['TVA']
             max_col = ws.max_column
             max_row = ws.max_row
-
             # REMOVE DATA FROM TABLE TVA
             if request.POST.get('delete_data', True):
                 Tva.objects.all().delete()
@@ -2219,12 +2230,11 @@ def import_divers_xls(request):
                     active=ws.cell(row=i, column=4).value,
                 )
                 obj.save()
-
             message = format_html("- " + str(max_row) + " Taux de TVA importés : <br/>")
+
             ws = wb['FRAIS']
             max_col = ws.max_column
             max_row = ws.max_row
-
             # REMOVE DATA FROM TABLE FRAIS
             if request.POST.get('delete_data', True):
                 Frais.objects.all().delete()
@@ -2236,13 +2246,13 @@ def import_divers_xls(request):
                     tva=Tva.objects.get(id=ws.cell(row=i, column=3).value),
                 )
                 obj.save()
-
             message = message + format_html("- " + str(max_row) + " Frais importés<br/>")
+
             ws = wb['STATUT']
             max_col = ws.max_column
             max_row = ws.max_row
 
-            # REMOVE DATA FROM TABLE FRAIS
+            # REMOVE DATA FROM TABLE STATUT
             if request.POST.get('delete_data', True):
                 Statut.objects.all().delete()
 
@@ -2253,6 +2263,23 @@ def import_divers_xls(request):
                 )
                 obj.save()
             message = message + format_html("F- " + str(max_row) + " Statuts importés<br>")
+
+            ws = wb['INVENTAIRE']
+            max_col = ws.max_column
+            max_row = ws.max_row
+
+            # REMOVE DATA FROM TABLE INVENTAIRE
+            if request.POST.get('delete_data', True):
+                Inventaire.objects.all().delete()
+
+            for i in range(2, max_row + 1):
+                obj = Inventaire.objects.create(
+                    id=ws.cell(row=i, column=1).value,
+                    start_date=ws.cell(row=i, column=2).value,
+                    end_date=ws.cell(row=i, column=3).value,
+                )
+                obj.save()
+            message = message + format_html("F- " + str(max_row) + " Période importées<br>")
 
             messages.success(request, message)
             wb.close()
