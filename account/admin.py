@@ -1,5 +1,4 @@
 from django.contrib import admin
-from .models import *
 
 @admin.register(TokenLogin)
 class TokenAdmin(admin.ModelAdmin):
@@ -8,8 +7,10 @@ class TokenAdmin(admin.ModelAdmin):
     list_filter = ['user']
 
 
+'''
 @admin.register(Config)
 class ConfigAdmin(admin.ModelAdmin):
     list_display = ['id', 'register']
     list_display_links = ['id', 'register']
     list_filter = ['register']
+'''

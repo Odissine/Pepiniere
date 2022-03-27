@@ -124,6 +124,7 @@ class FormResetPassword(forms.Form):
         fields = ['password2', 'password']
 
 
+'''
 class FormConfig(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
@@ -147,3 +148,4 @@ class FormConfig(forms.ModelForm):
     class Meta:
         model = Config
         fields = ['register']
+'''
