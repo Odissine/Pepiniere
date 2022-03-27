@@ -8,8 +8,10 @@ class TokenAdmin(admin.ModelAdmin):
     list_filter = ['user']
 
 
+'''
 @admin.register(Config)
 class ConfigAdmin(admin.ModelAdmin):
     list_display = ['id', 'register']
     list_display_links = ['id', 'register']
     list_filter = ['register']
+'''
