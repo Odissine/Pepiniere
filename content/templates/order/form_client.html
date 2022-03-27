@@ -1,7 +1,7 @@
 {% extends "layout/base.html" %}
 {% load static %}
 {% load i18n %}
-{% block title %}La Pépinière - Administration{% endblock %}
+{% block title %}Administration - Client{% endblock %}
 {% block content %}
 <div class="card">
     <div class="card-header py-2 border-bottom border-primary">
@@ -24,11 +24,21 @@
                     </div>
                     {{ form.prenom }}
                 </div>
+            </div>
+            <div class="row g-2">
                 <div class="col-6 mb-2 input-group">
                     <div class="input-group-prepend col-2">
                         <span class="input-group-text col-12">{{ form.nom.label }}</span>
                     </div>
                     {{ form.nom }}
+                </div>
+            </div>
+            <div class="row g-2">
+                <div class="col-6 mb-2 input-group">
+                    <div class="input-group-prepend col-2">
+                        <span class="input-group-text col-12">{{ form.societe.label }}</span>
+                    </div>
+                    {{ form.societe }}
                 </div>
             </div>
             <div class="row g-2">
@@ -46,6 +56,8 @@
                     </div>
                     {{ form.cp }}
                 </div>
+            </div>
+            <div class="row g-2">
                 <div class="col-6 mb-2 input-group">
                     <div class="input-group-prepend col-2">
                         <span class="input-group-text">{{ form.ville.label }}</span>

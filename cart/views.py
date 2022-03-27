@@ -44,7 +44,7 @@ def cart_add_ajax(request, produit_id):
     #
     if form.is_valid():
         cd = form.cleaned_data
-        messages, tags = cart.add(produit=produit, qte=qte, override_qte=cd['override'])
+        messages, tags = cart.add(request=request, produit=produit, qte=qte, override_qte=cd['override'])
 
     return JsonResponse({"data": request.session['cart'], "total": len(request.session['cart']), "messages": messages, "tags": tags})
 
@@ -56,40 +56,60 @@ def cart_remove(request, produit_id):
     cart.remove(produit)
     return redirect('cart:cart-detail')
 
+
 @login_required
 def cart_update(request, produit_id):
     cart = Cart(request)
-    form = CartUpdateForm(request.POST or None)
-
-    if form.is_valid():
-        cd = form.cleaned_data
-        produit = get_object_or_404(Produit, id=produit_id)
-        message, tags = cart.update_qte(produit, cd['qte'])
-        cart.update_prix(produit, cd['prix'])
+    # form = CartUpdateForm(request.POST or None)
+    # print(form.errors)
+    # print(form)
+    # if form.is_valid():
+        # cd = form.cleaned_data
+    produit = get_object_or_404(Produit, id=produit_id)
+    try:
+        qte = int(request.POST.get('qte'))
+    except:
+        qte = 0
+    message, tags = cart.update_qte(request, produit, qte)
+    if request.user.is_staff:
+        try:
+            prix = float(request.POST.get('qte'))
+        except:
+            prix = 15
+        cart.update_prix(produit, prix)
         # message = "Quantités/Produits mis(es) à jour avec succès !"
-        if tags == "success":
-            messages.success(request, message)
-        else:
-            messages.error(request, message)
+    if tags == "success":
+        messages.success(request, message)
+    else:
+        messages.error(request, message)
 
     return redirect('cart:cart-detail')
 
 
 @login_required
 def cart_detail(request):
+    admin = AccessMode.objects.filter(user=request.user).first()
     # user = request.user.is_authenticated
     # if user is False:
     #    return redirect('onlineshop:produit-list')
+    if not request.user.is_staff:
+        client = Client.objects.get(user=request.user)
+        form = CartValidForm(initial={'clients': client})
+    else:
+        form = CartValidForm(request.POST or None)
 
     cart = Cart(request)
     if len(cart) == 0:
         return redirect('onlineshop:produit-list')
 
     clients = Client.objects.all()
+    connected_client = Client.objects.get(user=request.user)
 
     context = {
+        'form': form,
         'cart': cart,
         'clients': clients,
+        'access_mode': admin,
     }
     return render(request, 'cart/detail.html', context)
 
@@ -97,68 +117,73 @@ def cart_detail(request):
 @login_required
 def cart_valid(request):
     cart = Cart(request)
+    form = CartValidForm(request.POST or None)
+    mode = request.POST.get('cart-valid-mode')
 
     if request.method == "POST":
-        if len(request.POST['client']) > 0:
-            for item in cart:
-                produit = Produit.objects.get(nom=item['produit'])
-                new_qte = produit.stock_bis - item['qte']
-                if new_qte < 0:
-                    message = format_html("Impossible de créer la commande.<br>Stock insuffisant pour le produit : " + produit.nom)
-                    messages.error(request, message)
-                    return redirect('cart:cart-detail')
+        if form.is_valid():
+            if not request.user.is_staff:
+                client = Client.objects.get(user=request.user)
+            else:
+                client = form.cleaned_data['clients']
 
-            client = Client.objects.get(pk=request.POST['client'])
-            statut_en_cours = Statut.objects.get(nom="En cours")
-            remise_client = client.remise
-            tva = Tva.objects.get(default=True)
+            if client is not None:
+                message = ""
+                # COMMANDE NORMALE (STATUT EN COURS)
+                if mode == 'normal':
+                    for item in cart:
+                        produit = Produit.objects.get(nom=item['produit'])
+                        new_qte = produit.stock_bis - item['qte']
+                        if new_qte < 0:
+                            message = format_html("Impossible de créer la commande.<br>Stock insuffisant pour le produit : " + produit.nom)
+                            messages.error(request, message)
+                            return redirect('cart:cart-detail')
 
-            commande_create = Commande.objects.create(date=datetime.now, client=client, remise=remise_client, statut=statut_en_cours, tva=tva)
-            commande_create.save()
+                    # STATUT DE LA COMMANDE EN FONCTION DE QUI EST CONNECTE (STAFF OU USER)
+                    if request.user.is_staff:
+                        statut_en_cours = Statut.objects.get(nom="En cours")
+                        statut = "En cours"
+                    else:
+                        statut_en_cours = Statut.objects.get(nom="En attente")
+                        statut = "En attente"
 
-            for item in cart:
-                cart_commande = Cartdb.objects.create(produit=item['produit'], prix=item['prix'], qte=item['qte'], commande=commande_create)
-                cart_commande.save()
-                produit = Produit.objects.get(nom=item['produit'])
-                new_qte = produit.stock_bis - item['qte']
-                Produit.objects.filter(nom=item['produit']).update(stock_bis=new_qte)
+                    remise_client = client.remise
+                    tva = Tva.objects.get(default=True)
 
-            message = "Commande créée avec succès !"
-            messages.success(request, message)
+                    commande_create = Commande.objects.create(client=client, remise=remise_client, statut=statut_en_cours, tva=tva)
+                    # commande_create.save()
 
-            cart.clear()
+                    for item in cart:
+                        cart_commande = Cartdb.objects.create(produit=item['produit'], prix=item['prix'], qte=item['qte'], commande=commande_create)
+                        cart_commande.save()
+                        if statut == "En cours":
+                            produit = Produit.objects.get(nom=item['produit'])
+                            new_qte = produit.stock_bis - item['qte']
+                            Produit.objects.filter(nom=item['produit']).update(stock_bis=new_qte)
+
+                    message = "Commande créée avec succès !"
+
+                # PRE COMMANDE (STATUT PRE-COMMANDE)
+                if mode == 'pre':
+                    statut_en_cours = Statut.objects.get(nom="Pré-commande")
+                    remise_client = client.remise
+                    tva = Tva.objects.get(default=True)
+
+                    commande_create = Commande.objects.create(date=datetime.now(), client=client, remise=remise_client, statut=statut_en_cours, tva=tva)
+                    commande_create.save()
+
+                    for item in cart:
+                        cart_commande = Cartdb.objects.create(produit=item['produit'], prix=item['prix'], qte=item['qte'], commande=commande_create)
+                        cart_commande.save()
+                        produit = Produit.objects.get(nom=item['produit'])
+                        new_qte = produit.stock_future + item['qte']
+                        Produit.objects.filter(nom=item['produit']).update(stock_future=new_qte)
+
+                    message = "Pré-commande créée avec succès !"
+                messages.success(request, message)
+                cart.clear()
         else:
             message = "Veuillez selectionner un client pour valider le panier !"
-            messages.error(request, message)
-            return redirect('cart:cart-detail')
-
-    return redirect('order:order-list')
-
-
-@login_required
-def pre_cart_valid(request):
-    cart = Cart(request)
-
-    if request.method == "POST":
-        if len(request.POST['pre_client']) > 0:
-
-            client = Client.objects.get(pk=request.POST['pre_client'])
-            statut_pre_commande = Statut.objects.get(nom="Pré-commande")
-            tva = Tva.objects.get(default=True)
-            commande_create = Commande.objects.create(date=datetime.now(), client=client, remise=client.remise, statut=statut_pre_commande, tva=tva)
-
-            for item in cart:
-                produit = Produit.objects.get(nom=item['produit'])
-                new_qte = produit.stock_future + item['qte']
-                Produit.objects.filter(nom=item['produit']).update(stock_future=new_qte)
-
-                cart_commande = Cartdb.objects.create(produit=item['produit'], prix=item['prix'], qte=item['qte'], commande=commande_create)
-
-            message = "Pré-commande créée avec succès !"
-            messages.success(request, message)
-            cart.clear()
-        else:
-            message = "Veuillez selectionner un client pour valider le panier en pré-commande!"
             messages.error(request, message)
             return redirect('cart:cart-detail')
 

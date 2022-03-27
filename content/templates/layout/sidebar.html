@@ -8,7 +8,8 @@
           <i class="bi bi-home"></i>
           <span>Accueil</span>
         </a>
-      </li><!-- End Dashboard Nav -->
+      </li>
+      <!-- START NAV STAFF -->
       {% if user.is_authenticated %}
       <li class="nav-item">
         <a class="nav-link collapsed" data-bs-target="#jeux-nav" data-bs-toggle="collapse" href="#" aria-expanded="false">
@@ -26,9 +27,12 @@
             </a>
           </li>
         </ul>
-      </li><!-- End Jeux Nav -->
+      </li>
       {% endif %}
+      <!-- End Menu NAV -->
+      <!-- Start Admin Nav -->
       {% if user.is_authenticated %}
+      {% if user|is_staff %}
       <li class="nav-item">
         <a class="nav-link collapsed" data-bs-target="#admin-nav" data-bs-toggle="collapse" href="#" aria-expanded="false">
           <i class="bi bi-journal-text"></i><span>Administration</span><i class="bi bi-chevron-down ms-auto"></i>
@@ -45,10 +49,13 @@
               <i class="bi bi-circle"></i><span>Gérer les Commandes</span>
             </a>
           </li>
+          <li>
+            <a href="{% url 'account:config' %}">
+              <i class="bi bi-circle"></i><span>Configuration du site</span>
+            </a>
+          </li>
         </ul>
       </li>
-      <!-- End Admin Nav -->
-      {% endif %}
       {% if user|mode_admin %}
       <li class="nav-item bg-success">
         <a class="nav-link text-light bg-success" href="{% url 'onlineshop:full-admin' %}">
@@ -64,6 +71,8 @@
         </a>
       </li>
       {% endif %}
-      <!-- End Dashboard Nav -->
+      {% endif %}
+      {% endif %}
+      <!-- End Admin Nav -->
     </ul>
   </aside>

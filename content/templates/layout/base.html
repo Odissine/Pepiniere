@@ -3,23 +3,17 @@
 {% load bootstrap5 %}
 {% load i18n %}
 {% load auth_extras %}
+{% load my_templatetag %}
 {% get_current_language as language_code %}
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>La petite pépinière</title>
+  <title>La petite pépinière - {% block title %}{% endblock title %}</title>
   <meta content="" name="description">
   <meta content="" name="keywords">
-
   <!-- Favicons -->
   <link rel="icon" type="image/png" href="{% static 'img/leaf.png' %}" />
-
-
-  <!-- Google Fonts -->
-  <!--
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
-  -->
   <!-- Vendor CSS Files -->
   <link href="{% static 'vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
@@ -33,11 +27,10 @@
   <!-- Template Main CSS File -->
   <link href="{% static 'css/style.css' %}" rel="stylesheet">
   <link rel='stylesheet' href="{% static 'css/datepicker.min.css' %}">
-  <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
-  <script src="{% static 'js/select2.min.js' %}"></script>
 
 </head>
-<body>
+
+<body class="{% if user|mode_admin %} bg-danger bg-opacity-25 {% endif %}">
   <!--
   <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
   -->
@@ -103,12 +96,36 @@
   <script src="{% static 'js/popper.min.js' %}"></script>
   <script src="{% static 'js/toastr.min.js' %}"></script>
   <script src="{% static 'js/select-menu.js' %}"></script>
-
+  <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+  <script src="{% static 'js/select2.min.js' %}"></script>
   <script src="{% static 'js/datepicker-full.min.js' %}"></script>
-
   <!-- Template Main JS File -->
   <script src="{% static 'js/main.js' %}"></script>
   <script>
+      $(function() {
+            $.ajaxSetup({
+                beforeSend: function(xhr, settings) {
+                    function getCookie(name) {
+                        var cookieValue = null;
+                        if (document.cookie && document.cookie != '') {
+                            var cookies = document.cookie.split(';');
+                            for (var i = 0; i < cookies.length; i++) {
+                                var cookie = jQuery.trim(cookies[i]);
+                                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                    break;
+                                }
+                            }
+                        }
+                    return cookieValue;
+                    }
+                    if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+                        xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+                    }
+                }
+            });
+        });
+
       $(document).ready(function() {
           $('.js-example-basic-single').select2();
 
@@ -128,7 +145,6 @@
           }
           setTimeout(hideMsg,5000);
       });
-
     const getDatePickerTitle = elem => {
       // From the label or the aria-label
       const label = elem.nextElementSibling;
@@ -148,11 +164,13 @@
         title: getDatePickerTitle(elem)
       });
     }
+
     var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
     var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
       return new bootstrap.Popover(popoverTriggerEl)
     })
 
   </script>
+{% block scripts %}{% endblock %}
 </body>
 </html>

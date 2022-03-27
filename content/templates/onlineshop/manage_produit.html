@@ -1,7 +1,8 @@
 {% extends "layout/base.html" %}
 {% load static %}
 {% load i18n %}
-{% block title %}La Pépinière - Administration{% endblock %}
+{% load calcul_produit %}
+{% block title %}Administration - Produits{% endblock %}
 {% block content %}
 {% include 'onlineshop/search.html' %}
 <div class="row">
@@ -11,36 +12,55 @@
                 <div class="row align-items-center">
                     <h5 class="col-1 text-start mb-0">
                         <a class="bx-pull-left" href="{{ previous_page}}">
-                            <button class="btn btn-light" type="button">Retour</button>
+                            <button class="btn btn-secondary" type="button">Retour</button>
                         </a>
                     </h5>
                     <h5 class="col-8 h3 mb-0">Gestion des Produits</h5>
                     <h5 class="col-3 text-end mb-0">
                         <a class="bx-pull-right" href="{% url 'onlineshop:add-produit' %}">
-                            <button class="btn btn-light" type="button"><i class="bi bi-plus me-1"></i> Nouveau</button>
+                            <button class="btn btn-success" type="button"><i class="bi bi-plus me-1"></i> Nouveau</button>
                         </a>
                     </h5>
                 </div>
             </div>
             <div class="card-body">
-                <div class="row bg-dark text-light align-items-center py-2 border-bottom ">
+                <div class="row bg-dark text-light align-items-center py-2 border-bottom">
+                    {% if query_string %}
                     <div class="col-3">PRODUITS</div>
-                    <div class="col-2">ESPECES</div>
-                    <div class="col-2">VARIETES</div>
-                    <div class="col-2">PORTE-GREFFES</div>
-                    <div class="col-1">STOCK</div>
-                    <div class="col-2"></div>
+                    <div class="col-1"><a class="link-warning" href="?{{ query_string }}&p=espece">ESPECES</a></div>
+                    <div class="col-2"><a class="link-warning" href="?{{ query_string }}&p=variete">VARIETES</a></div>
+                    <div class="col-1"><a class="link-warning" href="?{{ query_string }}&p=portegreffe">P-G</a></div>
+                    <div class="col-1"><a class="link-warning" href="?{{ query_string }}&p=total">TOTAL COMMANDE</a></div>
+                    <div class="col-1"><a class="link-warning" href="?{{ query_string }}&p=-stock">STOCK <br/>FINAL</a></div>
+                    <div class="col-1"><a class="link-warning" href="?{{ query_string }}&p=-stock_bis">STOCK EN COURS</a></div>
+                    <div class="col-1"><a class="link-warning" href="?{{ query_string }}&p=-stock_future">STOCK FUTURE</a></div>
+                    <div class="col-1"></div>
+                    {% else %}
+                    <div class="col-3">PRODUITS</div>
+                    <div class="col-1"><a class="link-warning" href="?p=espece">ESPECES</a></div>
+                    <div class="col-2"><a class="link-warning" href="?p=variete">VARIETES</a></div>
+                    <div class="col-1"><a class="link-warning" href="?p=portegreffe">P-G</a></div>
+                    <div class="col-1"><a class="link-warning" href="?p=total">TOTAL COMMANDE</a></div>
+                    <div class="col-1"><a class="link-warning" href="?p=-stock">STOCK <br/>FINAL</a></div>
+                    <div class="col-1"><a class="link-warning" href="?p=-stock_bis">STOCK EN COURS</a></div>
+                    <div class="col-1"><a class="link-warning" href="?p=-stock_future">STOCK FUTURE</a></div>
+                    <div class="col-1"></div>
+                    {% endif %}
                 </div>
                 {% for produit in produits %}
                 <div class="row align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %} {% if produit.gaf == True %}bg-primary bg-opacity-25{% endif %}">
                     <div class="col-3">{{ produit.nom }}</div>
-                    <div class="col-2">{{ produit.espece.nom }}</div>
+                    <div class="col-1">{{ produit.espece.nom }}</div>
                     <div class="col-2">{{ produit.variete.nom }}</div>
-                    <div class="col-2">{{ produit.portegreffe.nom }}</div>
-                    <div class="col-1">{{ produit.stock }} / {{ produit.stock_bis }}</div>
-                    <div class="col-2 text-end">
+                    <div class="col-1">{{ produit.portegreffe.nom }}</div>
+                    <div class="col-1">{{ produit|total_qte }}</div>
+                    <div class="col-1"><input id="stock_{{ produit.id }}" name="stock_{{ produit.id }}" class="form-control" type="number" min="0" value="{{ produit.stock }}" /></div>
+                    <div class="col-1"><input id="stock_bis_{{ produit.id }}" name="stock_bis_{{ produit.id }}" class="form-control" type="number" min="0" value="{{ produit.stock_bis }}" /></div>
+                    <div class="col-1"><input id="stock_future_{{ produit.id }}" name="stock_future_{{ produit.id }}" class="form-control" type="number" min="0" value="{{ produit.stock_future }}" /></div>
+                    <div class="col-1 text-end">
                         <button onclick="delete_this_produit({{ produit.id }},'{{ produit.nom }}')" class="btn btn-danger btn-sm" type="button"><i class="bi bi-trash"></i></button>
                         <a href="{% url 'onlineshop:edit-produit' produit.id %}"><button class="btn btn-warning btn-sm" type="button"><i class="bi bi-pencil"></i></button></a>
+                        <button id="edit-stock-button" name="edit-stock-button" data-code="{{ produit.id }}" class="btn btn-success btn-sm edit-stock-button" type="button"><i class="bi bi-check"></i></button>
                     </div>
                 </div>
                 {% endfor %}
@@ -99,17 +119,61 @@
         </ul>
     </nav>
 {% endif %}
-<script>
-    function delete_this_produit(produit_id, nom) {
-        var url = "{% url 'onlineshop:delete-produit' 'XXX' %}"
-        var html;
-        html = "Cela va supprimer le produit : <strong>" + nom + "</strong>"
-        console.log(nom)
-        url = url.replace('XXX', produit_id);
-        $('#modal-delete-produit').modal('toggle');
-        $('#delete-produit-body').html(html);
-        $('#button-delete-produit').attr('href',url);
-    };
-</script>
+    {% block scripts %}
+        <script>
 
+            function delete_this_produit(produit_id, nom) {
+                var url = "{% url 'onlineshop:delete-produit' 'XXX' %}"
+                var html;
+                html = "Cela va supprimer le produit : <strong>" + nom + "</strong>"
+                console.log(nom)
+                url = url.replace('XXX', produit_id);
+                $('#modal-delete-produit').modal('toggle');
+                $('#delete-produit-body').html(html);
+                $('#button-delete-produit').attr('href',url);
+            }
+
+            $(document).ready(function(){
+                $('.edit-stock-button').click(function() {
+                    console.log("COUCOU")
+                    var code = $(this).attr("data-code");
+                    var stock_id = $("#stock_" + code);
+                    var stock_bis_id = $("#stock_bis_" + code);
+                    var stock_future_id = $("#stock_future_" + code);
+                    var stock = $(stock_id).val();
+                    var stock_bis = $(stock_bis_id).val();
+                    var stock_future = $(stock_future_id).val();
+
+                    launchJquery(code, stock, stock_bis, stock_future);
+
+                    $('#textErrorMessageAjax').text("Mise à jour des stocks effectuée avec succès !");
+                    $('#errorMessageAjax').addClass('show');
+                    $('#errorMessageAjax').removeClass('hide');
+                    $('#errorMessageAjax').css("display","block");
+                    function hideMsg () {
+                        $('#errorMessageAjax').fadeOut();
+                        $('#errorMessageAjax').removeClass('show');
+                        $('#errorMessageAjax').addClass('hide');
+                        $('#errorMessageAjax').css("display","none");
+                    }
+                    setTimeout(hideMsg,5000);
+                })
+
+                function launchJquery(code, stock, stock_bis, stock_future) {
+                    $.post("{% url 'onlineshop:edit-stock-produit' %}",
+                        {
+                            json_data: JSON.stringify({
+                                produit_id: code,
+                                stock: stock,
+                                stock_bis: stock_bis,
+                                stock_future: stock_future,
+                            })
+                        },
+                        function (data, status) {
+
+                        });
+                }
+            })
+        </script>
+    {% endblock %}
 {% endblock %}

@@ -1,9 +1,8 @@
-<div class="col-lg-12 card pt-2">
-
-    <form class="form-horizontal" action="{% url formAction %}" method="post" accept-charset="utf-8">
+<div class="col-lg-12 card pt-2 border border-primary">
+    <form class="form-horizontal" action="{% url formAction %}" method="GET" accept-charset="utf-8">
         {% csrf_token %}
         <a class="link-secondary" aria-expanded="false" aria-controls="search-card" data-bs-toggle="collapse" href="#search-card">
-            <h2 class="ms-3"><i class="bi bi-search"></i> Recherche</h2>
+            <h2 class="ms-3"><i class="bi bi-search"></i> Recherche <span class="bx-pull-right me-2">Produits : {{ produits_list|length }}</span> </h2>
         </a>
         <div class="collapse card-body" id="search-card">
             <div class="row g-2 mb-2">
@@ -35,7 +34,7 @@
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="form-check form-switch ">
+                    <div class="form-check form-switch">
                         {{ form.gaf }}
                         <label class="" style="position:relative; top:12px; left:10px;">{{ form.gaf.label }}</label>
                     </div>
@@ -44,9 +43,10 @@
             {% endif %}
             <div class="row g-2">
                 <div class="col-md d-grid gap-2">
-                    <input type="submit" value="RECHERCHER" class="btn btn-warning" id="search-btn"/>
+                    <input type="submit" value="RECHERCHER" class="btn btn-lg btn-primary" id="search-btn"/>
                 </div>
             </div>
+            <br/>
         </div>
     </form>
 </div>

@@ -1,0 +1,40 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load calcul_order %}
+{% block title %}Administration - Commande{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header py-2 border-bottom border-primary">
+        <div class="row align-items-center">
+            <div class="col-md-auto h3 mb-0">Créer les pré-commandes ci-dessous</div>
+            <div class="col">
+                <a class="bx-pull-right" href="{{ previous_page}}">
+                    <button class="btn btn-secondary" type="button">Retour</button>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class=" card-body mt-3">
+        <div class="row g-2 pagetitle h5 bg-primary-light">
+            <div class="col-2">ID</div>
+            <div class="col-3">DATE</div>
+            <div class="col-3">CLIENT</div>
+            <div class="col-2">TOTAL</div>
+            <div class="col-2">PRODUIT</div>
+        </div>
+        {% for order in orders %}
+        <div class="row g-2 py-2 {% cycle 'bg-transparent' 'bg-secondary bg-opacity-25' as rowcolors %}">
+            <div class="col-2"><a href="{% url 'order:order-detail' order.id %}">{{ order.id }}</a></div>
+            <div class="col-3">{{ order.date }}</div>
+            <div class="col-3">{{ order.client.nom }}</div>
+            <div class="col-2">{{ order.id|total_order }} €</div>
+            <div class="col-2">{{ order.id|nb_produits }}</div>
+        </div>
+        {% endfor %}
+        <div class="d-grid gap-2 my-3">
+            <a type="button" href="{% url 'order:all-order-pre-valid' True %}" class="btn btn-primary" id="search-btn">VALIDER</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -25,7 +25,6 @@ from django.conf.urls import re_path
 urlpatterns = [
     path('', produit_list, name='produit-list'),
     path('produits/', include('onlineshop.urls', namespace='onlineshop')),
-    # path('export/', include('onlineshop.urls', namespace='export')),
     path('admin/', admin.site.urls),
     path('cart/', include('cart.urls', namespace='cart')),
     path('account/', include('account.urls', namespace='account')),

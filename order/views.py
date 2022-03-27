@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
+from django.db.models import Q, Count, F, Value, Sum
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse, JsonResponse, FileResponse
@@ -8,6 +10,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.template.loader import get_template
 from django.utils.html import format_html
 from django_xhtml2pdf.utils import generate_pdf
+from django.utils import timezone
+from django.db.models.expressions import RawSQL
 
 from datetime import datetime, date
 from openpyxl import load_workbook
@@ -21,27 +25,47 @@ from .forms import *
 from .models import *
 from .core import *
 from onlineshop.models import *
+from onlineshop.core import *
 from cart.forms import CartAddProduitForm, CartUpdateForm, RemiseUpdateForm
 
 locale.setlocale(locale.LC_ALL, 'fr_FR')
 
 
 @login_required
-def order_list(request, date_before=None, date_after=None, statut_request=None, client_request=None):
-    # orders_list = Commande.objects.filter(statut="En cours")
-    form = SearchOrderForm(request.POST or None)
-    orders = Commande.objects.all().order_by('-date', 'statut')
-    formAction = "order:order-list"
-    statut = None
-    clients = None
-    start_date = None
-    end_date = None
-    produits = None
-    especes = None
-    varietes = None
-    portegreffes = None
+# @staff_member_required(login_url='account:error')
+def order_list(request):
 
-    if request.method == 'POST':
+    if request.user.is_staff is False:
+        orders = Commande.objects.filter(client__user=request.user)
+    else:
+        orders = Commande.objects.all()
+
+    if 'o' in request.GET:
+        order_value = request.GET['o']
+        if order_value == 'total':
+            orders = orders.annotate(total_order=Sum(F('Cartdbs__qte') * F('Cartdbs__prix'))).order_by('-total_order')
+        elif order_value == 'qte':
+            orders = orders.annotate(qte_order=Count('Cartdbs')).order_by('-qte_order')
+        else:
+            orders = orders.order_by(order_value)
+
+        request.session['o'] = request.GET['o']
+    elif 'o' in request.session:
+        order_value = request.session['o']
+        if order_value == 'total':
+            orders = orders.annotate(total_order=Sum(F('Cartdbs__qte') * F('Cartdbs__prix'))).order_by('-total_order')
+        elif order_value == 'qte':
+            orders = orders.annotate(qte_order=Count('Cartdbs')).order_by('-qte_order')
+        else:
+            orders = orders.order_by(order_value)
+    else:
+        orders = orders.order_by('-date', 'statut')
+
+    formAction = "order:order-list"
+    form = SearchOrderForm()
+
+    if request.method == 'GET':
+        form = SearchOrderForm(request.GET)
         if form.is_valid():
             statut = form.cleaned_data['statut']
             clients = form.cleaned_data['clients']
@@ -51,14 +75,16 @@ def order_list(request, date_before=None, date_after=None, statut_request=None, 
             especes = form.cleaned_data['especes']
             varietes = form.cleaned_data['varietes']
             portegreffes = form.cleaned_data['portegreffes']
+            frais = form.cleaned_data['frais']
+            inventaire = form.cleaned_data['inventaire']
 
             if statut.exists():
                 orders = orders.filter(statut__in=statut)
             if clients.exists():
                 orders = orders.filter(client__in=clients)
-            if not start_date is None:
+            if start_date is not None and start_date != "":
                 orders = orders.filter(date__gte=start_date)
-            if not end_date is None:
+            if end_date is not None and end_date != "":
                 orders = orders.filter(date__lte=end_date)
             if produits.exists():
                 orders = orders.filter(Cartdbs__produit__in=produits)
@@ -68,9 +94,19 @@ def order_list(request, date_before=None, date_after=None, statut_request=None, 
                 orders = orders.filter(Cartdbs__produit__variete__in=varietes)
             if portegreffes.exists():
                 orders = orders.filter(Cartdbs__produit__portegreffe__in=portegreffes)
+            if frais.exists():
+                orders = orders.filter(frais__in=frais)
+            if inventaire.exists():
+                orders = orders.filter(inventaire__in=inventaire)
 
     paginator = Paginator(orders, 50)
-    page = request.GET.get('page')
+    get_data = request.GET.copy()
+    page = get_data.pop('page', None)
+    o = get_data.pop('o', None)
+    if 'page' in request.GET:
+        page = request.GET['page']
+    elif 'page' in request.session:
+        page = request.session['page']
 
     try:
         orders_page = paginator.page(page)
@@ -81,19 +117,12 @@ def order_list(request, date_before=None, date_after=None, statut_request=None, 
         # If page is out of range (e.g. 9999), deliver last page of results.
         orders_page = paginator.page(paginator.num_pages)
 
-    context = {'clients': clients,
-               'orders': orders_page,
+    context = {'orders': orders_page,
                'orders_list': orders,
-               'start_date': start_date,
-               'end_date': end_date,
-               'statut': statut,
-               'portegreffes': portegreffes,
-               'varietes': varietes,
-               'especes': especes,
-               'produits': produits,
                'paginate': True,
                'form': form,
                'formAction': formAction,
+               'query_string': get_data.urlencode(),
                }
     return render(request, 'order/list.html', context)
 
@@ -101,7 +130,14 @@ def order_list(request, date_before=None, date_after=None, statut_request=None, 
 @login_required
 def order_detail(request, id):
     commande = get_object_or_404(Commande, id=id)
+    if not request.user.is_staff:
+        commande_users = Commande.objects.filter(client__user=request.user).all()
+        if not commande in commande_users:
+            messages.error(request, "Commande inexistante !")
+            return redirect('order:order-list')
+
     produits = Cartdb.objects.filter(commande=commande)
+
     frais = Frais.objects.all()
     tvas = Tva.objects.filter(active=True)
     form = FormAddProduit(request.POST or None)
@@ -117,22 +153,212 @@ def order_detail(request, id):
     return render(request, 'order/detail.html', context)
 
 
+# PASSAGE D'UNE PRE COMMANDE EN COMMANDE
+@login_required
+@staff_member_required
+def order_accept(request, id):
+    previous = request.META.get('HTTP_REFERER').split("/")[-1]
+    try:
+        order = get_object_or_404(Commande, pk=id)
+    except:
+        messages.error(request, "Commande inexistante !")
+        return redirect('order:order-detail', id)
+
+    if order.statut.nom != "En attente":
+        messages.error(request, "Action impossible avec cette commande (problème de statut) !")
+        return redirect('order:order-detail', id)
+
+    items = Cartdb.objects.filter(commande=order)
+    statut = Statut.objects.get(nom='En cours')
+    nb_produit = 0
+    message = ""
+    for item in items:
+        stock_virtuel = item.produit.stock_bis
+        if stock_virtuel - item.qte < 0:
+            nb_produit += 1
+            message = message + "<li>" + item.produit.nom + "</li>"
+
+    if nb_produit > 0:
+        message = format_html("Stock insuffisant pour accepter la commande pour les produits suivants : <ul>" + message + "</ul>")
+        messages.error(request, message)
+        if previous == "manage":
+            return redirect('order:manage-order')
+        else:
+            return redirect('order:order-detail', id)
+
+    for item in items:
+        produit = item.produit
+        produit.stock_bis = produit.stock_bis - item.qte
+        produit.save()
+
+    Commande.objects.filter(pk=id).update(statut=statut, date_update=datetime.now())
+    message = "Commande en attente acceptée avec succès à partir de celle réalisée par %s" % order.client
+    messages.success(request, message)
+    if previous == "manage":
+        return redirect('order:manage-order')
+    else:
+        return redirect('order:order-detail', id)
+
+
 # STATUT VALIDEE D'UNE COMMANDE
 @login_required
+@staff_member_required
 def order_valid(request, id):
-    order = get_object_or_404(Commande, pk=id)
+    try:
+        order = get_object_or_404(Commande, pk=id)
+    except:
+        messages.error(request, "Commande inexistante !")
+        return redirect('order:order-detail', id)
+
+    if order.statut.nom != "En cours":
+        messages.error(request, "Action impossible avec cette commande (problème de statut) !")
+        return redirect('order:order-detail', id)
+
     statut = Statut.objects.get(nom='Validée')
     Commande.objects.filter(pk=id).update(statut=statut, date_update=datetime.now())
-
     message = "Commande validée avec succès :)"
     messages.success(request, message)
+    return redirect('order:order-detail', id)
 
-    return redirect('order:order_detail', id)
+
+# PASSAGE D'UNE PRE COMMANDE EN COMMANDE
+@login_required
+@staff_member_required
+def order_pre_valid(request, id):
+    try:
+        order = get_object_or_404(Commande, pk=id)
+    except:
+        messages.error(request, "Commande inexistante !")
+        return redirect('order:order-detail', id)
+
+    if order.statut.nom != "Pré-commande":
+        messages.error(request, "Action impossible avec cette commande (problème de statut) !")
+        return redirect('order:order-detail', id)
+
+    items = Cartdb.objects.filter(commande=order)
+    statut = Statut.objects.get(nom='En cours')
+    nb_produit = 0
+    message = ""
+    for item in items:
+        stock_virtuel = item.produit.stock_bis
+        if stock_virtuel - item.qte < 0:
+            nb_produit += 1
+            message = message + "<li>" + item.produit.nom + "</li>"
+
+    if nb_produit > 0:
+        message = format_html("Stock insuffisant pour permettre la création de la commande pour les produits suivants : <ul>" + message + "</ul>")
+        messages.error(request, message)
+        return redirect('order:order-detail', id)
+
+    for item in items:
+        produit = item.produit
+        produit.stock_bis = produit.stock_bis - item.qte
+        produit.stock_future = produit.stock_future - item.qte
+        produit.save()
+    inventaire = Inventaire.objects.get(start_date__lte=datetime.now(), end_date__gte=datetime.now())
+
+    Commande.objects.filter(pk=id).update(statut=statut, date_update=datetime.now(), date=datetime.now(), inventaire=inventaire)
+    message = "Commande créée avec succès à partir de la Pré-commande !"
+    messages.success(request, message)
+    return redirect('order:order-detail', id)
+
+
+# PASSAGE DE TOUTES LES PRE COMMANDES EN COMMANDES
+@login_required
+@staff_member_required
+def all_order_pre_valid(request, action=None):
+    orders = Commande.objects.filter(statut__nom="Pré-commande")
+    print(action)
+    if action == 'True':
+        statut = Statut.objects.get(nom='En cours')
+        nb_produit = 0
+        message = ""
+        for order in orders:
+            items = Cartdb.objects.filter(commande=order)
+
+            for item in items:
+                stock_virtuel = item.produit.stock_bis
+                if stock_virtuel - item.qte < 0:
+                    nb_produit += 1
+                    message += "<li>" + item.produit.nom + "</li>"
+
+        if nb_produit > 0:
+            message = format_html("Stock insuffisant pour permettre la création de la commande pour les produits suivants : <ul>" + message + "</ul>")
+            messages.error(request, message)
+            return redirect('order:order-administration')
+
+        inventaire = Inventaire.objects.get(start_date__lte=datetime.datetime.now(), end_date__gte=datetime.datetime.now())
+        for order in orders:
+            items = Cartdb.objects.filter(commande=order)
+            for item in items:
+                produit = item.produit
+                produit.stock_bis = produit.stock_bis - item.qte
+                produit.stock_future = produit.stock_future - item.qte
+                produit.save()
+            order.statut = statut
+            order.date_update = datetime.datetime.now()
+            order.date = datetime.datetime.now()
+            order.inventaire = inventaire
+            order.save()
+
+        message = "Commandes créées avec succès à partir des Pré-commandes !"
+        messages.success(request, message)
+        return redirect('order:order-administration')
+
+    context = {
+        'previous-page': 'order:order-administration',
+        'orders': orders,
+    }
+    return render(request, 'order/form_pre_order.html', context)
 
 
 @login_required
+@staff_member_required
+def pre_order_create(request, id):
+    try:
+        order = get_object_or_404(Commande, pk=id)
+    except:
+        messages.error(request, "Commande inexistante !")
+        return redirect('order:order-detail', id)
+
+    items = Cartdb.objects.filter(commande=order)
+    statut = Statut.objects.get(nom='Pré-commande')
+    order.pk = None
+    order.id = None
+    order.save()
+    order.date_update = timezone.now()
+    order.date = timezone.now()
+    order.statut = statut
+    order.save()
+    set_inventaire_for_pre_order(order.id)
+
+    for item in items:
+        produit = Produit.objects.get(id=item.produit.id)
+        item.id = None
+        item.pk = None
+        item.commande = order
+        item.save()
+        produit.stock_future += item.qte
+        produit.save()
+
+    message = "Pré-Commande créée avec succès à partir de la Commande selectionnée !"
+    messages.success(request, message)
+
+    previous = request.META.get('HTTP_REFERER').split("/")[-1]
+    if previous == "manage":
+        return redirect('order:manage-order')
+    else:
+        return redirect('order:order-detail', order.id)
+
+
+@login_required
+@staff_member_required
 def order_update_qte_prix(request, id):
     produit_commande = get_object_or_404(Cartdb, id=id)
+    try:
+        admin_mode = AccessMode.objects.get(user=request.user).admin
+    except:
+        admin_mode = False
 
     if request.method == "POST":
         try:
@@ -146,25 +372,42 @@ def order_update_qte_prix(request, id):
         if isinstance(prix, float) and isinstance(qte, int):
             # MISE A JOUR DES STOCK VIRTUELS
             produit = Produit.objects.get(id=produit_commande.produit.id)
-            new_stock = produit.stock_bis + produit_commande.qte - qte
-            if new_stock >= 0:
-                produit.stock_bis = new_stock
-                produit.save()
+            print(produit_commande.commande.statut.nom)
+            print(admin_mode)
 
+            if admin_mode is True and produit_commande.commande.statut.nom == "Pré-commande":
                 # ON MET A JOUR LE PRODUIT DE LA COMMANDE AVEC LA NOUVELLE QUANTITE ET LE NOUVEAU PRIX
+                new_stock = produit.stock_future - produit_commande.qte + qte
+
                 produit_commande.qte = qte
                 produit_commande.prix = prix
                 produit_commande.save()
 
-                # ON MET A JOUR LA COMMANDE AVEC LE NOUVEAU TOTAL
-                Commande.objects.filter(pk=produit_commande.commande.id).update(date_update=datetime.now())
+                produit.stock_future = new_stock
+                produit.save()
 
-                message = "Mise à jour quantités / prix effectuée avec succès !"
+                message = format_html("Mise à jour quantités / prix effectuée avec succès !")
                 messages.success(request, message)
             else:
-                message = "Stock insuffisant !<br/> Modification impossible avec cette quantité !"
-                messages.error(request, message)
-                return redirect('order:order-detail', id)
+                new_stock = produit.stock_bis + produit_commande.qte - qte
+                if new_stock >= 0:
+                    produit.stock_bis = new_stock
+                    produit.save()
+
+                    # ON MET A JOUR LE PRODUIT DE LA COMMANDE AVEC LA NOUVELLE QUANTITE ET LE NOUVEAU PRIX
+                    produit_commande.qte = qte
+                    produit_commande.prix = prix
+                    produit_commande.save()
+
+                    # ON MET A JOUR LA COMMANDE AVEC LE NOUVEAU TOTAL
+                    Commande.objects.filter(pk=produit_commande.commande.id).update(date_update=datetime.now())
+
+                    message = format_html("Mise à jour quantités / prix effectuée avec succès !")
+                    messages.success(request, message)
+                else:
+                    message = format_html("Stock insuffisant !<br/> Modification impossible avec cette quantité !")
+                    messages.error(request, message)
+                    return redirect('order:order-detail', produit_commande.commande.id)
         else:
             message = "Une erreur s'est produite !"
             messages.error(request, message)
@@ -174,6 +417,7 @@ def order_update_qte_prix(request, id):
 
 # MISE A JOUR DE LA REMISE SUR UNE COMMANDE
 @login_required
+@staff_member_required
 def order_update_remise(request, id):
     try:
         remise = locale.atof(request.POST['remise'])
@@ -191,9 +435,15 @@ def order_update_remise(request, id):
 
 # MISE A JOUR DES FRAIS SUR UNE COMMANDE (AJAX - CHANGE INPUT)
 @login_required
+@staff_member_required
 def order_update_frais(request, id):
     if request.method == "POST":
-        commande = Commande.objects.get(pk=id)
+        try:
+            commande = get_object_or_404(Commande, pk=id)
+        except:
+            messages.error(request, "Commande inexistante !")
+            return redirect('order:order-detail', id)
+
         frais_montant = request.POST["fraisMontant"]
         frais_type = request.POST["frais_type"]
 
@@ -224,6 +474,7 @@ def order_update_frais(request, id):
 
 # AJOUT D'UN PRODUIT SUR UNE COMMANDE
 @login_required
+@staff_member_required
 def order_update_add_product(request):
     if (request.POST.get("recipient-order")) != "" and (request.POST.get("produit-id")) != "":
         order_id = request.POST.get("recipient-order")
@@ -257,11 +508,17 @@ def order_update_add_product(request):
 
 # SUPPRESSION D'UN ITEM DE LA COMMANDE
 @login_required
+@staff_member_required
 def order_product_remove(request, id):
     item = get_object_or_404(Cartdb, id=id)
-    stock = item.produit.stock_bis + item.qte
+
     commande = get_object_or_404(Commande, pk=item.commande.id)
-    Produit.objects.filter(pk=item.produit.id).update(stock_bis=stock)
+    if AccessMode.objects.get(user=request.user).admin is False:
+        stock = item.produit.stock_bis + item.qte
+        Produit.objects.filter(pk=item.produit.id).update(stock_bis=stock)
+    else:
+        stock = item.produit.stock_future - item.qte
+        Produit.objects.filter(pk=item.produit.id).update(stock_future=stock)
     item.delete()
 
     message = "Suppression du produit effectuée avec succès !"
@@ -272,24 +529,35 @@ def order_product_remove(request, id):
 
 # ANNULATION D'UNE COMMANDE AVEC MISE A JOUR DE LA DATE ET DU STATUT
 @login_required
+@staff_member_required
 def order_cancel(request, id):
     order = get_object_or_404(Commande, pk=id)
     statut = Statut.objects.get(nom='Annulée')
+    commande_statut = order.statut
     Commande.objects.filter(pk=id).update(statut=statut, date_update=datetime.now())
 
     items = Cartdb.objects.filter(commande=order)
+    message = ""
     for item in items:
         produit = Produit.objects.get(pk=item.produit.id)
-        old_qte = produit.stock_bis + order.qte
-        Produit.objects.filter(pk=item.produit.id).update(stock_bis=old_qte)
+        if commande_statut.name == "En attente":
+            message = "Commande en attente annulée avec succès !"
+        elif commande_statut.name == "Pré-commande":
+            old_qte = produit.stock_future - item.qte
+            Produit.objects.filter(pk=item.produit.id).update(stock_future=old_qte)
+            message = "Pré-commande annulée avec succès !"
+        else:
+            old_qte = produit.stock_bis + item.qte
+            Produit.objects.filter(pk=item.produit.id).update(stock_bis=old_qte)
+            message = "Commande annulée avec succès !"
 
-    message = "Commande annulée avec succès !"
     messages.success(request, message)
     return redirect('order:order-detail', id)
 
 
 # COMMANDE TERMINEE AVEC MISE A JOUR DE LA DATE ET DU STATUT
 @login_required
+@staff_member_required
 def order_end(request, id):
     order = get_object_or_404(Commande, pk=id)
     statut = Statut.objects.get(nom='Terminée')
@@ -297,18 +565,17 @@ def order_end(request, id):
     items = Cartdb.objects.filter(commande=order)
     for item in items:
         produit = Produit.objects.get(pk=item.produit.id)
-        new_qte = produit.stock - order.qte
+        new_qte = produit.stock - item.qte
         if new_qte < 0:
-            message = format_html("Impossibler de passer la commande en statut \"Terminée\"<br>Stock insuffisant !")
-            messages.success(request, message)
+            message = format_html("Impossible de passer la commande en statut \"Terminée\"<br>Stock Final insuffisant !")
+            messages.error(request, message)
             return redirect('order:order-detail', id)
 
     Commande.objects.filter(pk=id).update(statut=statut, date_update=datetime.now())
     for item in items:
         produit = Produit.objects.get(pk=item.produit.id)
-        new_qte = produit.stock - order.qte
-        if new_qte >= 0:
-            Produit.objects.filter(pk=item.produit.id).update(stock=new_qte)
+        new_qte = produit.stock - item.qte
+        Produit.objects.filter(pk=item.produit.id).update(stock=new_qte)
 
     message = "Commande terminée avec succès !"
     messages.success(request, message)
@@ -316,20 +583,19 @@ def order_end(request, id):
 
 
 @login_required
+@staff_member_required
 def order_print(request, id, *args, **kwargs):
     try:
         mode = request.GET['mode']
     except:
-        mode = "0"
+        mode = "1"
+    path_pdf = 'pdf/facture.html'
 
     if mode == "1":
-        path_pdf = 'pdf/facture.html'
         type_pdf = "Facture"
     elif mode == "2":
-        path_pdf = 'pdf/boncommande.html'
         type_pdf = "Commande"
     else:
-        path_pdf = 'pdf/devis.html'
         type_pdf = "Devis"
 
     template = get_template(path_pdf)
@@ -338,10 +604,13 @@ def order_print(request, id, *args, **kwargs):
     image = settings.STATIC_ROOT + '/img/logo_facture.png'
 
     context = {
+        'type': type_pdf,
         'commande': commande,
         'items': items,
         'image': image,
     }
+    # return render(request, path_pdf, context)
+
     pdf = render_to_pdf(path_pdf, context)
 
     if pdf:
@@ -359,6 +628,8 @@ def order_print(request, id, *args, **kwargs):
 
 
 # Modal Search for Client by Name/Firstname for Add in Order
+@login_required
+@staff_member_required
 def order_search_client(request):
     nom = request.POST.get("recipient-nom")
     prenom = request.POST.get("recipient-prenom")
@@ -376,6 +647,8 @@ def order_search_client(request):
 
 
 # Modal Search for Commande by ID for Add Product in
+@login_required
+@staff_member_required
 def order_search_order(request):
     order_id = request.POST.get("recipient-order")
     orders = Commande.objects.all().values()
@@ -388,20 +661,33 @@ def order_search_order(request):
 
 
 @login_required
+@staff_member_required
 def order_etiquettes(request):
     formAction = 'order:order-etiquettes'
-    form = SearchOrderForm(request.POST or None)
-    orders = Commande.objects.all().order_by('-date', 'statut')
-    statut = None
-    clients = None
-    start_date = None
-    end_date = None
-    produits = None
-    especes = None
-    varietes = None
-    portegreffes = None
+    form = SearchOrderForm(request.GET or None)
 
-    if request.method == "POST":
+    if 'o' in request.GET:
+        order_value = request.GET['o']
+        if order_value == 'total':
+            orders = Commande.objects.all().annotate(total_order=Sum(F('Cartdbs__qte') * F('Cartdbs__prix'))).order_by('-total_order')
+        elif order_value == 'qte':
+            orders = Commande.objects.all().annotate(qte_order=Count('Cartdbs')).order_by('-qte_order')
+        else:
+            orders = Commande.objects.all().order_by(order_value)
+
+        request.session['o'] = request.GET['o']
+    elif 'o' in request.session:
+        order_value = request.session['o']
+        if order_value == 'total':
+            orders = Commande.objects.all().annotate(total_order=Sum(F('Cartdbs__qte') * F('Cartdbs__prix'))).order_by('-total_order')
+        elif order_value == 'qte':
+            orders = Commande.objects.all().annotate(qte_order=Count('Cartdbs')).order_by('-qte_order')
+        else:
+            orders = Commande.objects.all().order_by(order_value)
+    else:
+        orders = Commande.objects.all().order_by('-date', 'statut')
+
+    if request.method == "GET":
         if form.is_valid():
             statut = form.cleaned_data['statut']
             clients = form.cleaned_data['clients']
@@ -428,22 +714,25 @@ def order_etiquettes(request):
                 orders = orders.filter(Cartdbs__produit__variete__in=varietes)
             if portegreffes.exists():
                 orders = orders.filter(Cartdbs__produit__portegreffe__in=portegreffes)
+        else:
+            orders = orders.filter(date__year__gte=datetime.now().year - 1)
 
     context = {'formAction': formAction,
                'form': form,
                'orders': orders,
+               'orders_list': orders,
                }
     return render(request, 'order/etiquettes.html', context)
 
 
+@login_required
+@staff_member_required
 def print_etiquettes(request):
     if request.method == "POST":
         query_order_list = request.POST.getlist('checkorder')
-        # for order in request.POST.getlist('checkorder'):
-        #     print(order)
 
     commandes = Commande.objects.filter(pk__in=query_order_list)
-    orders = Cartdb.objects.filter(commande__in=commandes)
+    orders = Cartdb.objects.filter(commande__in=commandes).order_by('produit__espece', 'produit__portegreffe', 'produit__variete')
     context = {
         'commandes': commandes,
         'orders': orders,
@@ -475,6 +764,8 @@ def print_etiquettes(request):
     # return HttpResponse("Not found")
 
 
+@login_required
+@staff_member_required
 def export_etiquettes(request):
     if request.method == "POST":
         query_order_list = request.POST.getlist('checkorder')
@@ -532,6 +823,8 @@ def export_etiquettes(request):
 # *************************************************************************************
 # DIVERS (TVA/FRAIS/STATUT)
 # *************************************************************************************
+@login_required
+@staff_member_required
 def manage_divers(request):
     frais = Frais.objects.all()
     tvas = Tva.objects.all()
@@ -550,6 +843,8 @@ def manage_divers(request):
 # *************************************************************************************
 # TVA (ADD/UPDATE/DELETE)
 # *************************************************************************************
+@login_required
+@staff_member_required
 def add_tva(request):
     if request.user.is_staff:
         title = "TVA"
@@ -589,6 +884,8 @@ def add_tva(request):
         return redirect('order:manage-divers')
 
 
+@login_required
+@staff_member_required
 def edit_tva(request, tva_id):
     # RECUPERATION DES INFOS SELON CATEGORIE SI ADMIN CONNECTE
     if request.user.is_staff:
@@ -638,6 +935,8 @@ def edit_tva(request, tva_id):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def delete_tva(request, tva_id):
     if request.user.is_staff:
         tva = Tva.objects.get(id=tva_id)
@@ -651,6 +950,8 @@ def delete_tva(request, tva_id):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def default_tva(request, tva_id):
     if request.user.is_staff:
         tva = Tva.objects.get(id=tva_id)
@@ -671,6 +972,8 @@ def default_tva(request, tva_id):
 # *************************************************************************************
 # FRAIS
 # *************************************************************************************
+@login_required
+@staff_member_required
 def add_frais(request):
     if request.user.is_staff:
         title = "FRAIS"
@@ -704,6 +1007,8 @@ def add_frais(request):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def edit_frais(request, frais_id):
     # RECUPERATION DES INFOS SELON CATEGORIE SI ADMIN CONNECTE
     if request.user.is_staff:
@@ -735,6 +1040,8 @@ def edit_frais(request, frais_id):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def delete_frais(request, frais_id):
     if request.user.is_staff:
         title = "TVA"
@@ -753,6 +1060,8 @@ def delete_frais(request, frais_id):
 # *************************************************************************************
 # STATUT
 # *************************************************************************************
+@login_required
+@staff_member_required
 def add_statut(request):
     if request.user.is_staff:
         title = "STATUT"
@@ -786,6 +1095,8 @@ def add_statut(request):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def edit_statut(request, statut_id):
     # RECUPERATION DES INFOS SELON CATEGORIE SI ADMIN CONNECTE
     if request.user.is_staff:
@@ -817,6 +1128,8 @@ def edit_statut(request, statut_id):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def delete_statut(request, statut_id):
     if request.user.is_staff:
         title = "STATUT"
@@ -835,6 +1148,8 @@ def delete_statut(request, statut_id):
 # ###########################################################################################################################################
 # EXPORT
 # ###########################################################################################################################################
+@login_required
+@staff_member_required
 def export_commandes_xls(request):
     """
     Export Excel de l'ensemble des commandes du site
@@ -911,6 +1226,8 @@ def export_commandes_xls(request):
     return response
 
 
+@login_required
+@staff_member_required
 def export_clients_xls(request):
     """
     Export Excel de l'ensemble des clients
@@ -1000,6 +1317,8 @@ def export_clients_xls(request):
     return response
 
 
+@login_required
+@staff_member_required
 def export_divers_xls(request):
     """
     Export Excel de l'ensemble des informations annexes (TVA, STATUT, FRAIS)
@@ -1018,12 +1337,16 @@ def export_divers_xls(request):
     # TVA
     worksheet_tva.write(0, 0, 'ID')
     worksheet_tva.write(0, 1, 'TAUX')
+    worksheet_tva.write(0, 2, 'DEFAUT')
+    worksheet_tva.write(0, 2, 'ACTIF')
 
     tvas = Tva.objects.all()
     row = 1
     for tva in tvas:
         worksheet_tva.write(row, 0, tva.id)
         worksheet_tva.write(row, 1, tva.nom)
+        worksheet_tva.write(row, 1, tva.default)
+        worksheet_tva.write(row, 1, tva.active)
         row += 1
 
     # FRAIS
@@ -1067,8 +1390,16 @@ def export_divers_xls(request):
 # ADMINISTRATION
 # ###########################################################################################################################################
 @login_required
+@staff_member_required
 def order_administration(request):
-    context = {}
+    inventaire_actif = Inventaire.objects.get(start_date__lte=datetime.now(), end_date__gte=datetime.now())
+
+    pre_orders = Commande.objects.filter(statut__nom="Pré-commande")
+    waiting_orders = Commande.objects.exclude(statut__nom__in=["Terminée", "Annulée"]).exclude(inventaire=inventaire_actif)
+    context = {
+        'pre_orders': pre_orders,
+        'waiting_orders': waiting_orders,
+    }
     if request.user.is_staff:
         return render(request, 'order/administration_menu_order.html', context)
     else:
@@ -1076,14 +1407,32 @@ def order_administration(request):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def manage_order(request):
-    form = SearchOrderForm(request.POST or None)
+
+    if 'mo' in request.GET:
+        order_value = request.GET['mo']
+        if order_value == 'total':
+            queryset = Commande.objects.all().annotate(total_order=Sum(F('Cartdbs__qte') * F('Cartdbs__prix'))).order_by('-total_order')
+        else:
+            queryset = Commande.objects.all().order_by(order_value)
+        request.session['mo'] = request.GET['mo']
+    elif 'mo' in request.session:
+        order_value = request.session['mo']
+        if order_value == 'total':
+            queryset = Commande.objects.all().annotate(total_order=Sum(F('Cartdbs__qte') * F('Cartdbs__prix'))).order_by('-total_order')
+        else:
+            queryset = Commande.objects.all().order_by(order_value)
+    else:
+        queryset = Commande.objects.all().order_by('-date', 'statut')
 
     if request.user.is_staff:
         produits_commande = {}
-        queryset = Commande.objects.all().order_by('-date')
+        form = SearchOrderForm()
 
-        if request.method == 'POST':
+        if request.method == 'GET':
+            form = SearchOrderForm(request.GET)
             if form.is_valid():
                 statut = form.cleaned_data['statut']
                 clients = form.cleaned_data['clients']
@@ -1093,6 +1442,8 @@ def manage_order(request):
                 especes = form.cleaned_data['especes']
                 varietes = form.cleaned_data['varietes']
                 portegreffes = form.cleaned_data['portegreffes']
+                frais = form.cleaned_data['frais']
+                inventaire = form.cleaned_data['inventaire']
 
                 if produits.exists():
                     queryset = queryset.filter(Cartdbs__produit__in=produits)
@@ -1104,12 +1455,19 @@ def manage_order(request):
                     queryset = queryset.filter(cCartdbs__produit__portegreffe__in=portegreffes)
                 if statut.exists():
                     queryset = queryset.filter(statut__in=statut)
+                if frais.exists():
+                    queryset = queryset.filter(frais__in=frais)
                 if clients.exists():
                     queryset = queryset.filter(client__in=clients)
                 if not start_date is None:
                     queryset = queryset.filter(date__gte=start_date)
                 if not end_date is None:
                     queryset = queryset.filter(date__lte=end_date)
+                if inventaire.exists():
+                    queryset = queryset.filter(inventaire__in=inventaire)
+                else:
+                    inventaire = Inventaire.objects.get(start_date__lte=datetime.now(), end_date__gte=datetime.now())
+                    queryset = queryset.filter(inventaire=inventaire)
 
         for commande in queryset:
             produits = Cartdb.objects.filter(commande=commande)
@@ -1131,7 +1489,14 @@ def manage_order(request):
         previous_page = reverse('order:order-administration')
 
         paginator = Paginator(queryset, 50)
-        page = request.GET.get('page')
+        get_data = request.GET.copy()
+        page = get_data.pop('page', None)
+        mo = get_data.pop('mo', None)
+
+        if 'page' in request.GET:
+            page = request.GET['page']
+        elif 'page' in request.session:
+            page = request.session['page']
 
         try:
             commandes = paginator.page(page)
@@ -1155,6 +1520,8 @@ def manage_order(request):
             'context_header': context_header,
             'formAction': formAction,
             'form': form,
+            'orders_list': queryset,
+            'query_string': get_data.urlencode(),
         }
 
         return render(request, 'order/manage_order.html', context)
@@ -1163,6 +1530,8 @@ def manage_order(request):
         return redirect('onlineshop:produit-list')
 
 
+@login_required
+@staff_member_required
 def edit_order(request, order_id):
     if request.user.is_staff:
         title = "COMMANDES"
@@ -1196,19 +1565,21 @@ def edit_order(request, order_id):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def delete_order(request, order_id):
     if request.user.is_staff:
         title = "COMMANDES"
         order = Commande.objects.get(id=order_id)
         items = Cartdb.objects.filter(commande=order)
 
-        for item in items:
-            produit = Produit.objects.get(id=item.produit.id)
-            produit.stock_bis += item.qte
-            produit.save()
+        # for item in items:
+        #     produit = Produit.objects.get(id=item.produit.id)
+        #     produit.stock_bis += item.qte
+        #     produit.save()
 
         order.delete()
-        message = format_html("Commande supprimée avec succès !<br> Stock remis à jour pour l'ensemble des produits de la commande")
+        message = format_html("Commande supprimée avec succès !<br> <i class='bi bi-exclamation-triangle'></i> Stock NON remis à jour pour l'ensemble des produits de la commande")
         messages.success(request, message)
         return redirect('order:manage-order')
     else:
@@ -1216,9 +1587,11 @@ def delete_order(request, order_id):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def cancel_order(request, order_id):
+
     if request.user.is_staff:
-        title = "COMMANDES"
         order = Commande.objects.get(id=order_id)
         items = Cartdb.objects.filter(commande=order)
         statut = Statut.objects.get(nom="Annulée")
@@ -1237,6 +1610,12 @@ def cancel_order(request, order_id):
                 item.produit.stock_bis += item.qte
                 item.produit.save()
 
+        if order.statut.nom == "Pré-commande":
+            message = message + format_html("<br>Stock futur remis à jour pour l'ensemble des produits de la commande")
+            for item in items:
+                item.produit.stock_future -= item.qte
+                item.produit.save()
+
         order.statut = statut
         order.save()
         messages.success(request, message)
@@ -1246,14 +1625,82 @@ def cancel_order(request, order_id):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def validate_order(request, order_id):
     if request.user.is_staff:
         title = "COMMANDES"
         order = Commande.objects.get(id=order_id)
         items = Cartdb.objects.filter(commande=order)
         statut = Statut.objects.get(nom="Validée")
-
+        nb_produit = 0
         message = format_html("Commande validée avec succès !")
+
+        # TERMINEE ___________________________________________________________________________________________________________
+        if order.statut.nom == "Terminée":
+            message = message + format_html("<br>Stock final remis à jour pour l'ensemble des produits de la commande.")
+            for item in items:
+                item.produit.stock += item.qte
+                item.produit.save()
+
+        # ANNULEE OU EN ATTENTE ______________________________________________________________________________________________
+        if order.statut.nom == "Annulée" or order.statut.nom == "En attente":
+            message_produit = ""
+            message = message + format_html("<br>Stock virtuel remis à jour pour l'ensemble des produits de la commande.")
+            # On test avant si sur TOUS les produits le stock est OK !
+            for item in items:
+                if item.produit.stock_bis - item.qte < 0:
+                    nb_produit += 1
+                    message_produit = message_produit + "<li>" + item.produit.nom + "</li>"
+
+            if nb_produit > 0:
+                message = format_html("Impossible de passer la commande en \"Validée\" !<br>Stock insuffisant sur les produits suivants : <ul>" + message_produit + "</ul>")
+                messages.error(request, message)
+                return redirect('order:manage-order')
+
+            for item in items:
+                item.produit.stock_bis -= item.qte
+                item.produit.save()
+
+        # PRE COMMANDE ______________________________________________________________________________________________________
+        if order.statut.nom == "Pré-commande":
+            message_produit = ""
+            message = message + format_html("<br>Stock futur et virtuel mis à jour pour l'ensemble des produits de la commande.")
+            # On test avant si sur TOUS les produits le stock est OK !
+            for item in items:
+                if item.produit.stock_bis - item.qte < 0:
+                    nb_produit += 1
+                    message_produit = message_produit + "<li>" + item.produit.nom + "</li>"
+
+            if nb_produit > 0:
+                message = format_html("Impossible de passer la commande en \"Validée\" !<br>Stock insuffisant sur les produits suivants : <ul>" + message_produit + "</ul>")
+                messages.error(request, message)
+                return redirect('order:manage-order')
+
+            for item in items:
+                item.produit.stock_bis -= item.qte
+                item.produit.stock_future -= item.qte
+                item.produit.save()
+
+        order.statut = statut
+        order.save()
+        messages.success(request, message)
+        return redirect('order:manage-order')
+    else:
+        messages.error(request, "Vous n'avez pas les droits !")
+        return redirect('produit-list')
+
+
+@login_required
+@staff_member_required
+def in_progress_order(request, order_id):
+    if request.user.is_staff:
+        title = "COMMANDES"
+        order = Commande.objects.get(id=order_id)
+        items = Cartdb.objects.filter(commande=order)
+        statut = Statut.objects.get(nom="En cours")
+        nb_produit = 0
+        message = format_html("Commande passée en \"En cours\" avec succès !")
 
         if order.statut.nom == "Terminée":
             message = message + format_html("<br>Stock final remis à jour pour l'ensemble des produits de la commande.")
@@ -1261,17 +1708,43 @@ def validate_order(request, order_id):
                 item.produit.stock += item.qte
                 item.produit.save()
 
+        if order.statut.nom == "Pré-commande":
+            message_produit = ""
+            message = message + format_html("<br>Stock future remis à jour pour l'ensemble des produits de la commande.")
+            for item in items:
+                if item.produit.stock_bis - item.qte < 0:
+                    nb_produit += 1
+                    message_produit = message_produit + "<li>" + item.produit.nom + "</li>"
+
+            if nb_produit > 0:
+                message = format_html("Impossible de passer la commande en \"En cours\" <br>Stock insuffisant sur les produits suivants : <ul>" + message_produit + "</ul>")
+                messages.error(request, message)
+                return redirect('order:manage-order')
+
+            for item in items:
+                item.produit.stock_bis -= item.qte
+                item.produit.stock_future -= item.qte
+                item.produit.save()
+            order.date = datetime.datetime.now()
+
         if order.statut.nom == "Annulée":
+            message_produit = ""
             message = message + format_html("<br>Stock virtuel remis à jour pour l'ensemble des produits de la commande.")
             for item in items:
                 if item.produit.stock_bis - item.qte < 0:
-                    message = format_html("Impossible de repasser la commande dans un autre statut<br>Stock insuffisant !")
-                    messages.error(request, message)
-                    return redirect('order:manage-order')
+                    nb_produit += 1
+                    message_produit = message_produit + "<li>" + item.produit.nom + "</li>"
 
+            if nb_produit > 0:
+                message = format_html("Impossible de passer la commande en \"En cours\" <br>Stock insuffisant sur les produits suivants : <ul>" + message_produit + "</ul>")
+                messages.error(request, message)
+                return redirect('order:manage-order')
+
+            for item in items:
                 item.produit.stock_bis -= item.qte
                 item.produit.save()
 
+        order.date_update = datetime.datetime.now()
         order.statut = statut
         order.save()
         messages.success(request, message)
@@ -1281,31 +1754,42 @@ def validate_order(request, order_id):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def finish_order(request, order_id):
     if request.user.is_staff:
-        title = "COMMANDES"
         order = Commande.objects.get(id=order_id)
         items = Cartdb.objects.filter(commande=order)
         statut = Statut.objects.get(nom="Terminée")
-
+        nb_produit = 0
         message = format_html("Commande terminée avec succès !")
         if order.statut.nom == "Validée" or order.statut.nom == "En cours":
+            message_produit = ""
             for item in items:
                 if item.produit.stock - item.qte < 0:
-                    message = format_html("Impossible de repasser la commande dans un autre statut<br>Stock insuffisant !")
-                    messages.error(request, message)
-                    return redirect('order:manage-order')
+                    nb_produit += 1
+                    message_produit = message_produit + "<li>" + item.produit.nom + "</li>"
+
+            if nb_produit > 0:
+                message = format_html("Impossible de repasser la commande en \"Terminée\"<br>Stock insuffisant sur les produits suivants : <ul>" + message_produit + "</ul>")
+                messages.error(request, message)
+                return redirect('order:manage-order')
 
             for item in items:
                 item.produit.stock -= item.qte
                 item.produit.save()
 
-        if order.statut.nom == "Annulée":
+        if order.statut.nom == "Annulée" or order.statut.nom == "En attente":
+            message_produit = ""
             for item in items:
                 if item.produit.stock_bis - item.qte < 0 or item.produit.stock - item.qte < 0:
-                    message = format_html("Impossible de repasser la commande dans un autre statut<br>Stock insuffisant !")
-                    messages.error(request, message)
-                    return redirect('order:manage-order')
+                    nb_produit += 1
+                    message_produit = message_produit + "<li>" + item.produit.nom + "</li>"
+
+            if nb_produit > 0:
+                message = format_html("Impossible de repasser la commande en \"Terminée\"<br>Stock insuffisant sur les produits suivants : <ul>" + message_produit + "</ul>")
+                messages.error(request, message)
+                return redirect('order:manage-order')
 
             for item in items:
                 item.produit.stock -= item.qte
@@ -1322,7 +1806,10 @@ def finish_order(request, order_id):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def add_produit_order(request, order_id, manage):
+
     if request.user.is_staff:
         title = "PRODUIT"
 
@@ -1338,49 +1825,74 @@ def add_produit_order(request, order_id, manage):
                 prix = form.cleaned_data['prix']
                 produit_commande = Cartdb.objects.filter(commande=commande, produit=produit)
 
-                if produit_commande.exists():
-                    produit = Produit.objects.get(pk=produit.id)
-                    produit_commande = produit_commande.first()
+                if not commande.statut.nom == "Pré-commande":
+                    if produit_commande.exists():
+                        produit = Produit.objects.get(pk=produit.id)
+                        produit_commande = produit_commande.first()
+                        if produit.stock_bis - qte >= 0:
+                            produit_commande.qte = produit_commande.qte + qte
+                            produit_commande.prix = prix
+                            produit_commande.save()
+                            message = format_html("Produit déjà présent dans la commande.<br/>Quantité et Prix mis à jour !")
+                            messages.success(request, message)
+                        else:
+                            message = format_html("Produit déjà présent dans la commande.<br/>Stock insuffisant !")
+                            messages.error(request, message)
 
-                    if produit.stock_bis - qte >= 0:
-                        produit.stock_bis = produit.stock_bis - qte
+                        if manage == "1":
+                            return redirect('order:edit-order', order_id)
+                        else:
+                            return redirect('order:order-detail', order_id)
+
+                    if produit.stock_bis >= qte:
+                        obj = form.save(commit=False)
+                        obj.commande = commande
+                        obj.save()
+
+                        produit.stock_bis -= qte
                         produit.save()
 
+                        message = "Produit ajouté à la commande avec succès !"
+                        messages.success(request, message)
+                    else:
+                        message = "Stock insuffisant !"
+                        messages.error(request, message)
+                else:
+                    if produit_commande.exists():
+                        produit = Produit.objects.get(pk=produit.id)
+                        produit_commande = produit_commande.first()
                         produit_commande.qte = produit_commande.qte + qte
                         produit_commande.prix = prix
                         produit_commande.save()
 
-                        message = format_html("Produit déjà présent dans la commande.<br/>Quantité et Prix mis à jour !")
-                        messages.success(request, message)
-                    else:
-                        message = format_html("Produit déjà présent dans la commande.<br/>Stock insuffisant !")
-                        messages.error(request, message)
-                    if manage is True:
-                        return redirect('order:edit-order', order_id)
-                    else:
-                        return redirect('order:order-detail', order_id)
+                        produit.stock_future += produit_commande.qte
+                        produit.save()
 
-                if produit.stock_bis >= qte:
+                        message = format_html("Produit déjà présent dans la pré-commande.<br/>Quantité et Prix mis à jour !")
+                        messages.success(request, message)
+
+                        if manage == "1":
+                            return redirect('order:edit-order', order_id)
+                        else:
+                            return redirect('order:order-detail', order_id)
+
                     obj = form.save(commit=False)
                     obj.commande = commande
                     obj.save()
 
-                    produit.stock_bis += qte
+                    produit.stock_future += qte
                     produit.save()
 
-                    message = "Produit ajouté à la commande avec succès !"
+                    message = "Produit ajouté à la pré-commande avec succès !"
                     messages.success(request, message)
-                else:
-                    message = "Stock insuffisant !"
-                    messages.error(request, message)
             else:
                 message = "Une erreur s'est produite"
                 messages.error(request, message)
-            if manage is True:
+
+            if manage == "1":
                 return redirect('order:edit-order', order_id)
             else:
                 return redirect('order:order-detail', order_id)
-
         context_header = {
         }
 
@@ -1392,6 +1904,7 @@ def add_produit_order(request, order_id, manage):
             'previous_page': previous_page,
             'title': title,
             'context_header': context_header,
+            'manage': manage,
         }
         return render(request, "order/form_produit.html", context)
     else:
@@ -1399,6 +1912,8 @@ def add_produit_order(request, order_id, manage):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def edit_produit_order(request, order_id, produit_id):
     if request.user.is_staff:
         title = "PRODUIT"
@@ -1461,6 +1976,8 @@ def edit_produit_order(request, order_id, produit_id):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def delete_produit_order(request, order_id, produit_id):
     if request.user.is_staff:
 
@@ -1487,12 +2004,36 @@ def delete_produit_order(request, order_id, produit_id):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
+def recycle_produit_order(request, order_id, produit_id):
+    if request.user.is_staff:
+
+        commande = Commande.objects.get(id=order_id)
+        produit = Produit.objects.get(id=produit_id)
+        produit_commande = Cartdb.objects.get(commande=commande, produit=produit)
+
+        # ATTENTION : ON NE MET PAS A JOUR LES STOCKS
+        produit_commande.delete()
+
+        message = format_html("Produit supprimé de la commande avec succès !<br><i class='bi bi-exclamation-triangle'></i> Stock non mis à jour ! <i class='bi bi-exclamation-triangle'></i>")
+        messages.success(request, message)
+        return redirect('order:edit-order', order_id)
+    else:
+        messages.error(request, "Vous n'avez pas les droits !")
+        return redirect('produit-list')
+
+
+@login_required
+@staff_member_required
 def get_produit_stock(request, produit_id):
     produit = get_object_or_404(Produit, id=produit_id)
     return JsonResponse({"total": produit.stock_bis})
 
 
 # IMPORT DES PRODUITS A PARTIR D'UN FICHIER EXCEL
+@login_required
+@staff_member_required
 def import_commandes_xls(request):
     previous_page = reverse('order:order-administration')
 
@@ -1516,20 +2057,21 @@ def import_commandes_xls(request):
                 Commande.objects.all().delete()
 
             for i in range(2, max_row + 1):
+                print(i)
                 obj = Commande.objects.create(
                     id=ws.cell(row=i, column=1).value,
                     date=ws.cell(row=i, column=2).value,
-                    client=Client.objects.get(id=ws.cell(row=i, column=3).value),
+                    client=get_object_from_id(ws.cell(row=i, column=3).value, 'client'),
                     remise=ws.cell(row=i, column=4).value,
-                    statut=Statut.objects.get(id=ws.cell(row=i, column=5).value),
+                    statut=get_object_from_id(ws.cell(row=i, column=5).value, 'statut'),
                     date_update=ws.cell(row=i, column=6).value,
-                    tva=get_tva_from_id(ws.cell(row=i, column=7).value),
-                    frais=get_frais_from_id(ws.cell(row=i, column=8).value),
+                    tva=get_object_from_id(ws.cell(row=i, column=7).value, 'tva'),
+                    frais=get_object_from_id(ws.cell(row=i, column=8).value, 'frais'),
                     montant_frais=ws.cell(row=i, column=9).value,
                 )
-                message = "Fichier de commandes importé avec succès (" + str(max_row) + " commandes importés)<br/>"
                 obj.save()
 
+            message = "Fichier de commandes importé avec succès (" + str(max_row) + " commandes importés)<br/>"
             ws = wb['PRODUITS']
             max_col = ws.max_column
             max_row = ws.max_row
@@ -1543,10 +2085,9 @@ def import_commandes_xls(request):
                     id=ws.cell(row=i, column=1).value,
                     qte=ws.cell(row=i, column=2).value,
                     prix=ws.cell(row=i, column=3).value,
-                    commande=Commande.objects.get(id=ws.cell(row=i, column=4).value),
-                    produit=Produit.objects.get(id=ws.cell(row=i, column=5).value),
+                    commande=get_object_from_id(ws.cell(row=i, column=4).value, 'commande'),
+                    produit=get_object_from_id(ws.cell(row=i, column=5).value, 'produit'),
                 )
-
                 obj.save()
 
             message = message + "Fichier de produits liés importé avec succès (" + str(max_row) + " produits liés importés)"
@@ -1563,6 +2104,8 @@ def import_commandes_xls(request):
     # return response
 
 
+@login_required
+@staff_member_required
 def import_clients_xls(request):
     previous_page = reverse('order:order-administration')
 
@@ -1592,15 +2135,15 @@ def import_clients_xls(request):
                     first_name=ws.cell(row=i, column=3).value,
                     username=ws.cell(row=i, column=4).value,
                     email=ws.cell(row=i, column=5).value,
-                    is_staff=ws.cell(row=i, column=6).value,
-                    is_superuser=ws.cell(row=i, column=7).value,
+                    is_superuser=ws.cell(row=i, column=6).value,
+                    is_staff=ws.cell(row=i, column=7).value,
                     is_active=ws.cell(row=i, column=8).value,
                     date_joined=ws.cell(row=i, column=9).value,
                     last_login=ws.cell(row=i, column=10).value,
                 )
-                message = "Fichier de Clients importé avec succès (" + str(max_row) + " users liés importés)"
                 obj.save()
 
+            message = format_html("Fichier de Clients importé avec succès (" + str(max_row) + " users liés importés)<br>")
             # CLIENTS ----------------------------------------------------------------------------
             ws = wb['CLIENTS']
             max_col = ws.max_column
@@ -1623,11 +2166,11 @@ def import_clients_xls(request):
                     mail=ws.cell(row=i, column=8).value,
                     commentaire=ws.cell(row=i, column=9).value,
                     remise=ws.cell(row=i, column=10).value,
-                    user=User.objects.get(id=ws.cell(row=i, column=11).value),
+                    user=get_object_from_id(ws.cell(row=i, column=11).value, 'user'),
                 )
-                message = "Fichier de clients importé avec succès (" + str(max_row) + " clients importés)<br/>"
                 obj.save()
 
+            message = message + format_html("Fichier de clients importé avec succès (" + str(max_row) + " clients importés)<br/>")
             messages.success(request, message)
             wb.close()
 
@@ -1640,6 +2183,8 @@ def import_clients_xls(request):
     return render(request, 'order/import_clients.html', {'previous_page': previous_page})
 
 
+@login_required
+@staff_member_required
 def import_divers_xls(request):
     previous_page = reverse('order:order-administration')
 
@@ -1659,16 +2204,17 @@ def import_divers_xls(request):
 
             # REMOVE DATA FROM TABLE TVA
             if request.POST.get('delete_data', True):
-                pass
-                # Tva.objects.all().delete(commit=False)
+                Tva.objects.all().delete()
 
             for i in range(2, max_row + 1):
                 obj = Tva.objects.create(
                     id=ws.cell(row=i, column=1).value,
                     tva=ws.cell(row=i, column=2).value,
+                    default=ws.cell(row=i, column=3).value,
+                    active=ws.cell(row=i, column=4).value,
                 )
-                message = "Fichier Divers importé avec succès (" + str(max_row) + " Taux de TVA importés)<br/>"
-                obj.save(commit=False)
+                message = format_html("Fichier Divers importé avec succès (" + str(max_row) + " Taux de TVA importés)<br/>")
+                obj.save()
 
             ws = wb['FRAIS']
             max_col = ws.max_column
@@ -1676,8 +2222,7 @@ def import_divers_xls(request):
 
             # REMOVE DATA FROM TABLE FRAIS
             if request.POST.get('delete_data', True):
-                pass
-                # Frais.objects.all().delete(commit=False)
+                Frais.objects.all().delete()
 
             for i in range(2, max_row + 1):
                 obj = Frais.objects.create(
@@ -1685,8 +2230,8 @@ def import_divers_xls(request):
                     nom=ws.cell(row=i, column=2).value,
                     tva=Tva.objects.get(id=ws.cell(row=i, column=3).value),
                 )
-                message = "Fichier Divers importé avec succès (" + str(max_row) + " Frais importés)"
-                obj.save(commit=False)
+                message = message + format_html("Fichier Divers importé avec succès (" + str(max_row) + " Frais importés)<br/>")
+                obj.save()
 
             ws = wb['STATUT']
             max_col = ws.max_column
@@ -1694,16 +2239,15 @@ def import_divers_xls(request):
 
             # REMOVE DATA FROM TABLE FRAIS
             if request.POST.get('delete_data', True):
-                pass
-                # Statut.objects.all().delete(commit=False)
+                Statut.objects.all().delete()
 
             for i in range(2, max_row + 1):
                 obj = Statut.objects.create(
                     id=ws.cell(row=i, column=1).value,
                     nom=ws.cell(row=i, column=2).value,
                 )
-                message = "Fichier Divers importé avec succès (" + str(max_row) + " Statuts importés)"
-                obj.save(commit=False)
+                message = message + format_html("Fichier Divers importé avec succès (" + str(max_row) + " Statuts importés)<br>")
+                obj.save()
 
             messages.success(request, message)
             wb.close()
@@ -1720,26 +2264,56 @@ def import_divers_xls(request):
 # ----------------------------------------------------------------------------------------------------
 # CLIENTS
 # ----------------------------------------------------------------------------------------------------
+@login_required
+@staff_member_required
 def manage_client(request):
-    form = SearchClientForm(request.POST or None)
 
     if request.user.is_staff:
-        queryset = Client.objects.all().order_by('nom', 'prenom')
-        if request.method == 'POST':
+        form = SearchClientForm()
+        order_value = 'nom'
+        if 'mc' in request.GET:
+            order_value = request.GET['mc']
+            if order_value == 'total':
+                queryset = Client.objects.all().annotate(total_order=Count('Commandes')).order_by('-total_order')
+            else:
+                queryset = Client.objects.all().order_by(order_value)
+            request.session['mc'] = request.GET['mc']
+        elif 'mc' in request.session:
+            order_value = request.session['mc']
+            if order_value == 'total':
+                queryset = Client.objects.all().annotate(total_order=Count('Commandes')).order_by('-total_order')
+            else:
+                queryset = Client.objects.all().order_by(order_value)
+        else:
+            queryset = Client.objects.all().order_by('nom', 'prenom')
+
+        if request.method == 'GET':
+            form = SearchClientForm(request.GET)
             if form.is_valid():
                 cp = form.cleaned_data['cp']
                 ville = form.cleaned_data['ville']
-
                 remise = form.cleaned_data['remise']
-                if not cp is None:
+                nom = form.cleaned_data['nom']
+                prenom = form.cleaned_data['prenom']
+                activate = form.cleaned_data['activate']
+
+                queryset = queryset.filter(nom__contains=nom)
+                queryset = queryset.filter(prenom__contains=prenom)
+                if activate == "2":
+                    queryset = queryset.filter(Q(activate=True) | Q(activate=None))
+                if activate == "3":
+                    queryset = queryset.filter(activate=False)
+                if not cp is None and cp != "":
                     queryset = queryset.filter(cp__startswith=cp)
-                if len(ville) > 0:
+                if not ville is None and len(ville) > 0:
                     queryset = queryset.filter(ville=ville)
                 if not remise is None:
                     queryset = queryset.filter(remise=remise)
 
         count_order = {}
+        dic_order = {}
         for client in queryset:
+            dic_order[client.id] = list(Commande.objects.filter(client=client))
             count_order[client.id] = Commande.objects.filter(client=client).count()
         title = "Clients"
         header = "Ajouter un Client"
@@ -1748,7 +2322,14 @@ def manage_client(request):
         previous_page = reverse('order:order-administration')
 
         paginator = Paginator(queryset, 50)
-        page = request.GET.get('page')
+        get_data = request.GET.copy()
+        page = get_data.pop('page', None)
+        mc = get_data.pop('mc', None)
+
+        if 'page' in request.GET:
+            page = request.GET['page']
+        elif 'page' in request.session:
+            page = request.session['page']
 
         try:
             clients = paginator.page(page)
@@ -1764,6 +2345,7 @@ def manage_client(request):
             'javascript': javascript,
         }
         context = {
+            'dic_order': dic_order,
             'count_order': count_order,
             'clients': clients,
             'paginate': True,
@@ -1772,6 +2354,8 @@ def manage_client(request):
             'context_header': context_header,
             'formAction': formAction,
             'form': form,
+            'nb_clients': len(queryset),
+            'query_string': get_data.urlencode(),
         }
 
         return render(request, 'order/manage_client.html', context)
@@ -1780,6 +2364,8 @@ def manage_client(request):
         return redirect('onlineshop:produit-list')
 
 
+@login_required
+@staff_member_required
 def add_client(request):
     if request.user.is_staff:
         title = "CLIENTS"
@@ -1836,12 +2422,17 @@ def add_client(request):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def edit_client(request, client_id):
     # RECUPERATION DES INFOS SELON CATEGORIE SI ADMIN CONNECTE
     if request.user.is_staff:
         title = "CLIENT"
         client = Client.objects.get(id=client_id)
-        user = User.objects.get(id=client.user.id)
+        try:
+            user = User.objects.get(id=client.user.id)
+        except:
+            user = None
 
         form = FormAddClient(request.POST or None, instance=client)
 
@@ -1851,14 +2442,20 @@ def edit_client(request, client_id):
         if request.POST:
             if form.is_valid():
                 instance = form.instance
-                obj = instance.save()
+                email_exist = User.objects.filter(email=instance.mail)
+                if email_exist == 0:
+                    obj = instance.save()
 
-                user.first_name = instance.prenom
-                user.last_name = instance.nom
-                user.email = instance.mail
-                user.save()
+                if not user is None:
+                    user.first_name = instance.prenom
+                    user.last_name = instance.nom
+                    user.email = instance.mail
+                    user.save()
 
-                message = "Client (et User) modifié avec succès !"
+                message = "Client modifié avec succès !"
+                if not user is None:
+                    message = "Client (et User) modifié avec succès !"
+
                 messages.success(request, message)
                 return redirect('order:manage-client')
         context = {
@@ -1875,6 +2472,23 @@ def edit_client(request, client_id):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
+def activate_client(request, client_id):
+    if request.user.is_staff:
+        client = Client.objects.get(id=client_id)
+        client.activate = True
+        client.save()
+
+        messages.success(request, "Client réactivé avec succès !")
+        return redirect('order:manage-client')
+    else:
+        messages.error(request, "Vous n'avez pas les droits !")
+        return redirect('produit-list')
+
+
+@login_required
+@staff_member_required
 def delete_client(request, client_id):
     if request.user.is_staff:
         client = Client.objects.get(id=client_id)
@@ -1883,6 +2497,7 @@ def delete_client(request, client_id):
         if count > 0:
             message = "Client desactivé avec succès !"
             client.activate = False
+            client.save()
         else:
             message = "Client supprimé avec succès !"
             if not client.user is None:
@@ -1895,3 +2510,156 @@ def delete_client(request, client_id):
     else:
         messages.error(request, "Vous n'avez pas les droits !")
         return redirect('produit-list')
+
+
+@login_required
+@staff_member_required
+def manage_inventaire(request):
+    if request.user.is_staff:
+        inventaires = Inventaire.objects.all().order_by('-start_date')
+        context = {
+            'inventaires': inventaires
+        }
+        return render(request, "order/manage_inventaire.html", context)
+    else:
+        messages.error(request, "Vous n'avez pas les droits !")
+        return redirect('produit-list')
+
+
+@login_required
+@staff_member_required
+def add_inventaire(request):
+    if request.user.is_staff:
+        form = FormInventaire(request.POST or None)
+        previous_page = reverse('order:manage-inventaire')
+        formAction = 'order:add-inventaire'
+
+        if request.method == 'POST':
+            if form.is_valid():
+                obj = form.save()
+                message = "Période ajoutée avec succès !"
+                messages.success(request, message)
+            else:
+                message = "Une erreur s'est produite"
+                messages.error(request, message)
+            return redirect('order:manage-inventaire')
+
+        context = {
+            'form': form,
+            'formAction': formAction,
+            'previous_page': previous_page
+        }
+        return render(request, "order/form_inventaire.html", context)
+    else:
+        messages.error(request, "Vous n'avez pas les droits !")
+        return redirect('produit-list')
+
+
+@login_required
+@staff_member_required
+def edit_inventaire(request, inventaire_id):
+    if request.user.is_staff:
+        try:
+            inventaire = Inventaire.objects.get(pk=inventaire_id)
+        except:
+            messages.error(request, "La période selectionnée n'existe pas !")
+            return redirect('order:manage-inventaire')
+
+        form = FormInventaire(request.POST or None, instance=inventaire)
+        previous_page = reverse('order:manage-inventaire')
+        formAction = 'order:edit-inventaire'
+
+        if request.POST:
+            if form.is_valid():
+                instance = form.instance
+                obj = instance.save()
+                messages.success(request, "Période modifiée avec succès")
+                return redirect('order:manage-inventaire')
+
+        context = {
+            'inventaire': inventaire,
+            'form': form,
+            'formAction': formAction,
+            'previous_page': previous_page,
+        }
+        return render(request, "order/form_inventaire.html", context)
+    else:
+        messages.error(request, "Vous n'avez pas les droits !")
+        return redirect('produit-list')
+
+
+@login_required
+@staff_member_required
+def delete_inventaire(request, inventaire_id):
+    if request.user.is_staff:
+        return redirect('order:manage-inventaire')
+    else:
+        messages.error(request, "Vous n'avez pas les droits !")
+        return redirect('produit-list')
+
+
+@login_required
+@staff_member_required
+def reset_order(request):
+    cancel_statut = Statut.objects.get(nom='Annulée')
+    done_statut = Statut.objects.get(nom='Terminée')
+    inprogress_statut = Statut.objects.get(nom='En cours')
+    valid_statut = Statut.objects.get(nom='Validée')
+    wait_statut = Statut.objects.get(nom='En attente')
+    form = FormResetOrder(request.POST or None)
+    formAction = 'order:reset-order'
+    previous_page = 'order:order-administration'
+    inventaires = Inventaire.objects.all()
+    commandes = Commande.objects.filter(statut__in=[inprogress_statut, valid_statut, wait_statut])
+
+    if request.POST:
+        if form.is_valid():
+            inventaire = form.cleaned_data['inventaire']
+            mode = form.cleaned_data['mode']
+            commandes = commandes.filter(inventaire=inventaire)
+            nb_produit = 0
+            produit_list = ""
+            if mode == "FULL":
+                for commande in commandes:
+                    if commande.statut.nom == "En cours" or commande.statut.nom == "Validée":
+                        commande.statut = done_statut
+                    else:
+                        commande.statut = cancel_statut
+                    commande.save()
+                message = format_html("Les commandes ont bien toutes étés [<u>Terminées</u>] pour la période selectionnée !")
+                messages.success(request, message)
+            if mode == "CHECK":
+                for commande in commandes:
+                    items = Cartdb.objects.filter(commande=commande)
+                    for item in items:
+                        if item.qte > item.produit.stock:
+                            nb_produit += 1
+                            produit_list += "<li>" + str(item.produit.nom) + " (Manque : " + str(item.qte - item.produit.stock) + ")</li>"
+
+            if nb_produit > 0:
+                message = format_html("Impossible de terminer toutes les commandes.<br><strong>" + str(nb_produit) + "</strong> produits ne disposent pas d'un stock final suffisant !<ul>"+produit_list+"</ul>")
+                messages.error(request, message)
+            else:
+                for commande in commandes:
+                    commande.statut = done_statut
+                    commande.save()
+                    items = Cartdb.objects.filter(commande=commande)
+                    for item in items:
+                        if commande.statut.nom == "En cours" or commande.statut.nom == "Validée":
+                            item.produit.stock -= item.qte
+                            item.produit.save()
+
+                message = format_html("Les commandes ont bien toutes étés [<u>Terminées</u>] pour la période selectionnée !<br>Ne sont concernées que les commandes [<u>Validées</u>] ou [<u>En cours</u>] !<br>Les commandes [<u>En attente</u>] sont annulées.")
+                messages.success(request, message)
+
+            return redirect('order:order-administration')
+
+    context = {
+        'inventaires': inventaires,
+        'commandes': commandes,
+        'form': form,
+        'formAction': formAction,
+        'previous_page': previous_page,
+    }
+    return render(request, "order/form_reset_order.html", context)
+

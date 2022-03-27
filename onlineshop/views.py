@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlite3 import DatabaseError
 
 from django.core.exceptions import ValidationError
@@ -9,6 +10,7 @@ from django.utils.html import format_html
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.files.storage import FileSystemStorage
+from django.db.models import Sum
 from django.utils.text import slugify
 from django.http import JsonResponse
 from django.forms import formset_factory
@@ -26,28 +28,27 @@ from .forms import *
 from order.forms import *
 import xlsxwriter
 import io
-import pandas as pd
+import json
+
 from openpyxl import load_workbook
 
 
 @login_required
 @staff_member_required
 def full_admin(request):
-    admin = AccessMode.objects.filter(user=request.user).first()
-    if admin:
-        if admin.admin is True:
-            admin.admin = False
+    if request.user.is_authenticated:
+        admin = AccessMode.objects.filter(user=request.user).first()
+        if admin:
+            if admin.admin is True:
+                admin.admin = False
+            else:
+                admin.admin = True
+            admin.save()
         else:
-            admin.admin = True
-        admin.save()
-    else:
-        AccessMode.objects.create(user=request.user, admin=True)
-
-    test = AccessMode.objects.first()
-    print(test.user)
-    print(test.admin)
+            AccessMode.objects.create(user=request.user, admin=True)
 
     return redirect('produit-list')
+
 
 def create_tab_dict(items, menu):
     itemslist = []
@@ -64,21 +65,35 @@ def create_tab_dict(items, menu):
     return itemslist
 
 
-def produit_list(request, espece=None, variete=None, portegreffe=None, spec=None):
+def produit_list(request):
     espece = None
     variete = None
     portegreffe = None
     spec = None
     stock = True
     gaf = False
-    admin_mode = AccessMode.objects.get(user=request.user)
+
     formAction = 'onlineshop:produit-list'
 
-    form = SearchProduitForm(request.POST or None)
+    form = SearchProduitForm(request.GET or None)
 
-    queryset = Produit.objects.filter(available=True).order_by('espece', 'variete', 'portegreffe')
+    if 'p' in request.GET:
+        order_value = request.GET['p']
+        if order_value == 'total':
+            queryset = Produit.objects.annotate(sum=Sum('Cartdbs__qte')).order_by('-sum')
+        else:
+            queryset = Produit.objects.all().order_by(order_value)
+        request.session['p'] = request.GET['p']
+    elif 'p' in request.session:
+        order_value = request.session['p']
+        if order_value == 'total':
+            queryset = Produit.objects.annotate(sum=Sum('Cartdbs__qte')).order_by('-sum')
+        else:
+            queryset = Produit.objects.all().order_by(order_value)
+    else:
+        queryset = Produit.objects.all().order_by('variete', 'espece', 'portegreffe')
 
-    if request.method == 'POST':
+    if request.method == 'GET':
         if form.is_valid():
             espece = form.cleaned_data['especes']
             variete = form.cleaned_data['varietes']
@@ -87,8 +102,6 @@ def produit_list(request, espece=None, variete=None, portegreffe=None, spec=None
             stock = form.cleaned_data['stock']
             gaf = form.cleaned_data['gaf']
 
-    if request.method == 'POST':
-        if form.is_valid():
             if not espece is None:
                 queryset = queryset.filter(espece=espece)
             if not variete is None:
@@ -102,13 +115,26 @@ def produit_list(request, espece=None, variete=None, portegreffe=None, spec=None
             if gaf is True:
                 queryset = queryset.filter(gaf=True)
 
-    if not request.user.is_authenticated:
+    if request.user.is_staff is False:
         stock = True
         gaf = False
+        admin_mode = False
         queryset = queryset.filter(gaf=False, stock_bis__gt=0)
+    else:
+        try:
+            admin_mode = AccessMode.objects.get(user=request.user).admin
+        except:
+            admin_mode = False
 
     paginator = Paginator(queryset, 50)
-    page = request.GET.get('page')
+    get_data = request.GET.copy()
+    page = get_data.pop('page', None)
+    p = get_data.pop('p', None)
+    if 'page' in request.GET:
+        page = request.GET['page']
+        request.session['page_p'] = page
+    elif 'page_p' in request.session:
+        page = request.session['page_p']
 
     try:
         produits = paginator.page(page)
@@ -121,123 +147,31 @@ def produit_list(request, espece=None, variete=None, portegreffe=None, spec=None
 
     context = {'produits': produits,
                'produits_list': queryset,
-               'stock': stock,
                'paginate': True,
                'form': form,
                'formAction': formAction,
-               'espece': espece,
-               'variete': variete,
-               'portegreffe': portegreffe,
-               'spec': spec,
-               'gaf': gaf,
-               'admin_mode': admin_mode.admin,
+               'admin_mode': admin_mode,
+               'query_string': get_data.urlencode(),
                }
-
     return render(request, 'onlineshop/list.html', context)
 
 
 def produit_detail(request, id):
     produit = get_object_or_404(Produit, id=id, available=True)
     cart_produit_form = CartAddProduitForm
-    return render(request, './onlineshop/detail.html', {'produit': produit, 'cart_produit_form': cart_produit_form})
-
-
-# def page_not_found_view(request, exception):
-#    return render(request, '404.html')
-
-def export_produits(request, espece_slug=None, variete_slug=None, portegreffe_slug=None, spec_slug=None):
-    espece = None
-    variete = None
-    portegreffe = None
-    spec = None
-    stock_bool = True
-
-    if request.method == "POST":
-        # print(request.POST)
-        if request.POST['espece']:
-            espece_slug = request.POST['espece']
-            # print(espece_slug)
-
-        if request.POST['variete']:
-            variete_slug = request.POST['variete']
-
-        if request.POST['portegreffe']:
-            portegreffe_slug = request.POST['portegreffe']
-
-        if request.POST['spec']:
-            spec_slug = request.POST['spec']
-
-        stock_check = request.POST.get("stock_bool", None)
-        if stock_check == "True":
-            stock_bool = True
-        else:
-            stock_bool = False
-
-    especes = Espece.objects.all()
-    produits_list = Produit.objects.filter(available=True).order_by('espece', 'variete', 'portegreffe')
-
-    if not request.user.is_authenticated:
-        produits_list = produits_list.filter(stock_bis__gt=0)
-
-    varietes = create_tab_dict(produits_list, 'variete')
-    portegreffes = create_tab_dict(produits_list, 'portegreffe')
-    specs = create_tab_dict(produits_list, 'spec')
-
-    if espece_slug:
-        espece = get_object_or_404(Espece, slug=espece_slug)
-        produits_list = produits_list.filter(espece=espece)
-        varietes = create_tab_dict(produits_list, 'variete')
-
-    if variete_slug:
-        variete = get_object_or_404(Variete, slug=variete_slug)
-        produits_list = produits_list.filter(variete=variete)
-        portegreffes = create_tab_dict(produits_list, 'portegreffe')
-
-    if portegreffe_slug:
-        portegreffe = get_object_or_404(PorteGreffe, slug=portegreffe_slug)
-        produits_list = produits_list.filter(portegreffe=portegreffe)
-        specs = create_tab_dict(produits_list, 'spec')
-
-    if spec_slug:
-        spec = get_object_or_404(Spec, slug=spec_slug)
-        produits_list = produits_list.filter(spec=spec)
-
-    if stock_bool:
-        produits_list = produits_list.filter(stock_bis__gt=0)
-
-    paginator = Paginator(produits_list, 5000)
-    page = request.GET.get('page')
-
-    try:
-        produits = paginator.page(page)
-    except PageNotAnInteger:
-        # If page is not an integer, deliver first page.
-        produits = paginator.page(1)
-    except EmptyPage:
-        # If page is out of range (e.g. 9999), deliver last page of results.
-        produits = paginator.page(paginator.num_pages)
-
-    context = {'espece': espece,
-               'especes': especes,
-               'variete': variete,
-               'varietes': varietes,
-               'portegreffe': portegreffe,
-               'portegreffes': portegreffes,
-               'spec': spec,
-               'specs': specs,
-               'produits': produits,
-               'produits_list': produits_list,
-               'stock_bool': stock_bool,
-               'paginate': True
-               }
-
-    return render(request, './onlineshop/export.html', context)
+    context = {
+        'produit': produit,
+        'cart_produit_form': cart_produit_form,
+        'previous_page': 'onlineshop:produit-list',
+    }
+    return render(request, 'onlineshop/detail.html', context)
 
 
 # ****************************************************************************************************************
 # ADMINISTRATION
 # ****************************************************************************************************************
 @login_required
+@staff_member_required
 def onlineshop_administration(request):
     context = {}
     if request.user.is_staff:
@@ -248,12 +182,30 @@ def onlineshop_administration(request):
 
 
 # PRODUITS *****************************************************************************************************
+@login_required
+@staff_member_required
 def manage_produit(request):
-    form = SearchProduitForm(request.POST or None)
+    form = SearchProduitForm(request.GET or None)
 
     if request.user.is_staff:
-        queryset = Produit.objects.all().order_by('espece', 'variete', 'portegreffe')
-        if request.method == 'POST':
+
+        if 'p' in request.GET:
+            order_value = request.GET['p']
+            if order_value == 'total':
+                queryset = Produit.objects.annotate(sum=Sum('Cartdbs__qte')).order_by('-sum')
+            else:
+                queryset = Produit.objects.all().order_by(order_value)
+            request.session['p'] = request.GET['p']
+        elif 'p' in request.session:
+            order_value = request.session['p']
+            if order_value == 'total':
+                queryset = Produit.objects.annotate(sum=Sum('Cartdbs__qte')).order_by('-sum')
+            else:
+                queryset = Produit.objects.all().order_by(order_value)
+        else:
+            queryset = Produit.objects.all().order_by('variete', 'espece', 'portegreffe')
+
+        if request.method == 'GET':
             if form.is_valid():
                 espece = form.cleaned_data['especes']
                 variete = form.cleaned_data['varietes']
@@ -282,7 +234,14 @@ def manage_produit(request):
         previous_page = reverse('onlineshop:onlineshop-administration')
 
         paginator = Paginator(queryset, 50)
-        page = request.GET.get('page')
+        get_data = request.GET.copy()
+        page = get_data.pop('page', None)
+        p = get_data.pop('p', None)
+        if 'page' in request.GET:
+            page = request.GET['page']
+            request.session['page_p'] = page
+        elif 'page_p' in request.session:
+            page = request.session['page_p']
 
         try:
             produits = paginator.page(page)
@@ -299,12 +258,14 @@ def manage_produit(request):
         }
         context = {
             'produits': produits,
+            'produits_list': queryset,
             'paginate': True,
             'previous_page': previous_page,
             'title': title,
             'context_header': context_header,
             'formAction': formAction,
             'form': form,
+            'query_string': get_data.urlencode(),
         }
 
         return render(request, 'onlineshop/manage_produit.html', context)
@@ -313,6 +274,8 @@ def manage_produit(request):
         return redirect('onlineshop:produit-list')
 
 
+@login_required
+@staff_member_required
 def add_produit(request):
     if request.user.is_staff:
         title = "Espèces"
@@ -355,6 +318,8 @@ def add_produit(request):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def edit_produit(request, produit_id):
     # RECUPERATION DES INFOS SELON CATEGORIE SI ADMIN CONNECTE
     if request.user.is_staff:
@@ -394,6 +359,8 @@ def edit_produit(request, produit_id):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def delete_produit(request, produit_id):
     if request.user.is_staff:
         title = "Produits"
@@ -409,7 +376,398 @@ def delete_produit(request, produit_id):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
+def manage_greffons(request):
+    form = SearchGreffonsForm(request.GET or None)
+    couleurs = Couleur.objects.all()
+    inventaires = Inventaire.objects.all()
+
+    if request.user.is_staff:
+
+        if 'g' in request.GET:
+            order_value = request.GET['g']
+            queryset = Greffons.objects.all().order_by(order_value)
+            request.session['g'] = request.GET['g']
+        elif 'g' in request.session:
+            order_value = request.session['g']
+            queryset = Greffons.objects.all().order_by(order_value)
+        else:
+            queryset = Greffons.objects.all().order_by('produit')
+
+        if request.method == 'GET':
+            print(form.errors)
+            if form.is_valid():
+                espece = form.cleaned_data['especes']
+                variete = form.cleaned_data['varietes']
+                portegreffe = form.cleaned_data['portegreffes']
+                spec = form.cleaned_data['specs']
+                start_date = form.cleaned_data['start_date']
+                end_date = form.cleaned_data['end_date']
+                couleur = form.cleaned_data['couleur']
+                rang = form.cleaned_data['rang']
+                inventaire = form.cleaned_data['inventaire']
+
+                if espece is not None:
+                    queryset = queryset.filter(produit__espece=espece)
+                if variete is not None:
+                    queryset = queryset.filter(produit__variete=variete)
+                if portegreffe is not None:
+                    queryset = queryset.filter(produit__portegreffe=portegreffe)
+                if spec is not None:
+                    queryset = queryset.filter(produit__spec=spec)
+                if start_date is not None and start_date != "":
+                    queryset = queryset.filter(date__gte=start_date)
+                if end_date is not None and end_date != "":
+                    queryset = queryset.filter(date__lte=end_date)
+                if couleur.exists():
+                    queryset = queryset.filter(couleur__in=couleur)
+                if inventaire is not None:
+                    queryset = queryset.filter(inventaire__in=inventaire)
+
+        title = "Greffons"
+        header = "Ajouter un Greffon"
+        javascript = "Cela va supprimer le Greffon"
+        formAction = "onlineshop:manage-greffons"
+        previous_page = reverse('onlineshop:onlineshop-administration')
+
+        paginator = Paginator(queryset, 50)
+        get_data = request.GET.copy()
+        page = get_data.pop('page', None)
+        g = get_data.pop('g', None)
+        if 'page' in request.GET:
+            page = request.GET['page']
+            request.session['page_g'] = page
+        elif 'page_g' in request.session:
+            page = request.session['page_p']
+
+        try:
+            greffons = paginator.page(page)
+        except PageNotAnInteger:
+            # If page is not an integer, deliver first page.
+            greffons = paginator.page(1)
+        except EmptyPage:
+            # If page is out of range (e.g. 9999), deliver last page of results.
+            greffons = paginator.page(paginator.num_pages)
+
+        context_header = {
+            'header': header,
+            'javascript': javascript,
+        }
+        context = {
+            'greffons': greffons,
+            'greffons_list': queryset,
+            'paginate': True,
+            'previous_page': previous_page,
+            'title': title,
+            'context_header': context_header,
+            'formAction': formAction,
+            'form': form,
+            'query_string': get_data.urlencode(),
+            'couleurs': couleurs,
+            'inventaires': inventaires,
+        }
+
+        return render(request, 'onlineshop/manage_greffons.html', context)
+    else:
+        messages.error(request, "Vous n'avez pas les droits !")
+        return redirect('onlineshop:produit-list')
+
+@login_required
+@staff_member_required
+def valid_greffons(request):
+    greffons = Greffons.objects.all()
+    pass
+
+
+@login_required
+@staff_member_required
+def add_greffon(request):
+    if request.user.is_staff:
+        title = "Greffons"
+        form = FormGreffon(request.POST or None)
+        message = "Greffon ajouté avec succès !"
+
+        previous_page = reverse('onlineshop:manage-greffons')
+        formAction = 'onlineshop:add-greffon'
+
+        if request.POST:
+            if form.is_valid():
+                instance = form.instance
+                greffons = instance.greffons
+                comm = instance.comm
+                objectif = instance.objectif
+                realise = instance.realise
+                reussi = instance.reussi
+
+                if greffons is None or greffons == "":
+                    instance.greffons = 0
+
+                if comm is None or comm == "":
+                    instance.comm = 0
+
+                if objectif is None or objectif == "":
+                    instance.objectif = 0
+
+                if realise is None or realise == "":
+                        instance.realise = 0
+
+                if reussi is None or reussi == "":
+                    instance.reussi = 0
+
+                instance.save()
+                messages.success(request, message)
+                return redirect('onlineshop:manage-greffons')
+        context_header = {
+        }
+        context = {
+            'form': form,
+            'formAction': formAction,
+            'previous_page': previous_page,
+            'title': title,
+            'context_header': context_header,
+        }
+        return render(request, "onlineshop/form_greffon.html", context)
+    else:
+        return redirect('produit-list')
+
+
+@login_required
+@staff_member_required
+def edit_greffon(request, greffon_id):
+    # RECUPERATION DES INFOS SELON CATEGORIE SI ADMIN CONNECTE
+    if request.user.is_staff:
+        title = "Greffons"
+        greffon = Greffons.objects.get(id=greffon_id)
+        form = FormGreffon(request.POST or None, instance=greffon)
+        message = "Greffon modifié avec succès !"
+
+        previous_page = reverse('onlineshop:manage-greffons')
+        formAction = 'onlineshop:edit-greffon', greffon_id
+
+        if request.POST:
+            if form.is_valid():
+                instance = form.instance
+                qte = instance.greffons
+                comm = instance.comm
+                realise = instance.realise
+                objectif = instance.objectif
+                reussi = instance.reussi
+                rang = instance.rang
+                couleur = instance.couleur
+                date = instance.date
+
+                instance.qte = 0 if qte is None or qte == "" else qte
+                instance.comm = 0 if comm is None or comm == "" else comm
+                instance.objectif = 0 if objectif is None or objectif == "" else objectif
+                instance.realise = 0 if realise is None or realise == "" else realise
+                instance.reussi = 0 if reussi is None or reussi == "" else reussi
+                instance.date = date
+                instance.couleur = couleur
+                instance.rang = rang
+
+                obj = instance.save()
+                messages.success(request, message)
+                return redirect('onlineshop:manage-greffons')
+        context = {
+            'greffon_id': greffon_id,
+            'greffon': greffon,
+            'formAction': formAction,
+            'form': form,
+            'previous_page': previous_page,
+            'title': title,
+        }
+        return render(request, "onlineshop/form_greffon.html", context)
+    else:
+        messages.error(request, "Vous n'avez pas les droits !")
+        return redirect('produit-list')
+
+
+@login_required
+@staff_member_required
+def delete_greffon(request, greffon_id):
+    if request.user.is_staff:
+        title = "Greffons"
+        greffon = Greffons.objects.get(id=greffon_id)
+        form = FormGreffon(request.POST or None, instance=greffon)
+        message = "Greffon supprimé avec succès !"
+
+        greffon.delete()
+        messages.success(request, message)
+        return redirect('onlineshop:manage-greffons')
+    else:
+        messages.error(request, "Vous n'avez pas les droits !")
+        return redirect('produit-list')
+
+
+# MISE A JOUR DES STOCKS D'UN PRODUIT
+@login_required
+@staff_member_required
+def edit_qte_greffon(request):
+    if request.method == 'POST' and request.is_ajax:
+        data_string = request.POST.get('json_data')
+        data_dict = json.loads(data_string)
+        try:
+            greffon_id = data_dict['code']
+            qte = data_dict['greffon']
+            # comm = data_dict['comm']
+            objectif = data_dict['objectif']
+            realise = data_dict['realise']
+            reussi = data_dict['reussi']
+            rang = data_dict['rang']
+            date = datetime.strptime(data_dict['date'], '%d/%m/%Y')
+            couleur_id = data_dict['couleur']
+            inventaire_id = data_dict['inventaire']
+        except Exception as e:
+            print(e)
+
+        if couleur_id is None or couleur_id == "":
+            couleur = None
+        else:
+            couleur = Couleur.objects.get(id=couleur_id)
+
+        if inventaire_id is None or inventaire_id == "":
+            inventaire = None
+        else:
+            inventaire = Inventaire.objects.get(id=inventaire_id)
+
+        try:
+            greffon = Greffons.objects.get(id=greffon_id)
+        except:
+            messages.error(request, "Le greffon n'existe pas !")
+            return redirect('onlineshop:manage-greffons')
+
+        try:
+            greffon.greffon = int(qte)
+            # greffon.comm = int(comm)
+            greffon.objectif = int(objectif)
+            greffon.realise = int(realise)
+            greffon.reussi = int(reussi)
+            greffon.rang = rang
+            greffon.date = date
+            greffon.couleur = couleur
+            greffon.inventaire = inventaire
+            greffon.save()
+        except Exception as e:
+            print(e)
+
+        messages.success(request, "Infos mise à jour pour le greffon ;)")
+    return redirect('onlineshop:manage-greffons')
+
+
+@login_required
+@staff_member_required
+def manage_couleurs(request):
+    couleurs = Couleur.objects.all()
+
+    previous_page = reverse('onlineshop:onlineshop-administration')
+    context = {
+        'couleurs': couleurs,
+        'title': 'Gestion des couleurs',
+        'previous_page': previous_page,
+    }
+    return render(request, 'onlineshop/manage_couleurs.html', context)
+
+
+# *************************************************************************************
+# TVA (ADD/UPDATE/DELETE)
+# *************************************************************************************
+@login_required
+@staff_member_required
+def add_couleur(request):
+    if request.user.is_staff:
+        title = "AJOUTER UNE COULEUR"
+        form = FormCouleur(request.POST or None)
+        previous_page = reverse('onlineshop:manage-greffons')
+        formAction = 'onlineshop:add-couleur'
+
+        if request.method == 'POST':
+            if form.is_valid():
+                nom = form.cleaned_data['nom']
+                couleur = form.cleaned_data['couleur']
+                form.save()
+
+                message = "Nouvelle couleur ajoutée avec succès !"
+                messages.success(request, message)
+            else:
+                message = "Une erreur s'est produite"
+                messages.error(request, message)
+            return redirect('onlineshop:manage-couleurs')
+
+        context_header = {
+        }
+
+        context = {
+            'form': form,
+            'formAction': formAction,
+            'previous_page': previous_page,
+            'title': title,
+            'context_header': context_header,
+        }
+        return render(request, "onlineshop/form_couleur.html", context)
+    else:
+        return redirect('onlineshop:manage-couleurs')
+
+
+@login_required
+@staff_member_required
+def edit_couleur(request, couleur_id):
+    # RECUPERATION DES INFOS SELON CATEGORIE SI ADMIN CONNECTE
+    if request.user.is_staff:
+        title = "COULEUR"
+        couleur = Couleur.objects.get(id=couleur_id)
+        form = FormCouleur(request.POST or None, instance=couleur)
+
+        previous_page = reverse('onlineshop:manage-couleurs')
+        formAction = 'onlineshop:edit-couleur', couleur_id
+
+        if request.POST:
+            if form.is_valid():
+                nom = form.cleaned_data['nom']
+                couleur = form.cleaned_data['couleur']
+
+                message = "Couleur moidifiée avec succès !"
+                messages.success(request, message)
+                instance = form.instance
+                obj = instance.save()
+
+                return redirect('onlineshop:manage-couleurs')
+        context = {
+            'couleur_id': couleur_id,
+            'couleur': couleur,
+            'formAction': formAction,
+            'form': form,
+            'previous_page': previous_page,
+            'title': title,
+        }
+        return render(request, "onlineshop/form_couleur.html", context)
+    else:
+        messages.error(request, "Vous n'avez pas les droits !")
+        return redirect('produit-list')
+
+
+@login_required
+@staff_member_required
+def delete_couleur(request, couleur_id):
+    if request.user.is_staff:
+        try:
+            couleur = Couleur.objects.get(id=couleur_id)
+            couleur.delete()
+            message = "Couleur supprimée avec succès !"
+            messages.success(request, message)
+            return redirect('onlineshop:manage-couleurs')
+        except:
+            message = "Couleur inexistante !"
+            messages.error(request, message)
+            return redirect('onlineshop:manage-couleurs')
+    else:
+        messages.error(request, "Vous n'avez pas les droits !")
+        return redirect('produit-list')
+
+
 # ESPECES / VARIETES / PORTE GREFFE / SPECS ************************************************************************************
+@login_required
+@staff_member_required
 def manage_data(request, categorie):
     categories = ['espece', 'variete', 'portegreffe', 'spec']
     if categorie not in categories:
@@ -461,6 +819,8 @@ def manage_data(request, categorie):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def add_data(request, categorie):
     categories = ['espece', 'variete', 'portegreffe', 'spec']
     if categorie not in categories:
@@ -512,6 +872,8 @@ def add_data(request, categorie):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def edit_data(request, categorie, data_id):
     # TEST SI CATEGORIE EXISTE
     categories = ['espece', 'variete', 'portegreffe', 'spec']
@@ -568,6 +930,8 @@ def edit_data(request, categorie, data_id):
         return redirect('produit-list')
 
 
+@login_required
+@staff_member_required
 def delete_data(request, categorie, data_id):
     categories = ['espece', 'variete', 'portegreffe', 'spec']
     if categorie not in categories:
@@ -607,6 +971,8 @@ def delete_data(request, categorie, data_id):
 # ----------------------------------------------------------------------------------------------------------------------------------------
 # MANAGE GLOBAL
 # ----------------------------------------------------------------------------------------------------------------------------------------
+@login_required
+@staff_member_required
 def export_produits_xls(request):
     output = io.BytesIO()
 
@@ -718,6 +1084,8 @@ def export_produits_xls(request):
     return response
 
 
+@login_required
+@staff_member_required
 def export_produits_xls_custom(request):
     output = io.BytesIO()
 
@@ -773,6 +1141,8 @@ def export_produits_xls_custom(request):
 
 
 # IMPORT DES PRODUITS A PARTIR D'UN FICHIER EXCEL
+@login_required
+@staff_member_required
 def import_produits_xls(request):
 
     previous_page = reverse('onlineshop:onlineshop-administration')
@@ -873,6 +1243,8 @@ def import_produits_xls(request):
     # return response
 
 
+@login_required
+@staff_member_required
 def reset_stock(request):
     cancel_statut = Statut.objects.get(nom='Annulée')
     done_statut = Statut.objects.get(nom='Terminée')
@@ -888,8 +1260,11 @@ def reset_stock(request):
         form = SearchOrderForm(
             initial={
                 'statut': form_statut, })
-        context['form'] = form
-        context['formAction'] = 'order:manage-order'
+        context = {
+            'form': form,
+            'formAction': 'order:manage-order',
+            'previous_page': reverse('onlineshop:onlineshop-administration'),
+        }
         return render(request, 'order/manage_order.html', context)
         # return redirect('order:manage-order')
 
@@ -897,9 +1272,38 @@ def reset_stock(request):
     for produit in produits:
         produit.stock = 0
         produit.stock_bis = 0
+        produit.stock_future = 0
         produit.save()
 
-    message = format_html("Les stocks initiaux et virtuels ont bien été réinitalisés !")
-    messages.error(request, message)
+    message = format_html("Les stocks (initiaux, virtuels et futurs) ont bien été réinitalisés !")
+    messages.success(request, message)
 
     return redirect('onlineshop:onlineshop-administration')
+
+
+# MISE A JOUR DES STOCKS D'UN PRODUIT
+@login_required
+@staff_member_required
+def edit_stock_produit(request):
+    if request.method == 'POST' and request.is_ajax:
+        data_string = request.POST.get('json_data')
+        data_dict = json.loads(data_string)
+        print(data_dict)
+
+        produit_id = data_dict['produit_id']
+        stock = data_dict['stock']
+        stock_bis = data_dict['stock_bis']
+        stock_future = data_dict['stock_future']
+
+        try:
+            produit = Produit.objects.get(id=produit_id)
+        except:
+            messages.error(request, "Le produit n'existe pas !")
+            return redirect('onlineshop:manage-produit')
+
+        produit.stock = int(stock)
+        produit.stock_bis = int(stock_bis)
+        produit.stock_future = int(stock_future)
+        produit.save()
+        messages.success(request, "Quantité mise à jour pour le produit ;)")
+    return redirect('onlineshop:manage-produit')

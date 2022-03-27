@@ -1,17 +1,15 @@
 {% extends "layout/base.html" %}
 {% load static %}
 {% load i18n %}
-{% block title %}La Pépinière - Administration{% endblock %}
+{% block title %}Administration - Produits{% endblock %}
 {% block content %}
 <div class="row">
     <div class="col-12">
         <div class="card">
+            <div class="card-header bg-primary bg-opacity-50 text-black">
+                <div class="h3 mb-0">{% if data %}Modifier un Produit{% else %}Ajouter un Produit{% endif %}</div>
+            </div>
             <div class="card-body">
-                <div class="card-header bg-primary bg-opacity-50 text-black">
-                    <div class="row align-items-center">
-                        <h5 class="col-8 h3 mb-0">{% if data %}Modifier un Produit{% else %}Ajouter un Produit{% endif %}</h5>
-                    </div>
-                </div>
                 <form class="form-horizontal" action="{% if produit %}{% url 'onlineshop:edit-produit' produit_id %}{% else %}{% url 'onlineshop:add-produit' %}{% endif %}" method="post" accept-charset="utf-8">
                     {% csrf_token %}
                     <div class="row g-2">
@@ -110,6 +108,7 @@
                             <input type="submit" value="{% if produit %}MODIFIER{% else %}AJOUTER{% endif %}" class="btn btn-primary" id="search-btn"/>
                         </div>
                     </div>
+                    <br/>
                 </form>
             </div>
         </div>

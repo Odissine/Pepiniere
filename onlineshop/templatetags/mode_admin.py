@@ -14,3 +14,10 @@ def mode_admin(user):
     except:
         return False
     return False
+
+
+@register.filter(name='is_staff')
+def is_staff(user):
+    if user.is_staff is True:
+        return True
+    return False

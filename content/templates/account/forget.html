@@ -1,0 +1,37 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% block title %}La Pépinière - Identification{% endblock %}
+{% block content %}
+<div id="formContent" class=" row justify-content-md-center">
+    <!-- Login Form -->
+    <form class="form-group col-6" action="" method="post">
+        {% csrf_token %}
+        <div class="form-outline mb-4">
+            <h1 class="h3 mb-3 font-weight-normal">Réinitialisation du mot de passe !</h1>
+            <div class="input-group mb-3 col-6">
+                <span class="input-group-text" id="basic-username">@</span>
+                <input name="username" id="username" type="text" class="form-control" placeholder="Nom d'utilisateur / Email" aria-label="username or email" required="" autocomplete="off">
+            </div>
+            <div class="row align-middle">
+                <div class="col-8">
+                    <button class="btn btn-primary bx-pull-left" type="submit">Demande de réinitialisation</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+    <!--<div class="container">
+        <div class="row justify-content-center">
+            <div class="col-8">
+                <h1 class="mt-2">Django People</h1>
+                <hr class="mt-0 mb-4">
+                <form action="" method="post">
+                    {% csrf_token %}
+                    {{ form }}
+                    <button type="submit" class="btn btn-success">Identification</button>
+                </form>
+            </div>
+        </div>
+    </div>-->
+{% endblock %}

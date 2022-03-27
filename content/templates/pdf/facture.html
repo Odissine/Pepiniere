@@ -43,38 +43,53 @@
             color: #f8f9fa !important;
         }
     </style>
-    <title>Commande_{{commande.id}}_{{commande.date|date:'Y' }}</title>
+    <title>{{ type }}_{{commande.id}}_{{commande.date|date:'Y' }}</title>
 </head>
 <body>
     <div id="content" style="width:100%;">
-        <table>
+        <table style="width:100%;">
             <tr>
-                <td>
+                <td style="width:60%;">
                     <img src="{% static 'img/logo_facture.png' %}" height="116" width="330" alt="image non chargée" />
                 </td>
-                <td style="width:40%; font-size:1.5rem" rowspan="2">
-                    <span style="font-size:1.2rem; font-weight:500;">FACTURE N° {{ commande.id}}_{{commande.date|date:'Y' }}</span><br/><br/>
-                    {{ commande.client.nom }} {{ commande.client.prenom }}<br/>
-                    {{ commande.client.adresse }}<br/>
-                    {{ commande.client.cp }} {{ commande.client.ville }}
+                <td style="width:40%; font-size:1.5rem; vertical-align: top; text-align: right;">
+                    <span style="font-size:1.2rem; font-weight:500;">{{ type|upper }} N° {{ commande.id}}_{{commande.date|date:'Y' }}</span>
                 </td>
             </tr>
+        </table>
+        <br/>
+        <table style="width:100%;">
             <tr>
-                <td style="width:60%; font-size:1.1rem;">
+                <td style="width:60%; font-size:1.1rem; vertical-align: top;">
                     Gregory FAUPIN<br/>
                     Les Tesnières<br/>
                     49500 CHAZÉ-SUR-ARGOS<br/>
                     FR-BIO-09<br/>
                     SIRET: 79347157400020
                 </td>
+                <td style="width: 40%; font-size: 1.5rem; padding-left: 2em; vertical-align: top;">
+                    {{ commande.client.nom }} {{ commande.client.prenom }}<br/>
+                    {% if commande.client.adresse %}{{ commande.client.adresse }}<br/>{% endif %}
+                    {% if commande.client.cp %}{{ commande.client.cp }}{% endif %} {% if commande.client.ville %}{{ commande.client.ville }}{% endif %}
+                </td>
             </tr>
         </table>
             {% language 'fr' %}
+                {% if type == "Facture" or type == "Commande" %}
                 <h1 style="font-size:2rem; font-weight:500; line-height:1.2; margin-top:.5rem;">Commande du {{ commande.date|date:'d F Y' }}</h1>
+                {% else %}
+                <h1 style="font-size:2rem; font-weight:500; line-height:1.2; margin-top:.5rem;">Date du devis du {{ commande.date|date:'d F Y' }}</h1>
+                {% endif %}
             {% endlanguage %}
-        <table style="border-color:#000000; color:#212529;">
-            <thead style="background-color: #ffc107 !important; font-size:1.5rem; border-color:#000000; border-bottom-width:1px;">
+        <table style="border-color:#000000; color:#212529; width: 100%;">
+            <thead style="font-size:1.5rem; border-color:#000000; border-bottom-width:1px;">
+                {% if type == "Facture" %}
                 <tr style="background-color: #198754; color: #f8f9fa;vertical-align:middle; padding:.4rem .2rem .1rem .2rem; border-color:#000000; border-bottom-width:1px;">
+                {% elif type == "Commande" %}
+                <tr style="background-color: #ffc107; color: #f8f9fa;vertical-align:middle; padding:.4rem .2rem .1rem .2rem; border-color:#000000; border-bottom-width:1px;">
+                {% else %}
+                <tr style="background-color: #0dcaf0; color: #f8f9fa;vertical-align:middle; padding:.4rem .2rem .1rem .2rem; border-color:#000000; border-bottom-width:1px;">
+                {% endif %}
                     <th style="border-bottom-width:1px; text-align:left;">Produit</th>
                     <th style="border-bottom-width:1px; text-align:right;">Quantité</th>
                     <th style="border-bottom-width:1px; text-align:right;">Prix Unitaire</th>
@@ -155,6 +170,17 @@
                 <td style="text-align:right;">{{ commande.id|total_global_ht|floatformat:2 }} €</td>
             </tr>
             </tbody>
+        </table>
+        <br/>
+        <table style="width: 100%;">
+            <tr>
+                <td style="width: 60%; text-align: left;">
+                    <span style="text-align:left; line-height: 1rem ; font-size: 1.5rem;">Certifié par Certipaq bio FR-BIO-09</span>
+                </td>
+                <td style="width: 40%; text-align: right;">
+                    <img style="text-align: right;" src="{% static 'img/certipaq.jpg' %}"/>
+                </td>
+            </tr>
         </table>
     </div>
 </body>

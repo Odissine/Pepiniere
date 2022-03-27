@@ -2,8 +2,8 @@
 {% load static %}
 {% load i18n %}
 {% load mathfilters %}
-{% load order %}
-{% block title %}La Pépinière - Administration{% endblock %}
+{% load calcul_order %}
+{% block title %}Administration - Inventaires{% endblock %}
 {% block content %}
 {% include 'order/searchClient.html' %}
 <div class="row">
@@ -13,23 +13,32 @@
                 <a type="button" class="btn btn-secondary fw-bolder bx-pull-left" style="font-size: .8rem;" href="{{ previous_page }}">Retour
                 </a>
                 <span class=h3>Gestion des Clients</span>
-                <a type="button" class="btn btn-success fw-bolder bx-pull-right" style="font-size: .8rem;" href="{% url 'order:add-client' %}">
+                <a type="button" class="btn btn-success fw-bolder bx-pull-right" style="font-size: .8rem;" href="{% url 'order:add-inventaire' %}">
                     <i class="bi bi-plus me-1"></i> Nouveau
                 </a>
             </div>
             <div class="card-body">
                 <div class="row border-bottom border-primary align-items-center py-2 fw-bolder">
-                    <div class="col-2">NOM</div>
-                    <div class="col-2">PRENOM</div>
-                    <div class="col-3">MAIL</div>
-                    <div class="col-2">CP</div>
-                    <div class="col-1">CMD</div>
+                    {% if query_string %}
+                    <a href="?{{ query_string }}&mc=nom" class="col-2">NOM</a>
+                    <a href="?{{ query_string }}&mc=prenom" class="col-2">PRENOM</a>
+                    <a href="?{{ query_string }}&mc=mail" class="col-3">MAIL</a>
+                    <a href="?{{ query_string }}&mc=cp" class="col-1">CP</a>
+                    <a href="?{{ query_string }}&mc=total" class="col-2 text-center">COMMANDE(S)</a>
+                    {% else %}
+                    <a href="?mc=nom" class="col-2">NOM</a>
+                    <a href="?mc=prenom" class="col-2">PRENOM</a>
+                    <a href="?mc=mail" class="col-3">MAIL</a>
+                    <a href="?mc=cp" class="col-1">CP</a>
+                    <a href="?mc=total" class="col-2 text-center">COMMANDE(S)</a>
+                    {% endif %}
                     <div class="col-2"></div>
                 </div>
+                <div id="accordionFlushExample" class="accordion accordion-flush">
                 {% for client in clients %}
-                <div class="row align-items-center py-2">
+                <div style="cursor: pointer" class="row align-items-center py-2 {% cycle 'bg-transparent' 'bg-secondary bg-opacity-25' as rowcolors %} collapsed" data-bs-target="#flush-collapse{{ client.id }}" data-bs-toggle="collapse" aria-expanded="false" aria-controls="flush-collapse{{ client.id }}"">
                     <div class="col-2">
-                        {{ client.nom }}
+                        {{ client.nom|upper }}
                     </div>
                     <div class="col-2">
                         {{ client.prenom }}
@@ -38,21 +47,52 @@
                         {{ client.mail }}
                     </div>
                     <div class="col-2">
-                        {{ client.cp }}
+                        {% if client.cp %}{{ client.cp }}{% endif %}
                     </div>
                     <div class="col-1">
                         {{ count_order|get_item:client.id }}
                     </div>
                     <div class="col-2 text-end px-5">
-                        <button onclick="delete_this_client({{ client.id }},'{{ client.prenom }} {{ client.nom }}', {{ count_order|get_item:client.id }})" class="btn btn-danger btn-sm" type="button"><i class="bi bi-trash"></i></button>
-                        <a href="{% url 'order:edit-client' client.id %}"><button class="btn btn-warning btn-sm" type="button"><i class="bi bi-pencil"></i></button></a>
+                        {% if client.activate == True %}
+                        {% if count_order|get_item:client.id > 0 %}
+                        <button onclick="delete_this_client('{{ client.id }}', '{{ client.prenom }} {{ client.nom }}', '{{ count_order|get_item:client.id }}')" class="btn btn-danger btn-sm red-tooltip" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Désactiver {{ client.prenom }} {{ client.nom|upper }}"><i class="bi bi-pause-fill"></i></button>
+                        {% else %}
+                        <button onclick="delete_this_client('{{ client.id }}', '{{ client.prenom }} {{ client.nom }}', '{{ count_order|get_item:client.id }}')" class="btn btn-outline-danger btn-sm red-tooltip" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Supprimer {{ client.prenom }} {{ client.nom|upper }}"><i class="bi bi-trash"></i></button>
+                        {% endif %}
+                        {% else %}
+                        <button onclick="activate_this_client('{{ client.id }}', '{{ client.prenom }} {{ client.nom }}')" class="btn btn-success btn-sm red-tooltip" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Activer {{ client.prenom }} {{ client.nom|upper }}"><i class="bi bi-check"></i></button>
+                        {% endif %}
+                        <a href="{% url 'order:edit-client' client.id %}"><button class="btn btn-warning btn-sm" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Editer {{ client.prenom }} {{ client.nom|upper }}"><i class="bi bi-pencil"></i></button></a>
                     </div>
                 </div>
-                <div class="{% if not forloop.last %} border-bottom {% endif %}"></div>
+                <div id="flush-collapse{{ client.id }}" class="accordion-collapse collapse" aria-labelledby="flush-heading{{ client.id }}" data-bs-parent="#accordionFlushExample">
+                    <div class="accordion-body">
+                        {% for k,items in dic_order.items %}
+                            {% if k == client.id %}
+                            <div class="row">
+                                <div class="col-2 fw-bold bg-primary bg-opacity-10">Commande</div>
+                                <div class="col-3 fw-bold bg-primary bg-opacity-10">Date</div>
+                                <div class="col-3 fw-bold bg-primary bg-opacity-10">Statut</div>
+                                <div class="col-2 fw-bold bg-primary bg-opacity-10">Quantité</div>
+                                <div class="col-2 fw-bold bg-primary bg-opacity-10">Total</div>
+                                {% for item in items %}
+                                <a href="{% url 'order:order-detail' item.id %}" class="col-2">{{ item.id }}</a>
+                                <div class="col-3">{{ item.date }}</div>
+                                <div class="col-3">{{ item.statut.nom }}</div>
+                                <div class="col-2">{{ item.id|qte_order }}</div>
+                                <div class="col-2">{{ item.id|total_order }}</div>
+                                {% endfor %}
+                                <div class=""></div>
+                                <div class=""></div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
                 {% endfor %}
-
+                </div>
                 {% if paginate %}
-                    <div class="clearfix"></div>
+                    <div class="clearfix">&nbsp;</div>
                     <nav aria-label="...">
                         <ul class="pagination justify-content-center">
                         {% if clients.has_previous %}
@@ -89,11 +129,11 @@
         </div>
     </div>
 </div>
-<!-- MODAL DE SUPPRESSION DE L'ESPECE ----------------------------------------------------------------------------------->
-<div class="modal modal-danger fade in" id="modal-delete-client" style="display:none;">
+<!-- MODAL DE SUPPRESSION / ACTIVATION D'UN CLIENT ----------------------------------------------------------------------------------->
+<div class="modal fade in" id="modal-delete-client" style="display:none;">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-light">
+            <div class="modal-header text-light" id="modal-delete-header">
                 <h4 class="modal-title" id="modal-title-delete">Désactiver/Supprimer ce client ?</h4>
                 <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
@@ -102,7 +142,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                 <a href="" id="button-delete-client">
-                    <button type="button" class="btn btn-danger" id="button-delete">Supprimer</button>
+                    <button type="button" class="btn" id="button-delete">Supprimer</button>
                 </a>
             </div>
         </div>
@@ -126,11 +166,32 @@
         console.log(nom)
         url = url.replace('XXX', client_id);
         $('#modal-delete-client').modal('toggle');
+        $('#modal-delete-header').addClass('bg-danger');
         $('#delete-client-body').html(html);
         $('#button-delete-client').attr('href',url);
         $('#button-delete').html(button);
+        $('#button-delete').addClass('btn-danger');
         $('#modal-title-delete').html(title);
-    };
+    }
+
+    function activate_this_client(client_id, nom) {
+        var url = "{% url 'order:activate-client' 'XXX' %}"
+        var html;
+        var button;
+        var title;
+        html = "Êtes vous sûr de vouloir RE-ACTIVER le client : <strong>" + nom + "</strong>"
+        button = "Réactivation"
+        title = "Réactiver le client ?"
+        console.log(nom)
+        url = url.replace('XXX', client_id);
+        $('#modal-delete-client').modal('toggle');
+        $('#modal-delete-header').addClass('bg-success');
+        $('#delete-client-body').html(html);
+        $('#button-delete-client').attr('href',url);
+        $('#button-delete').html(button);
+        $('#button-delete').addClass('btn-success');
+        $('#modal-title-delete').html(title);
+    }
 </script>
 
 {% endblock %}

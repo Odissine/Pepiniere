@@ -1,7 +1,7 @@
 {% extends "layout/base.html" %}
 {% load static %}
 {% load i18n %}
-{% block title %}La Pépinière - Administration{% endblock %}
+{% block title %}Administration Produits{% endblock %}
 {% block content %}
 <div class="row">
     <div class="col-6">
@@ -18,6 +18,19 @@
                     <a href="{% url 'onlineshop:manage-data' 'variete' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Variétés</button></a>
                     <a href="{% url 'onlineshop:manage-data' 'portegreffe' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Porte-Greffes</button></a>
                     <a href="{% url 'onlineshop:manage-data' 'spec' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Spécialités</button></a>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header bg-primary bg-opacity-50 text-black">
+                <div class="row align-items-center">
+                    <h5 class="col-8 h4 mb-0">Gestion des Greffons</h5>
+                </div>
+            </div>
+            <div class="card-body py-2">
+                <div class="list-group">
+                    <a href="{% url 'onlineshop:manage-greffons' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Greffons</button></a>
+                    <a href="{% url 'onlineshop:manage-couleurs' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Couleurs</button></a>
                 </div>
             </div>
         </div>
@@ -45,7 +58,7 @@
             </div>
             <div class="card-body py-2">
                 <div class="list-group">
-                    <a href="{% url 'onlineshop:reset-stock' %}"><button type="button" class="list-group-item list-group-item-action">Remettre à Zero les stocks</button></a>
+                    <a href="{% url 'onlineshop:reset-stock' %}"><button type="button" class="list-group-item list-group-item-action">Remettre à Zero les stocks <span class="bx-pull-right"> <i class="bi bi-exclamation-triangle"></i> Action immédiate <i class="bi bi-exclamation-triangle"></i></span></button></a>
                 </div>
             </div>
         </div>

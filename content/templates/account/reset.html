@@ -1,0 +1,44 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% block title %}La Pépinière - Identification{% endblock %}
+{% block content %}
+<div id="formContent" class=" row justify-content-md-center">
+    <!-- Login Form -->
+    <form class="form-group col-6" action="" method="post" autocomplete="off">
+        <input type="hidden" autocomplete="off"/>
+        {% csrf_token %}
+        <div class="form-outline mb-4">
+            <h1 class="h3 mb-3 font-weight-normal">Modifier votre mot de passe !</h1>
+            <div class="input-group mb-3">
+                <span class="input-group-text bi-key" id="basic-password"></span>
+                <input name="pass1" id="pass1" type="password" class="form-control" placeholder="Mot de passe" aria-label="password" required="" value="">
+            </div>
+            <div class="input-group mb-3">
+                <span class="input-group-text bi-key" id="basic-password2"></span>
+                <input name="pass2" id="pass2" type="password" class="form-control" placeholder="Confirmation du mot de passe" aria-label="password confirmation" required="">
+            </div>
+            <input type="hidden" name="token" id="token" value="{{ token }}" />
+            <input type="hidden" name="user" id="user" value="{{ user.id }}" />
+            <div class="row align-middle">
+                <div class="col-3">
+                    <button class="btn btn-primary bx-pull-left" type="submit">Modifier</button>
+                </div>
+                <div class="col-9 text-end align-middle">
+                    <a href="{% url 'account:login' %}" class="link-primary">S'identifier</a> |
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function init() {
+    // Clear forms here
+    document.getElementById("pass1").value = "";
+    document.getElementById('pass1').setAttribute('placeholder','Nouveau mot de passe');
+    document.getElementById("pass1").focus();
+}
+$(document).ready(init)
+</script>
+{% endblock %}

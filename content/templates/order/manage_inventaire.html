@@ -1,0 +1,147 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load mathfilters %}
+{% load calcul_order %}
+{% block title %}Administration - Inventaires{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header container-fluid align-middle">
+                <span class=h3>Gestion des périodes</span>
+                <a type="button" class="btn btn-success fw-bolder bx-pull-right" style="font-size: .8rem;" href="{% url 'order:add-inventaire' %}">
+                    <i class="bi bi-plus me-1"></i> Nouveau
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row border-bottom border-primary align-items-center py-2 fw-bolder">
+                    {% if query_string %}
+                    <a href="?{{ query_string }}&mi=start_date" class="col-4"><i class="bi bi-calendar-date"></i> DEBUT</a>
+                    <a href="?{{ query_string }}&mi=end_date" class="col-4"><i class="bi bi-calendar-date"></i> DATE FIN</a>
+                    <a href="?mi=stats" class="col-2">STATS</a>
+                    {% else %}
+                    <a href="?mi=start_date" class="col-4"><i class="bi bi-calendar-date"></i> DATE DEBUT</a>
+                    <a href="?mi=end_date" class="col-4"><i class="bi bi-calendar-date"></i> DATE FIN</a>
+                    <a href="?mi=stats" class="col-2">STATS</a>
+                    {% endif %}
+                    <div class="col-2"></div>
+                </div>
+                {% for inventaire in inventaires %}
+                <div class="row align-items-center py-2 {% cycle 'bg-transparent' 'bg-secondary bg-opacity-25' as rowcolors %}">
+                    <div class="col-4">
+                        {{ inventaire.start_date|date:"j F Y" }}
+                    </div>
+                    <div class="col-4">
+                        {{ inventaire.end_date|date:"j F Y" }}
+                    </div>
+                    <div class="col-2">
+                        STATS
+                    </div>
+                    <div class="col-2 text-end px-5">
+                        <a href="{% url 'order:edit-inventaire' inventaire.id %}"><button class="btn btn-warning btn-sm" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Editer la période"><i class="bi bi-pencil"></i></button></a>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if paginate %}
+                <div class="clearfix">&nbsp;</div>
+                <nav aria-label="...">
+                    <ul class="pagination justify-content-center">
+                    {% if inventaires.has_previous %}
+                        <li class="page-item"><a href="?page={{ inventaires.previous_page_number }}" class="page-link"><<</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><a class="page-link" href="#"><<</a></li>
+                    {% endif %}
+                    {% if inventaires.number|add:'-4' > 1 %}
+                        <li class="page-item"><a class="page-link" href="?page={{ inventaires.number|add:'-5' }}{{ getvars }}">...</a></li>
+                    {% endif %}
+                    {% for i in inventaires.paginator.page_range %}
+                        {% if inventaires.number == i %}
+                            <li class="page-item active"><span class="page-link" href="#">{{ i }}</span></li>
+                        {% elif i > inventaires.number|add:'-5' and i < inventaires.number|add:'10' %}
+                            <li class="page-item"><a href="?page={{ i }}" class="page-link">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if inventaires.has_next %}
+                        <li class="page-item"><a href="?page={{ inventaires.next_page_number }}" class="page-link">>></a></li>
+                    {% else %}
+                        <li class="page-item disabled"><a class="page-link" href="#">>></a></li>
+                    {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                <div class="col-sm-12 d-grid gap-2 my-2">
+                    <a href="{% url 'order:order-administration' %}" class="d-grid gap-2">
+                        <button type="button" class="btn btn-secondary">RETOUR</button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL DE SUPPRESSION / ACTIVATION D'UN CLIENT ----------------------------------------------------------------------------------->
+<div class="modal fade in" id="modal-delete-client" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header text-light" id="modal-delete-header">
+                <h4 class="modal-title" id="modal-title-delete">Désactiver/Supprimer ce client ?</h4>
+                <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="delete-client-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="" id="button-delete-client">
+                    <button type="button" class="btn" id="button-delete">Supprimer</button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function delete_this_client(client_id, nom, count) {
+        var url = "{% url 'order:delete-client' 'XXX' %}"
+        var html;
+        var button;
+        var title;
+        if (count > 0) {
+            html = "Êtes vous sûr de vouloir DESACTIVER le client : <strong>" + nom + "</strong>"
+            button = "Désactiver"
+            title = "Désactiver ce client ?"
+        } else {
+            html = "Êtes vous sûr de vouloir SUPPRIMER le client : <strong>" + nom + "</strong>"
+            button = "Supprimer"
+            title = "Supprimer ce client ?"
+        }
+        console.log(nom)
+        url = url.replace('XXX', client_id);
+        $('#modal-delete-client').modal('toggle');
+        $('#modal-delete-header').addClass('bg-danger');
+        $('#delete-client-body').html(html);
+        $('#button-delete-client').attr('href',url);
+        $('#button-delete').html(button);
+        $('#button-delete').addClass('btn-danger');
+        $('#modal-title-delete').html(title);
+    }
+
+    function activate_this_client(client_id, nom) {
+        var url = "{% url 'order:activate-client' 'XXX' %}"
+        var html;
+        var button;
+        var title;
+        html = "Êtes vous sûr de vouloir RE-ACTIVER le client : <strong>" + nom + "</strong>"
+        button = "Réactivation"
+        title = "Réactiver le client ?"
+        console.log(nom)
+        url = url.replace('XXX', client_id);
+        $('#modal-delete-client').modal('toggle');
+        $('#modal-delete-header').addClass('bg-success');
+        $('#delete-client-body').html(html);
+        $('#button-delete-client').attr('href',url);
+        $('#button-delete').html(button);
+        $('#button-delete').addClass('btn-success');
+        $('#modal-title-delete').html(title);
+    }
+</script>
+
+{% endblock %}

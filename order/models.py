@@ -1,7 +1,9 @@
+from datetime import datetime, timedelta
 from django.db import models
 from django.contrib.auth.models import User
-from onlineshop.models import Produit
-from django.utils import timezone
+
+import onlineshop.models
+from onlineshop.models import *
 
 
 class Tva(models.Model):
@@ -18,15 +20,16 @@ class Tva(models.Model):
 class Client(models.Model):
     objects = models.Manager()
     nom = models.CharField(max_length=250, db_index=True, null=False, blank=False)
-    prenom = models.CharField(max_length=250, db_index=True, null=False, blank=False)
-    adresse = models.TextField(blank=True)
-    cp = models.CharField(max_length=5, blank=True)
-    ville = models.CharField(max_length=250, blank=True)
-    tel = models.CharField(max_length=20, blank=True)
-    mail = models.CharField(max_length=250, blank=False)
+    prenom = models.CharField(max_length=250, db_index=True, null=True, blank=True)
+    societe = models.CharField(max_length=250, null=True, blank=True)
+    adresse = models.TextField(blank=True, null=True)
+    cp = models.CharField(max_length=5, blank=True, null=True)
+    ville = models.CharField(max_length=250, blank=True, null=True)
+    tel = models.CharField(max_length=20, blank=True, null=True)
+    mail = models.CharField(max_length=250, blank=False, null=False)
     commentaire = models.TextField(blank=True, null=True)
     remise = models.DecimalField(max_digits=5, decimal_places=2, default=0, blank=True, null=True)
-    activate = models.BooleanField(default=True),
+    activate = models.BooleanField(default=True)
     user = models.ForeignKey(User, related_name='Clients', on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
@@ -54,16 +57,30 @@ class Frais(models.Model):
         return self.nom
 
 
+class Inventaire(models.Model):
+    objects = models.Manager()
+    start_date = models.DateTimeField(default=datetime.now)
+    end_date = models.DateTimeField(default=datetime.now() + timedelta(days=360))
+    # actif = models.BooleanField(default=False)
+
+    def __str__(self):
+        if self.end_date is not None:
+            return str(self.start_date.year) + " - " + str(self.end_date.year)
+        else:
+            return str(self.start_date.year) + " - Maintenant"
+
+
 class Commande(models.Model):
     objects = models.Manager()
-    date = models.DateTimeField(default=timezone.now)
-    date_update = models.DateTimeField(default=timezone.now)
+    date = models.DateTimeField(default=datetime.now)
+    date_update = models.DateTimeField(default=datetime.now)
     client = models.ForeignKey(Client, related_name='Commandes', on_delete=models.CASCADE)
     remise = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     statut = models.ForeignKey(Statut, related_name='Commandes', on_delete=models.CASCADE)
     tva = models.ForeignKey(Tva, related_name='Commandes', on_delete=models.CASCADE)
     frais = models.ForeignKey(Frais, related_name='Commandes', on_delete=models.SET_NULL, blank=True, null=True)
     montant_frais = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
+    inventaire = models.ForeignKey(Inventaire, related_name='Commandes', on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
         return '%s - %s - %s' % (self.date, self.client.get_fullname(), self.statut)
@@ -83,7 +100,7 @@ class Commande(models.Model):
 # Liste des produits commandés ... chaque produit appartient à une et une seule commande
 class Cartdb(models.Model):
     objects = models.Manager()
-    produit = models.ForeignKey(Produit, related_name='Cartdbs', on_delete=models.CASCADE)
+    produit = models.ForeignKey('onlineshop.Produit', related_name='Cartdbs', on_delete=models.CASCADE)
     qte = models.IntegerField(default=1)
     prix = models.DecimalField(max_digits=10, decimal_places=2, default=15.00)
     commande = models.ForeignKey(Commande, related_name='Cartdbs', on_delete=models.CASCADE)
