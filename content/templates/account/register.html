@@ -1,0 +1,109 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% block title %}La Pépinière - Inscription{% endblock %}
+{% block content %}
+<div id="formContent" class=" row justify-content-md-center">
+    <!-- Login Form -->
+    <form class="form-group col-8" action="" method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+            <h1 class="col-12">Inscrivez-vous !</h1>
+            {% if user_form.errors %}
+            <div class="alert alert-danger">
+            {% for field in user_form %}
+                {% for error in field.errors %}
+                        <strong>{{ error|escape }}</strong><br>
+                {% endfor %}
+            {% endfor %}
+            </div>
+            {% endif %}
+            <div class="col-12">
+                {{ user_form.username.label }}
+                <div class="input-group">
+                    <div class="input-group-text bi bi-person"></div>
+                    {{ user_form.username }}
+                    <div style="cursor: pointer" class="input-group-text bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="{{ user_form.username.help_text }}"></div>
+
+                </div>
+            </div>
+            <div class="col-md-12">
+                <label class="require">{{ user_form.email.label }}</label>
+                <div class="input-group ">
+                    <div class="input-group-text bg-danger text-light">@</div>
+                    {{ user_form.email }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="require">{{ user_form.password.label }}</label>
+                <div class="input-group">
+                    <span class="input-group-text bi-key bg-danger text-light"></span>
+                    {{ user_form.password }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="require">{{ user_form.password2.label }}</label>
+                <div class="input-group">
+                    <span class="input-group-text bi-key bg-danger text-light"></span>
+                    {{ user_form.password2 }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="require">{{ user_form.first_name.label }}</label>
+                <div class="input-group">
+                    <div class="input-group-text bg-danger text-light">Prénom</div>
+                    {{ user_form.first_name }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="require">{{ user_form.last_name.label }}</label>
+                <div class="input-group">
+                    <div class="input-group-text bg-danger text-light">Nom</div>
+                    {{ user_form.last_name }}
+                </div>
+            </div>
+            <div class="col-md-12">
+                {{ client_form.societe.label }}
+                <div class="input-group">
+                    <div class="input-group-text bi bi-vector-pen"></div>
+                    {{ client_form.societe }}
+                </div>
+            </div>
+            <div class="col-md-12">
+                <label class="require">{{ client_form.adresse.label }}</label>
+                <div class="input-group">
+                    <div class="input-group-text bi bi-house bg-danger text-light"></div>
+                    {{ client_form.adresse }}
+                </div>
+            </div>
+            <div class="col-md-5">
+                <label class="require">{{ client_form.ville.label }}</label>
+                <div class="input-group">
+                    <div class="input-group-text bi bi-building bg-danger text-light"></div>
+                    {{ client_form.ville }}
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="require">{{ client_form.cp.label }}</label>
+                <div class="input-group">
+                    <div class="input-group-text bi bi-123 bg-danger text-light"></div>
+                    {{ client_form.cp }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="require">{{ client_form.tel.label }}</label>
+                <div class="input-group">
+                    <div class="input-group-text bi bi-telephone bg-danger text-light"></div>
+                    {{ client_form.tel }}
+                </div>
+            </div>
+            <div class="col-md-12">
+                <button class="btn btn-primary bx-pull-right" type="submit">Enregistrer</button>
+            </div>
+            <div class="col-12 text-end align-middle">
+                <a href="{% url 'account:login' %}" class="link-primary">Identifiez-vous</a> |
+                <a href="" class="link-secondary">Mot de passe oublié ?</a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

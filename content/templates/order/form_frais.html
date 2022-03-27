@@ -1,7 +1,7 @@
 {% extends "layout/base.html" %}
 {% load static %}
 {% load i18n %}
-{% block title %}La Pépinière - Administration{% endblock %}
+{% block title %}Administration - Frais{% endblock %}
 {% block content %}
 <div class="card">
     <div class="card-header py-2 border-bottom border-primary">
@@ -19,50 +19,14 @@
         {% csrf_token %}
             <div class="row g-2">
                 <div class="col-6 mb-2 input-group">
-                    <div class="input-group-text">{{ form.prenom.label }}</div>
-                    {{ form.prenom }}
-                </div>
-                <div class="col-6 mb-2 input-group">
                     <div class="input-group-text">{{ form.nom.label }}</div>
                     {{ form.nom }}
                 </div>
             </div>
             <div class="row g-2">
                 <div class="col mb-2 input-group">
-                    <div class="input-group-text">{{ form.adresse.label }}</div>
-                    {{ form.adresse }}
-                </div>
-            </div>
-            <div class="row g-2">
-                <div class="col-6 mb-2 input-group">
-                    <div class="input-group-text">{{ form.cp.label }}</div>
-                    {{ form.cp }}
-                </div>
-                <div class="col-6 mb-2 input-group">
-                    <div class="input-group-text">{{ form.ville.label }}</div>
-                    {{ form.ville }}
-                </div>
-            </div>
-            <div class="row g-2">
-                <div class="col-6 mb-2 input-group">
-                    <div class="input-group-text">{{ form.tel.label }}</div>
-                    {{ form.tel }}
-                </div>
-                <div class="col-6 mb-2 input-group">
-                    <div class="input-group-text">{{ form.mail.label }}</div>
-                    {{ form.mail }}
-                </div>
-            </div>
-            <div class="row g-2">
-                <div class="col mb-2 input-group">
-                    <div class="input-group-text">{{ form.remise.label }}</div>
-                    {{ form.remise }}
-                </div>
-            </div>
-            <div class="row g-2">
-                <div class="col mb-2 input-group">
-                    <div class="input-group-text">{{ form.commentaire.label }}</div>
-                    {{ form.commentaire }}
+                    <div class="input-group-text">{{ form.tva.label }}</div>
+                    {{ form.tva }}
                 </div>
             </div>
             <div class="row g-2">

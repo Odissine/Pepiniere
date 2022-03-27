@@ -1,0 +1,315 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}Administration - Greffons{% endblock %}
+{% block content %}
+{% include 'onlineshop/searchGreffons.html' %}
+{% block css %}
+<style>
+    {% for couleur in couleurs %}
+select option[value="{{ couleur.nom }}"] {
+  background: {{ couleur.couleur }};
+}
+    {% endfor %}
+</style>
+{% endblock %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary bg-opacity-50 text-black">
+                <div class="row align-items-center">
+                    <h5 class="col-1 text-start mb-0">
+                        <a class="bx-pull-left" href="{{ previous_page}}">
+                            <button class="btn btn-secondary" type="button">Retour</button>
+                        </a>
+                    </h5>
+                    <h5 class="col-5 h3 mb-0">Gestion des Greffons</h5>
+                    <h5 class="col-3 text-end mb-0">
+                        <a class="bx-pull-right" href="{% url 'onlineshop:add-greffon' %}">
+                            <button class="btn btn-success" type="button"><i class="bi bi-plus me-1"></i> Nouveau</button>
+                        </a>
+                    </h5>
+                    <h5 class="col-3 text-end mb-0">
+                        <a class="bx-pull-right" href="{% url 'onlineshop:valid-greffon' %}">
+                            <button class="btn btn-primary" type="button"><i class="bi bi-plus me-1"></i> Créer les stocks !</button>
+                        </a>
+                    </h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row bg-dark text-light align-items-center py-2 border-bottom small">
+                    {% if query_string %}
+                    <div class="col-1"><a class="link-warning" href="?{{ query_string }}&g=produit__espece">ESPECES</a></div>
+                    <div class="col-1"><a class="link-warning" href="?{{ query_string }}&g=produit__variete">VARIETES</a></div>
+                    <div class="col-1"><a class="link-warning" href="?{{ query_string }}&g=produit__portegreffe">P-G</a></div>
+                    <div class="col-2">
+                        <div class="row">
+                            <div class="col-12"><a class="link-warning" href="?{{ query_string }}&g=-greffons">GREFFONS</a></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12"><a class="link-warning" href="?{{ query_string }}&g=-realise">REALISES</a></div>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="row">
+                            <div class="col-6"><a class="link-warning" href="?{{ query_string }}&g=-objectif">OBJECTIF</a></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6"><a class="link-warning" href="?{{ query_string }}&g=-reussi">REUSSIS</a></div>
+                        </div>
+                    </div>
+                    <!--
+                    <div class="col-1">
+                        <div class="row">
+                            <div class="col-12"><a class="link-warning" href="?{{ query_string }}&g=-objectif">OBJECTIF</a></div>
+                        </div>
+                    </div>
+                    -->
+                    <div class="col-2">
+                        <div class="row">
+                            <div class="col-6"><a class="link-warning" href="?{{ query_string }}&g=-date">DATE</a></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6"><a class="link-warning" href="?{{ query_string }}&g=couleur">COULEUR</a></div>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="row">
+                            <div class="col-6"><a class="link-warning" href="?{{ query_string }}&g=rang">RANG</a></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6"><a class="link-warning" href="?{{ query_string }}&g=-inventaire">PERIODE</a></div>
+                        </div>
+                    </div>
+                    <div class="col-1"></div>
+                    {% else %}
+                    <div class="col-1"><a class="link-warning" href="?g=produit__espece">ESPECES</a></div>
+                    <div class="col-1"><a class="link-warning" href="?g=produit__variete">VARIETES</a></div>
+                    <div class="col-1"><a class="link-warning" href="?g=produit__portegreffe">P-G</a></div>
+                    <div class="col-2">
+                        <div class="row">
+                            <div class="col-12"><a class="link-warning" href="?g=-greffons">GREFFONS</a></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12"><a class="link-warning" href="?g=-realise">REALISES</a></div>
+
+                        </div>
+                    </div>
+
+                    <div class="col-2">
+                        <div class="row">
+                            <div class="col-12"><a class="link-warning" href="?g=-objectif">OBJECTIF</a></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12"><a class="link-warning" href="?g=-reussi">REUSSIS</a></div>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="row">
+                            <div class="col-12"><a class="link-warning" href="?g=-date">DATE</a></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12"><a class="link-warning" href="?g=couleur">COULEUR</a></div>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="row">
+                            <div class="col-12"><a class="link-warning" href="?g=rang">RANG</a></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12"><a class="link-warning" href="?g=-inventaire">PERIODE</a></div>
+                        </div>
+                    </div>
+                    <div class="col-1"></div>
+                    {% endif %}
+                </div>
+                {% for greffon in greffons %}
+                <div class="row align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %} {% cycle 'bg-transparent' 'bg-secondary bg-opacity-25' as rowcolors %}">
+                    <div class="col-1">{{ greffon.produit.espece.nom }}</div>
+                    <div class="col-1">{{ greffon.produit.variete.nom }}</div>
+                    <div class="col-1">{{ greffon.produit.portegreffe.nom }}</div>
+                    <div class="col-2">
+                        <div class="row">
+                            <div class="col-12"><input id="greffon_{{ greffon.id }}" name="greffon_{{ greffon.id }}" class="form-control" type="number" min="0" value="{{ greffon.greffons }}" /></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12"><input id="realise_{{ greffon.id }}" name="realise_{{ greffon.id }}" class="form-control" type="number" min="0" value="{{ greffon.realise }}" /></div>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="row">
+                            <div class="col-12"><input id="objectif_{{ greffon.id }}" name="objectif_{{ greffon.id }}" class="form-control" type="number" min="0" value="{{ greffon.objectif }}" /></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12"><input id="reussi_{{ greffon.id }}" name="reussi_{{ greffon.id }}" class="form-control" type="number" min="0" value="{{ greffon.reussi }}" /></div>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="row">
+                            <div class="col-12"><input id="date_{{ greffon.id }}" name="date_{{ greffon.id }}" type="text" class="datepicker_input form-control" value="{{ greffon.date|date:'d/m/Y' }}" /></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <select id="couleur_{{ greffon.id }}" class="select2 form-control" style="background-color: {{ greffon.couleur.couleur }};">
+                                    <option selected value=""></option>
+                                    {% for couleur in couleurs %}
+                                        <option {% if greffon.couleur == couleur %}selected{% endif %} data-color="{{ couleur.couleur }}" style="background-color: {{ couleur.couleur }}" value="{{ couleur.id }}">{{ couleur.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="row">
+                            <div class="col-12"><input id="rang_{{ greffon.id }}" name="rang_{{ greffon.id }}" class="form-control" type="number" min="0" value="{{ greffon.rang }}" /></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <select id="inventaire_{{ greffon.id }}" class="select2 form-control">
+                                    <option selected value=""></option>
+                                    {% for inventaire in inventaires %}
+                                        <option {% if greffon.inventaire == inventaire %}selected{% endif %} value="{{ inventaire.id }}">{{ inventaire }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-1 text-end">
+                        <button onclick="delete_divis_greffon('{{ greffon.id }}')" class="btn btn-danger btn-sm" type="button"><i class="bi bi-trash"></i></button>
+                        <a href="{% url 'onlineshop:edit-greffon' greffon.id %}"><button class="btn btn-warning btn-sm" type="button"><i class="bi bi-pencil"></i></button></a>
+                        <button id="edit-qte-button" name="edit-qte-button" data-code="{{ greffon.id }}" class="btn btn-success btn-sm edit-qte-button" type="button"><i class="bi bi-check"></i></button>
+                    </div>
+                </div>
+                {% endfor %}
+                <div class="col-sm-12 d-grid gap-2 my-2">
+                    <a href="{{ previous_page }}" class="d-grid gap-2">
+                        <button type="button" class="btn btn-secondary">RETOUR</button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% if paginate %}
+    <div class="clearfix"></div>
+    <nav aria-label="...">
+        <ul class="pagination justify-content-center">
+        {% if greffons.has_previous %}
+            <li class="page-item"><a href="?page={{ greffons.previous_page_number }}" class="page-link"><<</a></li>
+        {% else %}
+            <li class="page-item disabled"><a class="page-link" href="#"><<</a></li>
+        {% endif %}
+        {% if greffons.number|add:'-4' > 1 %}
+            <li class="page-item"><a class="page-link" href="?page={{ greffons.number|add:'-5' }}{{ getvars }}">...</a></li>
+        {% endif %}
+        {% for i in greffons.paginator.page_range %}
+            {% if greffons.number == i %}
+                <li class="page-item active"><span class="page-link" href="#">{{ i }}</span></li>
+            {% elif i > greffons.number|add:'-5' and i < greffons.number|add:'10' %}
+                <li class="page-item"><a href="?page={{ i }}" class="page-link">{{ i }}</a></li>
+            {% endif %}
+        {% endfor %}
+        {% if greffons.has_next %}
+            <li class="page-item"><a href="?page={{ greffons.next_page_number }}" class="page-link">>></a></li>
+        {% else %}
+            <li class="page-item disabled"><a class="page-link" href="#">>></a></li>
+        {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+<!-- MODAL DE SUPPRESSION DE L'ESPECE ----------------------------------------------------------------------------------->
+<div class="modal modal-danger fade in" id="modal-delete-greffon" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-light">
+                <h4 class="modal-title">Supprimer ce greffon ?</h4>
+                <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="delete-greffon-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="" id="button-delete-greffon">
+                    <button type="button" class="btn btn-danger">Supprimer</button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+<script>
+
+    function delete_divis_greffon(greffon_id, nom) {
+        var url = "{% url 'onlineshop:delete-greffon' 'XXX' %}"
+        var html;
+        html = "Cela va supprimer le greffon"
+        url = url.replace('XXX', greffon_id);
+        $('#modal-delete-greffon').modal('toggle');
+        $('#delete-greffon-body').html(html);
+        $('#button-delete-greffon').attr('href',url);
+    }
+
+    $(document).ready(function(){
+        $('.edit-qte-button').click(function() {
+            var code = $(this).attr("data-code");
+
+            var greffon_id = $("#greffon_" + code);
+            // var comm_id = $("#comm_" + code);
+            var objectif_id = $("#objectif_" + code);
+            var realise_id = $("#realise_" + code);
+            var reussi_id = $("#reussi_" + code);
+            var rang_id = $("#rang_" + code);
+            var couleur_id = $("#couleur_" + code);
+            var date_id = $("#date_" + code);
+            var inventaire_id = $("#inventaire_" + code);
+
+            var greffon = $(greffon_id).val();
+            // var comm = $(comm_id).val();
+            var objectif = $(objectif_id).val();
+            var realise = $(realise_id).val();
+            var reussi = $(reussi_id).val();
+            var rang = $(rang_id).val();
+            var couleur = $(couleur_id).val();
+            var date = $(date_id).val();
+            var inventaire = $(inventaire_id).val();
+
+            console.log(code, greffon, objectif, realise, reussi, rang, couleur, date, inventaire)
+
+            launchJquery(code, greffon, objectif, realise, reussi, rang, couleur, date, inventaire);
+
+            $('#textErrorMessageAjax').text("Mise à jour des greffons effectuée avec succès !");
+            $('#errorMessageAjax').addClass('show');
+            $('#errorMessageAjax').removeClass('hide');
+            $('#errorMessageAjax').css("display","block");
+            function hideMsg () {
+                $('#errorMessageAjax').fadeOut();
+                $('#errorMessageAjax').removeClass('show');
+                $('#errorMessageAjax').addClass('hide');
+                $('#errorMessageAjax').css("display","none");
+            }
+            setTimeout(hideMsg,5000);
+        });
+
+        function launchJquery(code, greffon, objectif, realise, reussi, rang, couleur, date, inventaire) {
+            $.post("{% url 'onlineshop:edit-qte-greffon' %}",
+                {
+                    json_data: JSON.stringify({
+                        code: code,
+                        greffon: greffon,
+                        // comm: comm,
+                        objectif: objectif,
+                        realise: realise,
+                        reussi: reussi,
+                        rang: rang,
+                        couleur: couleur,
+                        date: date,
+                        inventaire: inventaire,
+                    })
+                },
+                function (data, status) {
+                });
+        }
+    });
+
+</script>
+{% endblock %}

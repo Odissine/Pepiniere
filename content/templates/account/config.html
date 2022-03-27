@@ -1,0 +1,30 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% block title %}La Pépinière - Administration - Configuration{% endblock %}
+{% block content %}
+<div id="formContent" class=" row justify-content-md-center">
+    <!-- Login Form -->
+    <form class="form-group col-8" action="" method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+            <h1 class="col-12">Configuration du site</h1>
+            {% if form.errors %}
+            <div class="alert alert-danger">
+            {% for field in form %}
+                {% for error in field.errors %}
+                        <strong>{{ error|escape }}</strong><br>
+                {% endfor %}
+            {% endfor %}
+            </div>
+            {% endif %}
+            <div class="col-12">
+                {{ form.register.label }}
+                {{ form.register }}
+            </div>
+            <div class="col-md-12">
+                <button class="btn btn-primary bx-pull-right" type="submit">Enregistrer</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

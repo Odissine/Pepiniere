@@ -61,6 +61,184 @@ class SearchProduitForm(forms.Form):
         fields = ['especes', 'varietes', 'portegreffes', 'specs', 'stock', 'gaf']
 
 
+class SearchGreffonsForm(forms.Form):
+
+    def __init__(self, *args, **kwargs):
+        self.especes = kwargs.pop('especes', None)
+        self.varietes = kwargs.pop('varietes', None)
+        self.portegreffes = kwargs.pop('portegreffes', None)
+        self.specs = kwargs.pop('specs', None)
+        self.date = kwargs.pop('date', None)
+        self.couleur = kwargs.pop('couleur', None)
+        self.inventaire = kwargs.pop('inventaire', None)
+        super(SearchGreffonsForm, self).__init__(*args, **kwargs)
+
+        self.fields['especes'] = forms.ModelChoiceField(
+            label="Espèces",
+            queryset=Espece.objects.all(),
+            required=False,
+            widget=Select2Widget(attrs={'placeholder': 'Especes', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir une espèce')
+
+        self.fields['varietes'] = forms.ModelChoiceField(
+            label="Variétés",
+            queryset=Variete.objects.all(),
+            required=False,
+            widget=Select2Widget(attrs={'placeholder': 'Variétés', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir une variété')
+
+        self.fields['portegreffes'] = forms.ModelChoiceField(
+            label="Porte-Greffes",
+            queryset=PorteGreffe.objects.all(),
+            required=False,
+            widget=Select2Widget(attrs={'placeholder': 'Porte-Greffes', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir un porte-greffe')
+
+        self.fields['specs'] = forms.ModelChoiceField(
+            label="Spécialités",
+            queryset=Spec.objects.all(),
+            required=False,
+            widget=Select2Widget(attrs={'placeholder': 'Spécialités', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir une spécialités')
+
+        self.fields['start_date'] = forms.DateField(
+            label="Date de début du greffon",
+            required=False,
+            widget=forms.DateInput(attrs={'placeholder': 'Date du greffon', 'class': 'datepicker_input form-control'}),
+            help_text='Séléctionner une date après laquelle les greffons ont été greffés',
+        )
+        self.fields['end_date'] = forms.DateField(
+            label="Date de fin du greffon",
+            required=False,
+            widget=forms.DateInput(attrs={'placeholder': 'Date du greffon', 'class': 'datepicker_input form-control'}),
+            help_text='Séléctionner une date avant laquelle les greffons ont été greffés',
+        )
+        self.fields['couleur'] = forms.ModelMultipleChoiceField(
+            label="Couleurs",
+            queryset=Couleur.objects.all(),
+            required=False,
+            widget=Select2MultipleWidget(attrs={'placeholder': 'Couleurs', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir une couleur'
+        )
+
+        self.fields['inventaire'] = forms.ModelChoiceField(
+            label="Période",
+            queryset=Inventaire.objects.all(),
+            required=False,
+            widget=Select2Widget(attrs={'placeholder': 'Période', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir une période')
+
+    class Meta:
+        fields = ['especes', 'varietes', 'portegreffes', 'specs', 'start_date', 'end_date', 'couleur', 'rang', 'inventaire']
+
+
+class FormGreffon(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        self.produit = kwargs.pop('produit', None)
+        # self.varietes = kwargs.pop('varietes', None)
+        # self.portegreffes = kwargs.pop('portegreffes', None)
+        # self.specs = kwargs.pop('specs', None)
+        self.greffons = kwargs.pop('greffons', None)
+        self.comm = kwargs.pop('comm', None)
+        self.objectif = kwargs.pop('objectif', None)
+        self.realise = kwargs.pop('realise', None)
+        self.reussi = kwargs.pop('reussi', None)
+        self.date = kwargs.pop('date', None)
+        self.couleur = kwargs.pop('couleur', None)
+        self.rang = kwargs.pop('rang', None)
+        super(FormGreffon, self).__init__(*args, **kwargs)
+
+        self.fields['produit'] = forms.ModelChoiceField(
+            label="Produits",
+            queryset=Produit.objects.all(),
+            required=False,
+            widget=Select2Widget(attrs={'placeholder': 'Produit', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir un produit dans la liste des produit existant !')
+        '''
+        self.fields['especes'] = forms.ModelChoiceField(
+            label="Espèces",
+            queryset=Espece.objects.all(),
+            required=False,
+            widget=Select2Widget(attrs={'placeholder': 'Especes', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir une espèce')
+
+        self.fields['varietes'] = forms.ModelChoiceField(
+            label="Variétés",
+            queryset=Variete.objects.all(),
+            required=False,
+            widget=Select2Widget(attrs={'placeholder': 'Variétés', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir une variété')
+
+        self.fields['portegreffes'] = forms.ModelChoiceField(
+            label="Porte-Greffes",
+            queryset=PorteGreffe.objects.all(),
+            required=False,
+            widget=Select2Widget(attrs={'placeholder': 'Porte-Greffes', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir un porte-greffe')
+
+        self.fields['specs'] = forms.ModelChoiceField(
+            label="Spécialités",
+            queryset=Spec.objects.all(),
+            required=False,
+            widget=Select2Widget(attrs={'placeholder': 'Spécialités', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir une spécialités')
+        '''
+        self.fields['date'] = forms.DateField(
+            label="Date du greffon",
+            required=False,
+            widget=forms.DateInput(attrs={'placeholder': 'Date du greffon', 'class': 'datepicker_input form-control'}),
+            help_text='Saisir une date à laquelle le greffon a été réalisé',
+        )
+        self.fields['greffons'] = forms.CharField(
+            label="Nombre de greffons",
+            required=False,
+            widget=forms.NumberInput(attrs={'placeholder': 'Nombre de greffons', 'class': 'form-control'}),
+            help_text='Quantité de greffon',
+        )
+        self.fields['comm'] = forms.CharField(
+            label="Nombre de comm ??",
+            required=False,
+            widget=forms.NumberInput(attrs={'placeholder': 'Nombre de comm ??', 'class': 'form-control'}),
+            help_text='Quantité de comm ??',
+        )
+        self.fields['objectif'] = forms.CharField(
+            label="Objectif",
+            required=False,
+            widget=forms.NumberInput(attrs={'placeholder': 'Objectif', 'class': 'form-control'}),
+            help_text='Objectif',
+        )
+        self.fields['realise'] = forms.CharField(
+            label="Réalisé",
+            required=False,
+            widget=forms.NumberInput(attrs={'placeholder': 'Réalisé', 'class': 'form-control'}),
+            help_text='Réalisé',
+        )
+        self.fields['couleur'] = forms.ModelChoiceField(
+            label="Couleur du scotch",
+            queryset=Couleur.objects.all(),
+            required=False,
+            widget=Select2Widget(attrs={'placeholder': 'Couleur du scotch', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir une couleur de scotch'
+        )
+        self.fields['rang'] = forms.CharField(
+            label="N° du Rang",
+            required=False,
+            widget=forms.TextInput(attrs={'placeholder': 'N° du rang', 'class': 'form-control'}),
+            help_text='Saisir un numéro de rang'
+        )
+        self.fields['reussi'] = forms.CharField(
+            label="Reussi",
+            required=False,
+            widget=forms.NumberInput(attrs={'placeholder': 'Reussi', 'class': 'form-control'}),
+            help_text='Reussi',
+        )
+
+    class Meta:
+        model = Greffons
+        fields = ['produit', 'date', 'greffons', 'comm','objectif', 'realise', 'reussi', 'couleur', 'rang']
+
+
 # FORMULAIRE DEDIE A L'AJOUT/EDITION D'UNE ESPECE ------------------------------------------------------------------------
 class FormEspece(forms.ModelForm):
 
@@ -191,3 +369,29 @@ class ImportProduitForm(forms.ModelForm):
     class Meta:
         model = Produit
         fields = ['id', 'nom', 'slug', 'description', 'prix', 'stock',	'stock_bis', 'available', 'espece',	'variete', 'portegreffe', 'spec']
+
+
+# FORMULAIRE DEDIE A L'AJOUT/EDITION D'UNE COULEUR
+class FormCouleur(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        self.tva = kwargs.pop('tva', None)
+        super(FormCouleur, self).__init__(*args, **kwargs)
+
+        self.fields['nom'] = forms.CharField(
+            label="Couleur de scotch",
+            required=True,
+            help_text='Indiquer un nom de couleur',
+            widget=forms.TextInput(attrs={'placeholder': 'Saisir un nom de couleur', 'class': 'form-control'},)
+        )
+
+        self.fields['couleur'] = forms.CharField(
+            label="Code couleur",
+            required=True,
+            help_text='Code couleur hexa #xxxxxx',
+            widget=forms.TextInput(attrs={'placeholder': '#XXXXXX', 'class': 'form-control form-control-color', 'type': 'color'},)
+        )
+
+    class Meta:
+        model = Couleur
+        fields = ['nom', 'couleur']

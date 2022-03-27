@@ -1,4 +1,5 @@
 from django import forms
+from django_select2.forms import Select2Widget, Select2MultipleWidget
 from order.models import Client
 
 PRODUCT_QUANTITY_CHOICES = [(i, str(i)) for i in range(1, 100)]
@@ -11,7 +12,22 @@ class CartAddProduitForm(forms.Form):
 
 
 class CartValidForm(forms.Form):
-    client = forms.ModelChoiceField(queryset=Client.objects.all())
+
+    def __init__(self, *args, **kwargs):
+        self.clients = kwargs.pop('clients', None)
+        super(CartValidForm, self).__init__(*args, **kwargs)
+
+        self.fields['clients'] = forms.ModelChoiceField(
+            label="Clients",
+            queryset=Client.objects.all(),
+            required=False,
+            widget=Select2Widget(attrs={'placeholder': 'Clients', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir un client'
+        )
+
+    class Meta:
+        model = Client
+        fields = ['clients']
 
 
 class CartUpdateForm(forms.Form):

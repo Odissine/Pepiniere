@@ -1380,7 +1380,7 @@ input[type="checkbox"].switch_1 {
   width: 100% !important;
 }
 body .select2-container {
-    z-index: 9999 !important;
+    z-index: 10 !important;
 }
 
 .input-group .select2 {
@@ -1428,8 +1428,8 @@ body .select2-container {
 
 .form-switch .form-check-input[type=checkbox] {
     border-radius: 1.5em;
-    height: 40px;
-    width: 80px;
+    height: 30px;
+    width: 60px;
 }
 
 .toast {
@@ -1459,10 +1459,26 @@ LOADING ANIMATION
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 1000;
+  z-index: 9999;
 }
 .spinner-border-sm {
   width: 6rem;
   height: 6rem;
   border-width: 0.5em;
+}
+
+input[required]+label:after {
+    content: '*';
+    color: red;
+}
+[required] label::after {
+  content: '*';
+  font-size: 24px;
+  line-height: 0;
+  vertical-align: middle;
+  color: red;
+}
+label.require::after {
+  content: " *";
+  color: #e32;
 }

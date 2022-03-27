@@ -1,0 +1,44 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}Administration - Inventaire{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header py-2 border-bottom border-primary">
+        <div class="row align-items-center">
+            <div class="col-md-auto h3 mb-0">{% if inventaire %}Modifier une période{% else %}Ajouter une période{% endif %}</div>
+            <div class="col">
+                <a class="bx-pull-right" href="{{ previous_page}}">
+                    <button class="btn btn-secondary" type="button">Retour</button>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class=" card-body mt-3">
+        <form class="form-horizontal" action="{% if inventaire %}{% url 'order:edit-inventaire' inventaire.id %}{% else %}{% url 'order:add-inventaire' %}{% endif %}" method="post" accept-charset="utf-8">
+        {% csrf_token %}
+            <div class="row g-2">
+                <div class="col-6 mb-2 input-group">
+                    <div class="input-group-prepend col-2">
+                        <span class="input-group-text col-12 ">{{ form.start_date.label }}</span>
+                    </div>
+                    {{ form.start_date }}
+                </div>
+            </div>
+            <div class="row g-2">
+                <div class="col-6 mb-2 input-group">
+                    <div class="input-group-prepend col-2">
+                        <span class="input-group-text col-12">{{ form.end_date.label }}</span>
+                    </div>
+                    {{ form.end_date }}
+                </div>
+            </div>
+            <div class="row g-2">
+                <div class="d-grid gap-2 my-3">
+                    <input type="submit" value="{% if inventaire %}MODIFIER{% else %}AJOUTER{% endif %}" class="btn btn-primary" id="search-btn"/>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

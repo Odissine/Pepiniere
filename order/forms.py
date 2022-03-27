@@ -5,6 +5,12 @@ from django_select2.forms import Select2Widget, Select2MultipleWidget
 from bootstrap_datepicker_plus.widgets import DatePickerInput
 
 
+CLIENT_CHOICE = (
+    ("1", "Tous"),
+    ("2", "Actif"),
+    ("3", "Inactif"),
+)
+
 class OrderAddProduitOrder(forms.Form):
     override = forms.BooleanField(required=False, initial=False, widget=forms.HiddenInput)
 
@@ -20,6 +26,8 @@ class SearchOrderForm(forms.Form):
         self.especes = kwargs.pop('especes', None)
         self.varietes = kwargs.pop('varietes', None)
         self.portegreffes = kwargs.pop('portegreffes', None)
+        self.frais = kwargs.pop('frais', None)
+        self.inventaire = kwargs.pop('inventaire', None)
         super(SearchOrderForm, self).__init__(*args, **kwargs)
 
         self.fields['statut'] = forms.ModelMultipleChoiceField(
@@ -36,18 +44,23 @@ class SearchOrderForm(forms.Form):
             widget=Select2MultipleWidget(attrs={'placeholder': 'Clients', 'class': 'form-control js-example-basic-single'}),
             help_text='Séléctionner un client')
 
+        current_year = datetime.now().year
+        previous_year = datetime.now().year - 1
+
         self.fields['start_date'] = forms.DateField(
             label="Commandes passées après",
             required=False,
             widget=forms.DateInput(attrs={'placeholder': 'Date début', 'class': 'datepicker_input form-control'}),
             help_text='Séléctionner une date après laquelle les commandes ont été passées',
+            initial=datetime.strptime('%s-01-01' % previous_year, '%Y-%m-%d')
         )
 
         self.fields['end_date'] = forms.DateField(
             label="Commandes passées avant",
             required=False,
             widget=forms.DateInput(attrs={'placeholder':'Date fin', 'class': 'datepicker_input form-control'}),
-            help_text='Séléctionner une date avant laquelle les commandes ont été passées'
+            help_text='Séléctionner une date avant laquelle les commandes ont été passées',
+            initial=datetime.strptime('%s-12-31' % current_year, '%Y-%m-%d')
         )
 
         self.fields['produits'] = forms.ModelMultipleChoiceField(
@@ -78,16 +91,57 @@ class SearchOrderForm(forms.Form):
             widget=Select2MultipleWidget(attrs={'placeholder': 'Porte-Greffes', 'class': 'form-control js-example-basic-single'}),
             help_text='Choisir un porte-greffe')
 
+        self.fields['frais'] = forms.ModelMultipleChoiceField(
+            label="Frais",
+            queryset=Frais.objects.all(),
+            required=False,
+            widget=Select2MultipleWidget(attrs={'placeholder': 'Frais', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir un type de frais')
+
+        self.fields['inventaire'] = forms.ModelMultipleChoiceField(
+            label="Période",
+            queryset=Inventaire.objects.all().order_by('-start_date'),
+            required=False,
+            widget=Select2MultipleWidget(attrs={'placeholder': 'Période', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir une période')
+
     class Meta:
         model = Commande
-        fields = ['statut', 'clients', 'start_date', 'end_date', 'produits', 'especes', 'varietes', 'portegreffes',]
+        fields = ['statut', 'clients', 'start_date', 'end_date', 'produits', 'especes', 'varietes', 'portegreffes', 'frais', 'inventaire', ]
         widgets = {
             'start_date': DatePickerInput(),  # default date-format %m/%d/%Y will be used
             'end_date': DatePickerInput(format='%Y-%m-%d'),  # specify date-frmat
         }
 
 
-class SearchClientForm(forms.ModelForm):
+class FormResetOrder(forms.Form):
+
+    def __init__(self, *args, **kwargs):
+        self.inventaire = kwargs.pop('inventaire', None)
+        super(FormResetOrder, self).__init__(*args, **kwargs)
+
+        self.fields['inventaire'] = forms.ModelChoiceField(
+            label="Période",
+            queryset=Inventaire.objects.exclude(end_date__gte=datetime.datetime.now()).order_by('-start_date'),
+            required=True,
+            widget=Select2Widget(attrs={'placeholder': 'Période', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir une période',
+            initial=Inventaire.objects.get(start_date__lte=datetime.datetime.now(), end_date__gte=datetime.datetime.now())
+        )
+
+        self.fields['mode'] = forms.ChoiceField(
+            label="Contrôle des stocks ?",
+            choices=[('CHECK', 'Avec contrôle'), ('FULL', 'Sans contrôle')],
+            required=True,
+            widget=Select2Widget(attrs={'placeholder': 'Contrôler les stocks ?', 'class': 'form-control js-example-basic-single'}),
+            help_text='Contrôler les stocks avant traitement ?')
+
+    class Meta:
+        model = Commande
+        fields = ['inventaire', 'mode']
+
+
+class SearchClientForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         self.cp = kwargs.pop('statut', None)
@@ -95,15 +149,30 @@ class SearchClientForm(forms.ModelForm):
         self.remise = kwargs.pop('start_date', None)
         super(SearchClientForm, self).__init__(*args, **kwargs)
 
+        self.fields['nom'] = forms.CharField(
+            label="Nom",
+            required=False,
+            widget=forms.TextInput(attrs={'placeholder': 'Nom', 'class': 'form-control'}),
+            help_text='Saisir le nom de famille ou une partie du nom du client'
+        )
+
+        self.fields['prenom'] = forms.CharField(
+            label="Prénom",
+            required=False,
+            widget=forms.TextInput(attrs={'placeholder': 'Prénom', 'class': 'form-control'}),
+            help_text='Saisir le prénom (ou une partie)'
+        )
+
         self.fields['cp'] = forms.CharField(
             label="Code Postal",
             required=False,
             widget=forms.TextInput(attrs={'placeholder': 'Code Postal', 'class': 'form-control'}),
-            help_text='Saisir un code postal')
+            help_text='Saisir un code postal'
+        )
 
-        self.fields['ville'] = forms.ModelChoiceField(
+        self.fields['ville'] = forms.ChoiceField(
             label="Villes",
-            queryset=Client.objects.order_by().values_list('ville', flat=True).distinct(),
+            choices=Client.objects.all().values_list('ville', 'ville').distinct(),
             required=False,
             widget=Select2Widget(attrs={'placeholder': 'Villes', 'class': 'form-control js-example-basic-single'}),
             help_text='Séléctionner une ville',
@@ -116,9 +185,17 @@ class SearchClientForm(forms.ModelForm):
             help_text='Saisir un taux de remise (sans le %)',
         )
 
+        self.fields['activate'] = forms.ChoiceField(
+            label="Statut",
+            choices=CLIENT_CHOICE,
+            required=False,
+            widget=Select2Widget(attrs={'placeholder': 'Statut', 'class': 'form-control js-example-basic-single'}),
+            help_text='Séléctionner un type de client.',
+        )
+
     class Meta:
         model = Client
-        fields = ['cp', 'ville', 'remise']
+        fields = ['cp', 'ville', 'remise', 'activate']
 
 
 class FormAddTva(forms.ModelForm):
@@ -197,11 +274,44 @@ class FormAddFrais(forms.ModelForm):
         fields = ['nom', 'tva']
 
 
+class FormInventaire(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        self.start_date = kwargs.pop('nom', None)
+        self.end_date = kwargs.pop('tva', None)
+        super(FormInventaire, self).__init__(*args, **kwargs)
+
+        self.fields['start_date'] = forms.DateField(
+            label="Debut des commandes",
+            required=True,
+            widget=forms.DateInput(attrs={'placeholder': 'Date début', 'class': 'datepicker_input form-control'}),
+            help_text='Séléctionner la date de reprsie des commandes'
+        )
+
+        self.fields['end_date'] = forms.DateField(
+            label="Fin des commandes",
+            required=True,
+            widget=forms.DateInput(attrs={'placeholder': 'Date fin', 'class': 'datepicker_input form-control'}),
+            help_text='Séléctionner la date de cloture des commandes (stock remis a zero ...)'
+        )
+
+    def clean(self):
+        data = self.cleaned_data
+        if data.get('end_date', None) and data.get('start_date', None):
+            if data.get('start_date') > data.get('end_date'):
+                raise forms.ValidationError('La date de début doit etre inférieur à la date de fin !')
+
+    class Meta:
+        model = Inventaire
+        fields = ['start_date', 'end_date']
+
+
 class FormAddClient(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.prenom = kwargs.pop('tva', None)
         self.nom = kwargs.pop('tva', None)
+        self.societe = kwargs.pop('tva', None)
         self.cp = kwargs.pop('tva', None)
         self.ville = kwargs.pop('tva', None)
         self.adresse = kwargs.pop('tva', None)
@@ -213,16 +323,23 @@ class FormAddClient(forms.ModelForm):
 
         self.fields['prenom'] = forms.CharField(
             label="Prénom",
-            required=True,
+            required=False,
             help_text='Saisir le prénom',
             widget=forms.TextInput(attrs={'placeholder': 'Saisir le prénom', 'class': 'form-control'},)
         )
 
         self.fields['nom'] = forms.CharField(
             label="Nom",
-            required=True,
+            required=False,
             help_text='Saisir le nom',
             widget=forms.TextInput(attrs={'placeholder': 'Saisir le nom', 'class': 'form-control'}, )
+        )
+
+        self.fields['societe'] = forms.CharField(
+            label="Societe",
+            required=False,
+            help_text='Saisir le nom de la société',
+            widget=forms.TextInput(attrs={'placeholder': 'Saisir le nom de la société', 'class': 'form-control'}, )
         )
 
         self.fields['adresse'] = forms.CharField(
@@ -234,7 +351,7 @@ class FormAddClient(forms.ModelForm):
 
         self.fields['cp'] = forms.CharField(
             label="Code Postal",
-            required=True,
+            required=False,
             help_text='Saisir le code postal',
             widget=forms.NumberInput(attrs={'placeholder': 'Saisir le code postal', 'class': 'form-control'}, )
         )
@@ -276,7 +393,7 @@ class FormAddClient(forms.ModelForm):
 
     class Meta:
         model = Client
-        fields = ['prenom', 'nom', 'adresse', 'cp', 'ville', 'tel', 'mail', 'remise', 'commentaire']
+        fields = ['prenom', 'nom', 'societe', 'adresse', 'cp', 'ville', 'tel', 'mail', 'remise', 'commentaire']
 
 
 class FormAddOrder(forms.ModelForm):
@@ -344,9 +461,17 @@ class FormAddOrder(forms.ModelForm):
             help_text='Séléctionner une date pour la création de la commande',
         )
 
+        self.fields['inventaire'] = forms.ModelChoiceField(
+            label="Période",
+            required=True,
+            queryset=Inventaire.objects.all(),
+            help_text='Choisir une période',
+            widget=Select2Widget(attrs={'placeholder': 'Choisir une période', 'class': 'form-control js-example-basic-single'})
+        )
+
     class Meta:
         model = Commande
-        fields = ['client', 'remise', 'statut', 'date', 'tva', 'frais', 'montant_frais']
+        fields = ['client', 'remise', 'statut', 'date', 'tva', 'frais', 'montant_frais', 'inventaire']
 
 
 class FormAddProduit(forms.ModelForm):

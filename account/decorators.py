@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from . import views
+from .models import *
 
 
 def unauthenticated_user(view_func):

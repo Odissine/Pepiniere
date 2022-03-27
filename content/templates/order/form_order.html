@@ -1,7 +1,7 @@
 {% extends "layout/base.html" %}
 {% load static %}
 {% load i18n %}
-{% block title %}La Pépinière - Administration{% endblock %}
+{% block title %}Administration - Commande{% endblock %}
 {% block content %}
 <div class="card">
     <div class="card-header py-2 border-bottom border-primary">
@@ -26,9 +26,10 @@
             </div>
             <div class="col-6 mb-2 input-group">
                 <div class="input-group-prepend col-2">
-                    <span class="input-group-text col-12">{{ form.remise.label }}</span>
+                    <span class="input-group-text">{{ form.remise.label }}</span>
                 </div>
                 {{ form.remise }}
+                <span class="input-group-text">%</span>
             </div>
         </div>
         <div class="row g-2">
@@ -39,7 +40,7 @@
                 {{ form.statut }}
             </div>
         </div>
-        <div class="row g-2">
+        <div class="row g-2 mb-2">
             <div class="col-6 mb-2 input-group">
                 <div class="input-group-prepend col-2">
                     <span class="input-group-text">{{ form.date.label }}</span>
@@ -48,13 +49,19 @@
             </div>
             <div class="col-6 mb-2 input-group">
                 <div class="input-group-prepend col-2">
+                    <span class="input-group-text">{{ form.inventaire.label }}</span>
+                </div>
+                {{ form.inventaire }}
+            </div>
+            <div class="col-6 mb-2 input-group">
+                <div class="input-group-prepend col-2">
                     <span class="input-group-text">{{ form.tva.label }}</span>
                 </div>
                 {{ form.tva }}
             </div>
         </div>
-        <div class="row g-2">
-            <div class="col-6 mb-2 input-group">
+        <div class="row g-2 mb-2">
+            <div class="col-6 input-group">
                 <div class="input-group-prepend col-2">
                     <span class="input-group-text">{{ form.frais.label }}</span>
                 </div>
@@ -64,7 +71,10 @@
                 <div class="input-group-prepend col-2">
                     <span class="input-group-text">{{ form.montant_frais.label }}</span>
                 </div>
+                <div class="input-group-prepend col-2">
                 {{ form.montant_frais }}
+                </div>
+                <span class="input-group-text">€</span>
             </div>
         </div>
         <div class="d-grid gap-2 my-3">
@@ -78,8 +88,8 @@
             <div class="col-md-auto h3 mb-0">Produits</div>
             {% if order.statut.nom != "Annulée" and order.statut.nom != "Terminée" %}
             <div class="col">
-                <a class="bx-pull-right" href="{% url 'order:add-produit-order' order.id True %}">
-                    <button class="btn btn-success" type="button"><i class="bi bi-plus me-1"></i> Nouveau</button>
+                <a class="bx-pull-right" href="{% url 'order:add-produit-order' order.id 1 %}">
+                    <button class="btn btn-success" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Ajouter un produit à la commande"><i class="bi bi-plus me-1"></i> Nouveau</button>
                 </a>
             </div>
             {% endif %}
@@ -101,9 +111,10 @@
             <div class="col-1">{{ produit.prix }}</div>
             <div class="col-2 text-end">
                 {% if order.statut.nom != "Annulée" and order.statut.nom != "Terminée" %}
-                <button onclick="delete_this_produit('{{ order.id }}', '{{ produit.produit.id }}', '{{ produit.produit.nom }}')" class="btn btn-danger btn-sm" type="button"><i class="bi bi-trash"></i></button>
-                <a href="{% url 'order:edit-produit-order' order.id produit.produit.id %}"><button class="btn btn-warning btn-sm" type="button"><i class="bi bi-pencil"></i></button></a>
+                <button onclick="delete_this_produit('{{ order.id }}', '{{ produit.produit.id }}', '{{ produit.produit.nom }}')" class="btn btn-danger btn-sm" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Supprimer le produit de la commande en modidiant les stocks"><i class="bi bi-trash"></i></button>
+                <a href="{% url 'order:edit-produit-order' order.id produit.produit.id %}"><button class="btn btn-warning btn-sm" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Modifier le produit de la commande"><i class="bi bi-pencil"></i></button></a>
                 {% endif %}
+                <button onclick="recycle_this_produit('{{ order.id }}', '{{ produit.produit.id }}', '{{ produit.produit.nom }}')" class="btn btn-outline-danger btn-sm" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Supprimer le produit de la commande SANS modifier les stocks"><i class="bi bi-bag-x"></i></button>
             </div>
         </div>
     {% endfor %}
@@ -145,6 +156,17 @@
         $('#modal-delete').modal('toggle');
         $('#body-delete').html(html);
         $('#button-delete').attr('href',url);
-    };
+    }
+    function recycle_this_produit(order_id, produit_id, nom) {
+        var url = "{% url 'order:recycle-produit-order' 'XXX' 'YYY' %}"
+        var html;
+        html = "Cela va supprimer le produit [<strong>" + nom + "</strong>] de la commande {{ order_id }} ...<br><i class='bi bi-exclamation-triangle'></i> SANS METTRE A JOUR LES STOCKS."
+        console.log(nom)
+        url = url.replace('YYY', produit_id);
+        url = url.replace('XXX', order_id);
+        $('#modal-delete').modal('toggle');
+        $('#body-delete').html(html);
+        $('#button-delete').attr('href',url);
+    }
 </script>
 {% endblock %}

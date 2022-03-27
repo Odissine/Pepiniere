@@ -1,25 +1,40 @@
+{% load my_templatetag %}
 <script>
  function reset_Field(field1, field2) {
     document.getElementById(field1).value= "";
     document.getElementById(field2).value= "";
  }
 </script>
-<div class="col-lg-12 card pt-2 border-primary border-top">
-    <form class="form-horizontal" action="{% url formAction %}" method="post" accept-charset="utf-8">
+<div class="col-lg-12 card pt-2 border-primary border">
+    <form class="form-horizontal" action="{% url formAction %}" method="get" accept-charset="utf-8">
     {% csrf_token %}
     <a class="link-secondary" aria-expanded="false" aria-controls="search-card" data-bs-toggle="collapse" href="#search-card">
-        <h2 class="ms-3"><i class="bi bi-search"></i> Recherche</h2>
+        <h2 class="ms-3"><i class="bi bi-search"></i> Recherche <span class="bx-pull-right me-2">Commandes : {{ orders_list|length }}</span></h2>
     </a>
     <div class="collapse card-body" id="search-card">
+        {% if user|is_staff %}
         <div class="row g-2">
-            <div class="col-md-6 mb-2">
+            <div class="col-md-12 mb-2">
                 {{ form.clients.label }}
                 {{ form.clients }}
             </div>
-            <div class="col-md-6 mb-2">
+        </div>
+        {% endif %}
+        <div class="row g-2">
+            <div class="col-md-4 mb-2">
+                {{ form.inventaire.label }}
+                {{ form.inventaire }}
+            </div>
+            <div class="col-md-4 mb-2">
                 {{ form.statut.label }}
                 {{ form.statut }}
             </div>
+            {% if user|is_staff %}
+            <div class="col-md-4 mb-2">
+                {{ form.frais.label }}
+                {{ form.frais }}
+            </div>
+            {% endif %}
         </div>
         <div class="row g-2">
             <div class="col-md-6 mb-2 input-group">

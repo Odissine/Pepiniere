@@ -1,6 +1,7 @@
 from decimal import Decimal
 from django.conf import settings
 from onlineshop.models import Produit
+from order.models import AccessMode
 
 
 class Cart(object):
@@ -13,11 +14,15 @@ class Cart(object):
             cart = self.session[settings.CART_SESSION_ID] = {}
         self.cart = cart
 
-    def add(self, produit, qte, override_qte=False):
+    def add(self, request, produit, qte, override_qte=False):
+        try:
+            access_mode = AccessMode.objects.get(user=request.user).admin
+        except:
+            access_mode = False
 
         produit_id = str(produit.id)
         if produit_id not in self.cart:
-            if qte > produit.stock_bis:
+            if qte > produit.stock_bis and access_mode is False:
                 message = "Stock insuffisant !"
                 tags = "error"
             else:
@@ -27,13 +32,13 @@ class Cart(object):
 
         else:
             if override_qte:
-                if qte > produit.stock:
+                if qte > produit.stock and access_mode is False:
                     message = "Stock insuffisant !"
                     tags = "warning"
                 else:
                     self.cart[produit_id]['qte'] = qte
             else:
-                if self.cart[produit_id]['qte'] + qte > produit.stock_bis:
+                if self.cart[produit_id]['qte'] + qte > produit.stock_bis and access_mode is False:
                     message = "Stock insuffisant !"
                     tags = "warning"
                 else:
@@ -62,11 +67,11 @@ class Cart(object):
 
         for item in cart.values():
             item['prix'] = float(item['prix'])
-            item['total'] = item['prix'] * item['qte']
+            item['total'] = float(item['prix']) * int(item['qte'])
             yield item
 
     def __len__(self):
-        return sum(item['qte'] for item in self.cart.values())
+        return sum(int(item['qte']) for item in self.cart.values())
 
     def get_total_prix(self):
         return sum(float(item['prix'])*float(item['qte']) for item in self.cart.values())
@@ -75,12 +80,14 @@ class Cart(object):
         del self.session[settings.CART_SESSION_ID]
         self.save()
 
-    def update_qte(self, produit, qte):
+    def update_qte(self, request, produit, qte):
+        try:
+            access_mode = AccessMode.objects.get(user=request.user).admin
+        except:
+            access_mode = False
         produit_id = str(produit.id)
-        print("Quantite : %s" % qte)
-        print("Stock : %s" % produit.stock_bis)
-        print("OK")
-        if qte > produit.stock_bis:
+
+        if qte > produit.stock_bis and access_mode is False:
             message = "Stock insuffisant !"
             tags = "warning"
         else:
@@ -88,6 +95,7 @@ class Cart(object):
                 item = self.cart[produit_id]
                 item['qte'] = qte
                 self.save()
+                print(qte)
             message = "Quantité mise à jour !"
             tags = "success"
         # return self.cart.values()

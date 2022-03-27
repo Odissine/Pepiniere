@@ -1,6 +1,9 @@
+from datetime import datetime
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
+import django.utils.timezone
+from order.models import *
 
 
 class Espece(models.Model):
@@ -115,6 +118,32 @@ class Produit(models.Model):
         return self.prix
 
 
+class Couleur(models.Model):
+    objects = models.Manager()
+    nom = models.CharField(max_length=255)
+    couleur = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.nom
+
+    def get_hexa(self):
+        return self.couleur
+
+
+class Greffons(models.Model):
+    objects = models.Manager()
+    produit = models.ForeignKey(Produit, related_name='Greffons', on_delete=models.CASCADE)
+    greffons = models.IntegerField(default=0)
+    comm = models.IntegerField(null=True)
+    objectif = models.IntegerField(default=0)
+    realise = models.IntegerField(default=0)
+    date = models.DateTimeField(default=datetime.now)
+    couleur = models.ForeignKey(Couleur, related_name='Greffons', on_delete=models.SET_NULL, null=True)
+    rang = models.IntegerField(default=0, null=True)
+    reussi = models.IntegerField(default=0, null=True)
+    inventaire = models.ForeignKey(Inventaire, related_name='Greffons', on_delete=models.CASCADE, null=True)
+
+
 class ProduitTest(models.Model):
     objects = models.Manager()
     espece = models.ForeignKey(Espece, related_name='ProduitTests', on_delete=models.CASCADE)
@@ -127,6 +156,7 @@ class ProduitTest(models.Model):
     prix = models.DecimalField(max_digits=10, decimal_places=2, default=15.00)
     stock = models.IntegerField(default=0)
     stock_bis = models.IntegerField(default=0)
+    # stock_future = models.IntegerField(default=0)
     available = models.BooleanField(default=True)
     gaf = models.BooleanField(default=False)
 

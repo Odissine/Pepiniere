@@ -1,7 +1,7 @@
 {% extends "layout/base.html" %}
 {% load static %}
 {% load i18n %}
-{% block title %}La Pépinière - Administration{% endblock %}
+{% block title %}Administration - Divers{% endblock %}
 {% block content %}
 <div class="card">
     <div class="card-header py-2 border-bottom border-primary">
@@ -20,7 +20,7 @@
 <!-- TVA -->
     <div class="col-6">
         <div class="card">
-            <div class="card-header">
+            <div class="card-header border-top border-primary h4">
                 Gestion des taux de TVA
                 <a type="button" class="btn btn-success fw-bolder bx-pull-right" style="font-size: .8rem;" href="{% url 'order:add-tva' %}">
                     <i class="bi bi-plus me-1"></i> Nouveau
@@ -28,16 +28,13 @@
             </div>
             <div class="card-body">
 
-                <div class="row border-bottom border-primary align-items-center py-2 fw-bolder">
-                    <div class="col-9">TVA</div>
-                    <div class="col-3">
-
-                    </div>
+                <div class="row border-bottom bg-secondary bg-opacity-10 align-items-center py-2 fw-bolder">
+                    <div class="col-12">TVA</div>
                 </div>
                 {% for tva in tvas %}
-                <div class="row align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}{% if tva.default == True %} bg-primary bg-opacity-25 {% endif %}{% if tva.active == False %} bg-secondary bg-opacity-25 {% endif %}">
-                    <div class="col-9">{{ tva.tva }} %</div>
-                    <div class="col-3 text-end">
+                <div class="row align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}{% if tva.default %} bg-primary bg-opacity-25 {% endif %}{% if not tva.active %} bg-secondary bg-opacity-25 {% endif %}">
+                    <div class="col-8">{{ tva.tva }} %</div>
+                    <div class="col-4 text-end">
                         <button onclick="delete_this_tva({{ tva.id }},'{{ tva.tva }}')" class="btn btn-danger btn-sm" type="button"><i class="bi bi-trash"></i></button>
                         <a href="{% url 'order:edit-tva' tva.id %}"><button class="btn btn-warning btn-sm" type="button"><i class="bi bi-pencil"></i></button></a>
                         {% if tva.default == False %}
@@ -49,15 +46,15 @@
             </div>
         </div>
 <!-- FRAIS -->
-        <div class="card">
-            <div class="card-header">
+        <div class="card mt-3">
+            <div class="card-header h4 border-top border-primary">
                 Gestion des Frais
                 <a type="button" class="btn btn-success fw-bolder bx-pull-right" style="font-size: .8rem;" href="{% url 'order:add-frais' %}">
                     <i class="bi bi-plus me-1"></i> Nouveau
                 </a>
             </div>
             <div class="card-body">
-                <div class="row border-bottom border-primary align-items-center py-2 fw-bolder">
+                <div class="row border-bottom bg-secondary bg-opacity-10 align-items-center py-2 fw-bolder">
                     <div class="col-5">NOM</div>
                     <div class="col-4">TVA</div>
                     <div class="col-3"></div>
@@ -78,7 +75,7 @@
 <!-- STATUT -->
     <div class="col-6">
         <div class="card">
-            <div class="card-header">
+            <div class="card-header h4 border-top border-primary">
                 Gestion des Status
                 <a type="button" class="btn btn-success fw-bolder bx-pull-right" style="font-size: .8rem;" href="{% url 'order:add-statut' %}">
                     <i class="bi bi-plus me-1"></i> Nouveau
@@ -86,7 +83,7 @@
             </div>
             <div class="card-body">
 
-                <div class="row border-bottom border-primary align-items-center py-2 fw-bolder">
+                <div class="row border-bottom bg-secondary bg-opacity-10 align-items-center py-2 fw-bolder">
                     <div class="col-9">STATUT</div>
                     <div class="col-3">
 

@@ -1,0 +1,78 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}Administration Couleurs{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header py-2 border-bottom border-primary">
+        <div class="row align-items-center">
+            <div class="col-md-auto h3 mb-0">Administration Couleurs</div>
+            <div class="col">
+                <a class="bx-pull-right" href="{{ previous_page}}">
+                    <button class="btn btn-secondary" type="button">Retour</button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+<!-- COULEUR -->
+    <div class="col">
+        <div class="card">
+            <div class="card-header border-top border-primary h4">
+                Gestion des couleurs
+                <a type="button" class="btn btn-success fw-bolder bx-pull-right" style="font-size: .8rem;" href="{% url 'onlineshop:add-couleur' %}">
+                    <i class="bi bi-plus me-1"></i> Nouveau
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row border-bottom bg-secondary bg-opacity-10 align-items-center py-2 fw-bolder">
+                    <div class="col-12">COULEURS</div>
+                </div>
+                {% for couleur in couleurs %}
+                <div class="row align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                    <div class="col-4">{{ couleur.nom }}</div>
+                    <div class="col-6" style="background-color:{{ couleur.couleur }}">{{ couleur.couleur }}</div>
+                    <div class="col-2 text-end">
+                        <button onclick="delete_this_couleur({{ couleur.id }},'{{ couleur.couleur }}','{{ couleur.nom }}')" class="btn btn-danger btn-sm" type="button"><i class="bi bi-trash"></i></button>
+                        <a href="{% url 'onlineshop:edit-couleur' couleur.id %}"><button class="btn btn-warning btn-sm" type="button"><i class="bi bi-pencil"></i></button></a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE SUPPRESSION D'UNE COULEUR ----------------------------------------------------------------------------------->
+<div class="modal modal-danger fade in" id="modal-delete-couleur" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-light">
+                <h4 class="modal-title">Supprimer cette couleur ?</h4>
+                <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="delete-couleur-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="" id="button-delete-couleur">
+                    <button type="button" class="btn btn-danger">Supprimer</button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function delete_this_couleur(couleur_id, nom, couleur) {
+        var url = "{% url 'onlineshop:delete-couleur' 'XXX' %}"
+        var html;
+        html = "Cela va supprimer la couleur <strong>" + nom + "</strong><span class='btn' style='background-color:'" + couleur + "></span>"
+        url = url.replace('XXX', couleur_id);
+        $('#modal-delete-couleur').modal('toggle');
+        $('#delete-couleur-body').html(html);
+        $('#button-delete-couleur').attr('href',url);
+    }
+</script>
+{% endblock %}

@@ -1,19 +1,21 @@
 {% extends "layout/base.html" %}
 {% load static %}
+{% load auth_extras %}
 {% block title %}La Pépinière - Identification{% endblock %}
 {% block content %}
 {% if form.errors %}
     <div class="alert alert-danger text-center" role="alert">Authentification impossible ... veuillez réessayer !</div>
 {% endif %}
-<div id="formContent" class="text-center">
+<div id="formContent" class=" row justify-content-md-center">
     <!-- Login Form -->
-    <form class="form-group" action="" method="post">
+    <form class="form-group col-6" action="" method="post" autocomplete="off">
+        <input type="hidden" autocomplete="off"/>
         {% csrf_token %}
         <div class="form-outline mb-4">
             <h1 class="h3 mb-3 font-weight-normal">Identifiez-vous !</h1>
-            <div class="input-group mb-3">
+            <div class="input-group mb-3 col-6">
                 <span class="input-group-text" id="basic-username">@</span>
-                <input name="username" id="username" type="text" class="form-control" placeholder="Nom d'utilisateur" aria-label="username" required="">
+                <input name="username" id="username" type="text" class="form-control" placeholder="Nom d'utilisateur" aria-label="username" required="" autocomplete="nope">
             </div>
             <div class="input-group mb-3">
                 <span class="input-group-text bi-key" id="basic-password"></span>
@@ -26,8 +28,16 @@
                 </label>
             </div>
             -->
-            <div class="input-group">
-                <button class="btn btn-primary" type="submit">Connexion</button>
+            <div class="row align-middle">
+                <div class="col-3">
+                    <button class="btn btn-primary bx-pull-left" type="submit">Connexion</button>
+                </div>
+                <div class="col-9 text-end align-middle">
+                    {% if True|allow_register %}
+                    <a href="{% url 'account:register' %}" class="link-primary">Créér un compte</a> |
+                    {% endif %}
+                    <a href="{% url 'account:forget' %}" class="link-secondary">Mot de passe oublié ?</a>
+                </div>
             </div>
         </div>
     </form>

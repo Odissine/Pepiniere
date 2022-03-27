@@ -1,31 +1,46 @@
 {% extends 'layout/base.html' %}
 {% load static %}
-{% load total_order %}
+{% load calcul_order %}
+{% block title %}Commandes{% endblock %}
 {% block content %}
 {% include 'order/search.html' %}
+{% if orders|length_is:"0" %}
+<div class="text-center h3">
+    Aucune commande !
+</div>
+{% else %}
 <div class="nav justify-content-between align-center">
-    <div class="h3">Liste des commandes</div>
-    <div class="h3" id="qty-find-order">{{ orders_list|length }} commandes</div>
+    <div class="h3 ps-2">Liste des commandes</div>
+    <!-- <div class="bx-pull-right h3 pe-3"><i class="bi bi-info-circle text-primary" style="cursor: pointer;" onclick="show_legend();"></i></div> -->
 </div>
 <div class="centered">
     <table class="table border-collapse">
     <thead>
-        <th scope="col">ID</th>
-        <th scope="col">DATE</th>
-        <th scope="col">STATUT</th>
-        <th scope="col">CLIENT</th>
-        <th scope="col">QTE</th>
-        <th scope="col">TOTAL</th>
+        {% if query_string %}
+        <th scope="col"><a href="?{{ query_string }}&o=id">ID</a></th>
+        <th scope="col"><a href="?{{ query_string }}&o=date">DATE</a></th>
+        <th scope="col"><a href="?{{ query_string }}&o=statut__nom">STATUT</a></th>
+        <th scope="col"><a href="?{{ query_string }}&o=client__nom">CLIENT (Prénom NOM)</a></th>
+        <th scope="col"><a href="?{{ query_string }}&o=qte">QTE</a></th>
+        <th scope="col"><a href="?{{ query_string }}&o=total">TOTAL</a></th>
+        {% else %}
+        <th scope="col"><a href="?o=id">ID</a></th>
+        <th scope="col"><a href="?o=date">DATE</a></th>
+        <th scope="col"><a href="?o=statut__nom">STATUT</a></th>
+        <th scope="col"><a href="?o=client__nom">CLIENT (Prénom NOM)</a></th>
+        <th scope="col"><a href="?o=qte">QTE</a></th>
+        <th scope="col"><a href="?o=total">TOTAL</a></th>
+        {% endif %}
         <th scope="col"></th>
     </thead>
         {% for order in orders %}
-        <tr class="align-middle {% if order.statut.nom == 'Annulée' %}table-secondary{% elif order.statut.nom == 'Terminée' %}table-success{% elif order.statut.nom == 'Validée' %}table-primary{% elif order.statut.nom == 'Pré-commande' %}table-info else %}table-warning{% endif %}">
+        <tr class="align-middle {% if order.statut.nom == 'Annulée' %}table-secondary{% elif order.statut.nom == 'Terminée' %}table-success{% elif order.statut.nom == 'Validée' %}table-primary{% elif order.statut.nom == 'Pré-commande' %}table-info{% elif order.statut.nom == 'En attente' %}table-danger{% else %}table-warning{% endif %}">
             <td class="align-middle">FA-{{ order.id }}-{{ order.date|date:'Y' }}</td>
             <td class="align-middle">{{ order.date|date:'d F Y @ H:i' }}</td>
             <td class="align-middle">{{ order.statut.nom }}</td>
-            <td class="align-middle">{{ order.client.prenom }} {{ order.client.nom }}</td>
+            <td class="align-middle">{{ order.client.prenom }} {{ order.client.nom|upper }}</td>
             <td class="align-middle">{{ order.qte_item }}</td>
-            <td class="align-middle">{{ order.id|total_order|floatformat:"2" }} €</td>
+            <td class="align-middle">{{ order.id|total_order|format_space }} €</td>
             <td class="d-flex justify-content-end">
                 {% if order.statut.nom == "En cours" %}
                 <a target="_blank" href="{% url 'order:order-print' order.id %}?download=1&mode=2" class="btn btn-warning mx-1"><i class="bi bi-clipboard-check"></i> Bon de Commande</a>
@@ -39,37 +54,103 @@
         {% endfor %}
     </table>
 </div>
-{% if orders|length_is:"0" %}
-<div class="text-center">
-    Aucune commande !
-</div>
-{% endif %}
 {% if paginate %}
 <div class="clearfix"></div>
 <nav aria-label="...">
 <ul class="pagination justify-content-center">
     {% if orders.has_previous %}
+        {% if query_string %}
+        <li class="page-item"><a class="page-link" href="?{{ query_string }}&page={{ orders.previous_page_number }}{{ getvars }}"><<</a></li>
+        {% else %}
         <li class="page-item"><a class="page-link" href="?page={{ orders.previous_page_number }}{{ getvars }}"><<</a></li>
+        {% endif %}
     {% else %}
         <li class="page-item disabled"><a class="page-link" href="#"><<</a></li>
     {% endif %}
     {% if orders.number|add:'-4' > 1 %}
+        {% if query_string %}
+        <li class="page-item"><a class="page-link" href="?{{ query_string }}&page={{ orders.number|add:'-5' }}{{ getvars }}">...</a></li>
+        {% else %}
         <li class="page-item"><a class="page-link" href="?page={{ orders.number|add:'-5' }}{{ getvars }}">...</a></li>
+        {% endif %}
     {% endif %}
     {% for i in orders.paginator.page_range %}
         {% if orders.number == i %}
             <li class="page-item active"><span class="page-link" href="#">{{ i }}</span></li>
         {% elif i > orders.number|add:'-5' and i < orders.number|add:'10' %}
+            {% if query_string %}
+            <li class="page-item"><a class="page-link" href="?{{ query_string }}&page={{ i }}{{ getvars }}">{{ i }}</a></li>
+            {% else %}
             <li class="page-item"><a class="page-link" href="?page={{ i }}{{ getvars }}">{{ i }}</a></li>
+            {% endif %}
         {% endif %}
     {% endfor %}
     <!-- <span class="current">{{ commandes.number }} / {{ commandes.paginator.num_pages }}</span>-->
     {% if orders.has_next %}
+        {% if query_string %}
+        <li class="page-item"><a class="page-link" href="?{{ query_string }}&page={{ orders.next_page_number }}{{ getvars }}">>></a></li>
+        {% else %}
         <li class="page-item"><a class="page-link" href="?page={{ orders.next_page_number }}{{ getvars }}">>></a></li>
+        {% endif %}
     {% else %}
         <li class="page-item disabled"><a class="page-link" href="#">>></a></li>
     {% endif %}
 </ul>
 </nav>
 {% endif %}
+<!-- MODAL LEGEND ----------------------------------------------------------------------------------->
+<div class="modal modal-info fade in" id="modal-legend" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-light">
+                <h4 class="modal-title">Code couleur des commandes</h4>
+                <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="body-legend">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+    function show_legend() {
+        var html;
+        // {% if order.statut.nom == 'Annulée' %}table-secondary{% elif order.statut.nom == 'Terminée' %}table-success{% elif order.statut.nom == 'Validée' %}table-primary{% elif order.statut.nom == 'Pré-commande' %}table-info else %}table-warning{% endif %}
+        html = "<table class='table'>" +
+            "<tr class='table-secondary'><td>Commande Annulée</td></tr>" +
+            "<tr class='table-warning'><td>Commande En cours</td></tr>" +
+            "<tr class='table-primary'><td>Commande Validée</td></tr>" +
+            "<tr class='table-success'><td>Commande Terminée</td></tr>" +
+            "<tr class='table-info'><td>Commande Pré-Commande</td></tr>" +
+            "<tr class='table-danger'><td>Commande En attente</td></tr>" +
+            "</table>"
+        $('#modal-legend').modal('toggle');
+        $('#body-legend').html(html);
+    }
+
+    const getDatePickerTitle = elem => {
+          // From the label or the aria-label
+          const label = elem.nextElementSibling;
+          let titleText = '';
+          if (label && label.tagName === 'LABEL') {
+            titleText = label.textContent;
+          } else {
+            titleText = elem.getAttribute('aria-label') || '';
+          }
+          return titleText;
+        }
+
+        const elems = document.querySelectorAll('.datepicker_input');
+        for (const elem of elems) {
+          const datepicker = new Datepicker(elem, {
+            format: 'dd/mm/yyyy', // UK format
+            title: getDatePickerTitle(elem)
+          });
+        }
+</script>
 {% endblock %}

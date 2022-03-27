@@ -2,140 +2,148 @@
 {% load static %}
 {% load i18n %}
 {% load mathfilters %}
+{% load my_templatetag %}
 {% load calcul_order %}
-{% block title %}La Pépinière - Commande{% endblock %}
+{% block title %}Commande{% endblock %}
 {% block content %}
 {% with client=commande.client %}
 {% language 'fr' %}
-<button type="button" class="btn btn-primary bx-pull-right" onclick="add_product_order({{ commande.id }})">Ajouter un produit</button>
-<h1>Commande FA-{{ commande.id }}-{{ commande.date|date:'Y' }}</h1>
-<h4>{{ commande.client.prenom }} {{ commande.client.nom }} du {{ commande.date|date:'d F Y' }}</h4>
+<div class="row">
+    <div class="col-7">
+        <h1>{% if commande.statut.nom == "Pré-commande" %}Pré-commande{% else %}Commande{% endif %} FA-{{ commande.id }}-{{ commande.date|date:'Y' }}</h1>
+        <h4>{{ commande.client.prenom }} {{ commande.client.nom }} du {{ commande.date|date:'d F Y' }}</h4>
+    </div>
+    {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée" and commande.statut.nom != "En attente" %}
+    <div class="col-5 align-middle pt-3">
+        <button type="button" class="btn btn-primary bx-pull-right btn-lg" onclick="add_product_order('{{ commande.id }}')">Ajouter un produit</button>
+    </div>
+    {% else %}
+    <div class="col-5"></div>
+    {% endif %}
+
+
+</div>
 {% endlanguage %}
 {% endwith %}
 <!-- HEADER TABLE --------------------------------------------------------------------->
-<div class="row align-items-center fw-bold ">
-    <div class="py-2 {% if commande.statut.nom == 'Annulée' %}bg-secondary text-black{% endif %}{% if commande.statut.nom == 'Terminée' %}bg-success text-light{% endif %}{% if commande.statut.nom == 'Validée' %}bg-primary text-light{% endif %}{% if commande.statut.nom == 'En cours' %}bg-warning text-black{% endif %} col-4">PRODUIT</div>
-    <div class="py-2 {% if commande.statut.nom == 'Annulée' %}bg-secondary text-black{% endif %}{% if commande.statut.nom == 'Terminée' %}bg-success text-light{% endif %}{% if commande.statut.nom == 'Validée' %}bg-primary text-light{% endif %}{% if commande.statut.nom == 'En cours' %}bg-warning text-black{% endif %} col-2 text-end">QUANTITE</div>
-    <div class="py-2 {% if commande.statut.nom == 'Annulée' %}bg-secondary text-black{% endif %}{% if commande.statut.nom == 'Terminée' %}bg-success text-light{% endif %}{% if commande.statut.nom == 'Validée' %}bg-primary text-light{% endif %}{% if commande.statut.nom == 'En cours' %}bg-warning text-black{% endif %} col-2 text-end">PU (TTC)</div>
-    <div class="py-2 {% if commande.statut.nom == 'Annulée' %}bg-secondary text-black{% endif %}{% if commande.statut.nom == 'Terminée' %}bg-success text-light{% endif %}{% if commande.statut.nom == 'Validée' %}bg-primary text-light{% endif %}{% if commande.statut.nom == 'En cours' %}bg-warning text-black{% endif %} col-3 text-end">TOTAL</div>
-    <div class="py-2 {% if commande.statut.nom == 'Annulée' %}bg-secondary text-black{% endif %}{% if commande.statut.nom == 'Terminée' %}bg-success text-light{% endif %}{% if commande.statut.nom == 'Validée' %}bg-primary text-light{% endif %}{% if commande.statut.nom == 'En cours' %}bg-warning text-black{% endif %} col-1 bg-transparent"></div>
+<div class="{% if commande.statut.nom == 'Annulée' %}border-secondary{% endif %}{% if commande.statut.nom == 'Terminée' %}border-success{% endif %}{% if commande.statut.nom == 'Validée' %}border-primary{% endif %}{% if commande.statut.nom == 'En cours' %}border-warning{% endif %}{% if commande.statut.nom == 'Pré-commande' %}border-info{% endif %} border-3 border">
+<div class="row align-items-center fw-bold g-0 {% if commande.statut.nom == 'Annulée' %}bg-secondary text-black{% endif %}{% if commande.statut.nom == 'Terminée' %}bg-success text-light{% endif %}{% if commande.statut.nom == 'Validée' %}bg-primary text-light{% endif %}{% if commande.statut.nom == 'En cours' %}bg-warning text-black{% endif %}{% if commande.statut.nom == 'Pré-commande' %}bg-info text-black{% endif %}">
+    <div class="py-2 ps-3 col-4">PRODUIT</div>
+    <div class="py-2 col-2 text-start">QUANTITE</div>
+    <div class="py-2 col-2 text-end">PU (TTC)</div>
+    <div class="py-2 pe-3 col-3 text-end">TOTAL</div>
+    <div class="py-2 col-1"></div>
 </div>
 <!-- PRODUCTS LIST --------------------------------------------------------------------->
 {% for produit in produits %}
-<form class="" method="post" name="qteForm{{ produit.id }}" id="qteForm{{ produit.id }}" action="{% url 'order:order-update-qte-prix' produit.id %}" onSubmit="return checkform({{ produit.produit.stock_bis }}, {{ produit.id }})">
-<div class="row align-items-center {% if not forloop.last %}border-bottom{% endif %}" id="{{ rowcolors }}">
-    <div class="py-2 {% cycle 'bg-transparent' 'bg-secondary bg-opacity-25' as rowcolors %} col-4 align-middle" >
+<form class="" method="post" name="qteForm{{ produit.produit.id }}" id="qteForm{{ produit.produit.id }}" action="{% url 'order:order-update-qte-prix' produit.id %}">
+<div class="row g-0 align-items-center {% if not forloop.last %}border-bottom{% endif %}  {% cycle 'bg-transparent' 'bg-secondary bg-opacity-25' as rowcolors %}" id="{{ rowcolors }}">
+    <div class="py-2 col-4 align-middle" >
         <a class="btn" href="{% url 'onlineshop:produit-detail' produit.produit.id %}">{{ produit.produit.nom }}</a>
     </div>
-    <div class="py-2 {% cycle 'bg-transparent' 'bg-secondary bg-opacity-25' as rowcolors %} col-2 align-middle text-end">
-        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" %}
-        <span class="">{{ produit.qte }}</span>
+    <div class="py-2 col-2 align-middle">
+        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" or commande.statut.nom == "En attente" %}
+        <div class="py-2">{{ produit.qte }}</div>
         {% else %}
-        <div class="text-end bx-pull-right">
-            <input type="number" name="qte" value="{{ produit.qte }}" min="1" max="{{ produit.produit.stock_bis }}" required id="id-qte-{{ produit.id }}" class="form-control" width="95" style="width:95px;" />
+        <div class="">
+            <input type="number" name="qte" value="{{ produit.qte }}" min="1" max="{% if request.user|mode_admin %}}9999{% else %}{{ produit.produit.stock_bis }}{% endif %}" required id="id-qte-{{ produit.id }}" class="form-control" width="95" style="width:95px;" />
         </div>
         {% csrf_token %}
         <input type="number" hidden name="qte_old" value="{{ produit.qte }}" id="id-qte-old-{{ produit.id }}"/>
         <input type="submit" hidden />
         <script>
-            document.getElementById('id-qte-{{ produit.id }}').validity.rangeOverflow;
+            // document.getElementById('id-qte-{{ produit.id }}').validity.rangeOverflow;
         </script>
         {% endif %}
     </div>
-    <div class="py-2 {% cycle 'bg-transparent' 'bg-secondary bg-opacity-25' as rowcolors %} col-2 align-middle text-end">
-        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" %}
-        <span class="">{{ produit.prix }} €</span>
+    <div class="py-2 col-2 align-middle text-end">
+        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" or commande.statut.nom == "En attente" %}
+        <div class="py-2">{{ produit.prix }} €</div>
         {% else %}
         <div class="text-end bx-pull-right input-group">
-            <input type="text" name="prix" value="{{ produit.prix|floatformat:'2' }}" min="1" step="1" required id="id-prix-{{ produit.id }}" class="form-control" width="95" style="width:95px;" />
+            <input type="text" name="prix" value="{{ produit.prix|floatformat:'2' }}" min="1" step="1" required id="id-prix-{{ produit.id }}" class="form-control text-end" width="95" style="width:95px;" />
             <span class="input-group-text">€</span>
         </div>
         {% csrf_token %}
         <input type="submit" hidden />
         {% endif %}
     </div>
-    <div class="py-3 {% cycle 'bg-transparent' 'bg-secondary bg-opacity-25' as rowcolors %} col-3 align-middle text-end" style="height:54px !important;">{{ produit.prix|mul:produit.qte }} €</div>
-    <div class="py-2 col-1 text-end align-middle">
-        {% if commande.statut.nom != "Annulée" or commande.statut.nom != "Terminée" %}
-        <button onclick="delete_this_product({{ produit.id }}, '{{ produit.produit.nom }}');" type="button" class="btn btn-sm p-0"><i class="bi-trash text-danger fs-4 float-start"></i></button>
-        <button type="submit" class="btn float-end btn-sm p-0" id="editQte{{ produit.id }}"><i class="bi-pencil-square text-warning fs-4"></i></button>
+    <div class="py-3 pe-3 col-3 align-middle text-end" style="height:54px !important;">{{ produit.prix|mul:produit.qte }} €</div>
+    <div class="py-2 col-1 text-center align-middle">
+        {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée" and commande.statut.nom != "En attente" %}
+        <button onclick="delete_this_product('{{ produit.id }}', '{{ produit.produit.nom }}');" type="button" class="btn btn-danger px-1 py-0 mx-1"><i class="bi-trash float-start"></i></button>
+        <button type="submit" class="btn btn-warning py-0 px-1" id="editQte{{ produit.id }}"><i class="bi-pencil-square"></i></button>
         {% endif %}
     </div>
 </div>
 </form>
-<script>
-$(document).ready(function(){
-    $("#editQte{{ produit.id }}").click(function() {
-        $("#qteForm{{ produit.id }}").submit();
-     });
-});
-</script>
 {% endfor %}
 
 <!-- TOTAL AVANT REMISE TABLE --------------------------------------------------------------------->
-<div class="row text-light align-items-center">
-    <div class="bg-dark py-3 col-8 align-middle">TOTAL (AVANT REMISE)</div>
-    <div class="bg-dark py-3 col-3 align-middle text-end">{{ commande.id|total_order }} €</div>
+<div class="row text-light align-items-center g-0 bg-dark ">
+    <div class="py-2 col-8 align-middle ps-3">TOTAL {% if commande.statut.nom != "Annulée" or commande.statut.nom != "Terminée" and commande.montant_frais > 0 %}(AVANT REMISE){% endif %}  </div>
+    <div class="py-2 col-3 align-middle text-end pe-3">{{ commande.id|total_order }} €</div>
     <div class="col-1"></div>
 </div>
 
 <!-- REMISE  -------------------------------------------------------------------------------------->
+{% if commande.statut.nom != "Annulée" or commande.statut.nom != "Terminée" and commande.montant_frais > 0 or commande.statut.nom == "En attente" %}
 <form class="" method="post" name="remiseForm" id="remiseForm" action="{% url 'order:order-update-remise' commande.id %}">
-<div class="row align-items-center">
-    <div class="col-6 bg-opacity-10 bg-success align-middle text-start py-3">Remise</div>
-    <div class="col-2 bg-opacity-10 bg-success align-middle py-2">
-        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Validée" or commande.statut.nom == "Terminée" %}
-        {{ commande.remise }} %
+<div class="row align-items-center g-0 bg-opacity-10 bg-success ">
+    <div class="col-6 align-middle text-start py-3 ps-3">Remise</div>
+    <div class="col-2 align-middle py-2 pe-3">
+        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" or commande.statut.nom == "En attente" %}
+        <div class="text-end">{{ commande.remise }} %</div>
         {% else %}
-
-            <div class="input-group">
-                <input type="text" name="remise" value="{{ commande.remise }}" min="0" max="100" required="" id="remise" class="form-control" width="95" style="width:95px;" />
-                <div class="input-group-text">%</div>
-            </div>
-            {% csrf_token %}
-            <input type="submit" hidden />
-            <script>
-                document.getElementById('remise').validity.rangeOverflow;
-            </script>
+        <div class="input-group">
+            <input type="text" name="remise" value="{{ commande.remise }}" min="0" max="100" required="" id="remise" class="form-control text-end" width="95" style="width:95px;" />
+            <div class="input-group-text">%</div>
+        </div>
+        {% csrf_token %}
+        <input type="submit" hidden />
+        <script>
+            document.getElementById('remise').validity.rangeOverflow;
+        </script>
         {% endif %}
     </div>
-    <div class="col-3 bg-opacity-10 bg-success align-middle text-end py-3">{{ commande.id|remise_order|floatformat:2 }} €</div>
-    <div class="col-1 text-end">
-        {% if commande.statut.nom != "Annulée" or commande.statut.nom != "Terminée" %}
-            <button type="submit" class="btn float-end" id="editRemise"><i class="bi-pencil-square text-warning fs-4"></i></button>
+    <div class="py-3 col-3 align-middle text-end pe-3">{{ commande.id|remise_order|floatformat:2 }} €</div>
+    <div class="col-1 text-center">
+        {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée" and commande.statut.nom != "En attente" and request.user|is_staff %}
+            <button type="submit" class="btn btn-warning py-0 px-1" id="editRemise"><i class="bi-pencil-square"></i></button>
         {% endif %}
     </div>
 </div>
 </form>
 
 <!-- TOTAL APRES REMISE TABLE --------------------------------------------------------------------->
-<div class="row align-items-center">
-    <div class="py-3 bg-dark text-light  col-7 align-middle">TOTAL (APRES REMISE)</div>
-    <div class="py-3 bg-dark text-light  col-1 align-middle text-end">TTC</div>
-    <div class="py-3 bg-dark text-light  col-3 align-middle text-end">{{ commande.id|total_post_remise|floatformat:2 }} €</div>
+<div class="row bg-dark text-light align-items-center g-0">
+    <div class="py-2 col-7 align-middle ps-3">TOTAL (APRES REMISE)</div>
+    <div class="py-2 col-1 align-middle text-end">TTC</div>
+    <div class="py-2 col-3 align-middle text-end pe-3">{{ commande.id|total_post_remise|floatformat:2 }} €</div>
     <div class="col-1"></div>
 </div>
-
+{% endif %}
 <!-- TOTAL HT ------------------------------------------------------------------------------------->
-<div class="row align-items-center">
-    <div class="py-2 bg-opacity-10 bg-danger col-8 align-middle text-end">HT</div>
-    <div class="py-2 bg-opacity-10 bg-danger col-3 align-middle text-end">{{ commande.id|total_ht|floatformat:2 }} €</div>
+<div class="row bg-opacity-10 bg-danger align-items-center g-0">
+    <div class="py-2 col-8 align-middle text-end ps-3">HT</div>
+    <div class="py-2 col-3 align-middle text-end pe-3">{{ commande.id|total_ht|floatformat:2 }} €</div>
     <div class="col-1"></div>
 </div>
 
 <!-- TVA ------------------------------------------------------------------------------------------>
-<div class="row align-items-center ">
-    <div class="py-2 bg-opacity-10 bg-warning col-7 align-middle text-end">({{ commande.tva.tva }} %)</div>
-    <div class="py-2 bg-opacity-10 bg-warning col-1 align-middle text-end">TVA</div>
-    <div class="py-2 bg-opacity-10 bg-warning col-3 align-middle text-end">{{ commande.id|total_tva|floatformat:2 }} €</div>
+<div class="row align-items-center g-0 bg-opacity-10 bg-warning">
+    <div class="py-2 col-7 align-middle text-end ps-3">({{ commande.tva.tva }} %)</div>
+    <div class="py-2 col-1 align-middle text-end">TVA</div>
+    <div class="py-2 col-3 align-middle text-end pe-3">{{ commande.id|total_tva|floatformat:2 }} €</div>
     <div class="col-1"></div>
 </div>
 <!-- FRAIS ------------------------------------------------------------------------------------------>
+{% if commande.statut.nom != "Annulée" or commande.statut.nom != "Terminée" or commande.statut.nom == "En attente" and commande.montant_frais > 0 %}
 <form class="" method="post" name="fraisForm" id="fraisForm" action="{% url 'order:order-update-frais' commande.id %}">
-<div class="row align-items-center py-2">
-    <div class="col-7 align-middle text-start">
-        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Validée" or commande.statut.nom == "Terminée" %}
-        {{ commande.frais.nom }}
+<div class="row align-items-center py-2 g-0">
+    <div class="col-7 align-middle text-start ps-3">
+        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" or commande.statut.nom == "En attente" %}
+            {{ commande.frais.nom }}
         {% else %}
         <select id="frais" class="form-select bg-transparent" name="frais_type">
             <option value="">Aucun frais</option>
@@ -146,108 +154,120 @@ $(document).ready(function(){
         {% endif %}
     </div>
     <div class="col-1 align-middle text-end">TTC</div>
-    <div class="col-3 align-middle text-end">
-        {% if commande.statut != "Annulée" and commande.statut != "Terminée" %}
+    <div class="col-3 align-middle text-end pe-3">
+        {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée" and commande.statut.nom != "En attente" %}
             <div class="input-group">
-                <input type="text" name="fraisMontant" value="{{ commande.montant_frais }}" min="0" id="fraisMontant" class="form-control" width="95" style="width:95px;" aria-label="Montant des frais" />
+                <input type="text" name="fraisMontant" value="{{ commande.montant_frais }}" min="0" id="fraisMontant" class="form-control text-end" width="95" style="width:95px;" aria-label="Montant des frais" />
                 <span class="input-group-text">€</span>
                 {% csrf_token %}
                 <input type="submit" hidden />
             </div>
+        {% else %}
+            {{ commande.montant_frais }} €
         {% endif %}
     </div>
-    <div class="col-1">
-        {% if commande.statut.nom != "Annulée" or commande.statut.nom != "Terminée" %}
-            <button type="submit" class="btn float-end" id="editFrais"><i class="bi-pencil-square text-warning fs-4"></i></button>
+    <div class="col-1 text-center">
+        {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée" and commande.statut.nom != "En attente" and request.user|is_staff %}
+            <button type="submit" class="btn bg-warning py-0 px-1" id="editFrais"><i class="bi-pencil-square"></i></button>
         {% endif %}
     </div>
 </div>
 </form>
 
 <!-- FRAIS HT ------------------------------------------------------------------------------------------>
-<div class="row align-items-center">
-    <div class="py-2 bg-opacity-10 bg-danger col-8 align-middle text-end">HT</div>
-    <div class="py-2 bg-opacity-10 bg-danger col-3 align-middle text-end">{{ commande.id|frais_ht|floatformat:2 }} €</div>
+<div class="row align-items-center g-0 bg-opacity-10 bg-danger">
+    <div class="py-2 col-8 align-middle text-end ps-3">HT</div>
+    <div class="py-2 col-3 align-middle text-end pe-3">{{ commande.id|frais_ht|floatformat:2 }} €</div>
     <div class="col-1"></div>
 </div>
 
 <!-- FRAIS TVA ------------------------------------------------------------------------------------------>
-<div class="row align-items-center">
-    <div class="py-2 bg-opacity-10 bg-warning col-7 align-middle text-end">({{ commande.frais.tva.tva|floatformat:2 }} %)</div>
-    <div class="py-2 bg-opacity-10 bg-warning col-1 align-middle text-end">TVA</div>
-    <div class="py-2 bg-opacity-10 bg-warning col-3 align-middle text-end">{{ commande.id|frais_tva|floatformat:2 }} €</div>
+<div class="row align-items-center g-0 bg-opacity-10 bg-warning ">
+    <div class="py-2 col-7 align-middle text-end ps-3">({{ commande.frais.tva.tva|floatformat:2 }} %)</div>
+    <div class="py-2 col-1 align-middle text-end">TVA</div>
+    <div class="py-2 col-3 align-middle text-end pe-3">{{ commande.id|frais_tva|floatformat:2 }} €</div>
     <div class="col-1"></div>
 </div>
+{% endif %}
 
 <!-- MONTANT TOTAL -------------------------------------------------------------------------------------->
-<div class="row align-items-center">
-    <div class="bg-dark text-light py-2 col-4 align-middle text-start">MONTANT TOTAL</div>
-    <div class="bg-dark text-light py-2 col-3 align-middle text-end">PRODUITS : {{ commande.id|qte_order }}</div>
-    <div class="bg-dark text-light py-2 col-1 align-middle text-end">TTC : </div>
-    <div class="bg-dark text-light py-2 col-3 align-middle text-end">{{ commande.id|total_global_ttc|floatformat:2 }} €</div>
+<div class="row align-items-center g-0 bg-dark text-light">
+    <div class="py-2 col-7 align-middle text-start ps-3">MONTANT TOTAL ({{ commande.id|qte_order }} produits)</div>
+    <div class="py-2 col-1 align-middle text-end">TTC : </div>
+    <div class="py-2 col-3 align-middle text-end pe-3">{{ commande.id|total_global_ttc|floatformat:2 }} €</div>
     <div class="col-1"></div>
 </div>
 
 <!-- MONTANT TOTAL HT ----------------------------------------------------------------------------------->
-<div class="row align-items-center">
-    <div class="py-2 bg-opacity-10 bg-danger col-8 align-middle text-end">HT</div>
-    <div class="py-2 bg-opacity-10 bg-danger col-3 align-middle text-end">{{ commande.id|total_global_tva|floatformat:2 }} €</div>
+<div class="row align-items-center g-0 bg-opacity-10 bg-danger">
+    <div class="py-2 col-8 align-middle text-end ps-3">HT</div>
+    <div class="py-2 col-3 align-middle text-end pe-3">{{ commande.id|total_global_ht|floatformat:2 }} €</div>
     <div class="col-1"></div>
 </div>
 
 <!-- MONTANT TOTAL TVA ---------------------------------------------------------------------------------->
-<div class="row align-items-center">
-    <div class="bg-opacity-10 bg-warning py-2 col-8 align-middle text-end">TVA</div>
-    <div class="bg-opacity-10 bg-warning py-2 col-3 align-middle text-end">{{ commande.id|total_global_ht|floatformat:2 }} €</div>
+<div class="row align-items-center g-0 bg-opacity-10 bg-warning ">
+    <div class="py-2 col-8 align-middle text-end ps-3">TVA</div>
+    <div class="py-2 col-3 align-middle text-end pe-3">{{ commande.id|total_global_tva|floatformat:2 }} €</div>
     <div class="col-1"></div>
 </div>
+</div>
 <br/>
-<div class="bx-pull-left">
-    <div class="col-md-auto"><a href="{% url 'order:order-list' %}" class="btn btn-secondary"> Retour </a></div>
+<div class="row">
+        <div class="col-2"><a href="{% url 'order:order-list' %}" class="btn btn-secondary"> Retour </a></div>
+        <div class="col-10 px-1">
+<!-- SI COMMANDE AUTRE QUE PRE COMMANDE >> RENDRE POSSIBLE LA CREATION D'UNE PRE COMMANDE A PARTIR D'UNE COMMANDE -->
+        {% if commande.statut.nom != "Pré-commande" and request.user|is_staff %}
+            <button onclick="create_pre_order('{{ commande.id }}');" type="button" class="btn btn-info me-md-2 bx-pull-right">Créer une pré-commande</button>
+        {% endif %}
+<!-- PERMET D'ANNULER UNE COMMANDE SAUF SI DEJA ANNULEE OU TERMINEE -->
+        {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée"  %}
+            <button onclick="cancel_this_order('{{ commande.id }}');" type="button" class="btn btn-danger me-md-2 bx-pull-right">Annuler la commande</button>
+        {% endif %}
+<!-- PERMET DE TERMINER UNE COMANDE SI STATUT VALIDEE -->
+        {% if commande.statut.nom == "Validée" %}
+            <button onclick="end_this_order('{{ commande.id }}');" type="button" class="btn btn-success me-md-2 bx-pull-right">Terminer la commande</button>
+        {% endif %}
+<!-- PERMET DE VALIDER UNE COMMANDE SI EN COURS UNIQUEMENT -->
+        {% if commande.statut.nom == "En cours" %}
+            <button onclick="valid_this_order('{{ commande.id }}');" type="button" class="btn btn-primary bx-pull-right">Valider la commande</button>
+        {% endif %}
+<!-- PERMET DE CREER LA COMMANDE A PARTIR D'UNE PRECOMMANDE -->
+        {% if commande.statut.nom == "Pré-commande" %}
+            <button onclick="pre_valid_this_order('{{ commande.id }}');" type="button" class="btn btn-info bx-pull-right">Créer la commande</button>
+        {% endif %}
+<!-- PERMET D'ACCEPETER LA COMMANDE A PARTIR D'UNE COMMANDE EN ATTENTE -->
+        {% if commande.statut.nom == "En attente" and request.user|is_staff %}
+            <button onclick="accept_this_order('{{ commande.id }}');" type="button" class="btn btn-success bx-pull-right">Accepter la commande</button>
+        {% endif %}
+
+<!-- POUR IMPRIMER LE BON DE COMMANDE -->
+        {% if commande.statut.nom == "Validée" or commande.statut.nom == "En cours" %}
+            <div class="col-md-auto bx-pull-right"><a target="_blank" href="{% url 'order:order-print' commande.id %}?download=1" class="btn btn-warning"><i class="bi bi-clipboard-check"></i> Bon de commande</a></div>
+        {% endif %}
+<!-- POUR IMPRIMER LA FACTURE -->
+        {% if commande.statut.nom == "Terminée" or commande.statut.nom == "Validée" %}
+            <div class="col-md-auto bx-pull-right"><a target="_blank" href="{% url 'order:order-print' commande.id %}?download=1&mode=1" class="btn btn-success"><i class="bi bi-clipboard-check"></i> Facture</a></div>
+        {% endif %}
+<!-- POUR IMPRIMER LE DEVIS -->
+        {% if commande.statut.nom == "Pré-commande" %}
+            <div class="col-md-auto bx-pull-right"><a target="_blank" href="{% url 'order:order-print' commande.id %}?download=1&mode=3" class="btn btn-info"><i class="bi bi-clipboard-check"></i> Devis</a></div>
+        {% endif %}
+        </div>
 </div>
-<div class="d-grid gap-2 d-md-flex justify-content-md-end">
-    <!-- SI COMMANDE AUTRE QUE ANNULEE -->
-    {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée"  %}
-    <form method="post" name="cancel-form-cart" id="cancel-form-cart" action="{% url 'order:order-cancel' commande.id %}">
-        <button type="submit" class="btn btn-outline-danger me-md-2">Annuler la commande</button>
-        {% csrf_token %}
-    </form>
-    {% endif %}
-    <!-- SI COMMANDE VALIDEE -->
-    {% if commande.statut.nom == "Validée" %}
-    <form method="post" name="end-form-cart" id="end-form-cart" action="{% url 'order:order-end' commande.id %}">
-        <button type="submit" class="btn btn-success me-md-2">Terminer la commande</button>
-        {% csrf_token %}
-    </form>
-    {% endif %}
-    <!-- SI COMMANDE EN COURS -->
-    {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Validée" and commande.statut.nom != "Terminée" %}
-    <form method="post" name="valid-form-cart" id="valid-form-cart" action="{% url 'order:order-valid' commande.id %}">
-        <button type="submit" class="btn btn-primary">Valider la commande</button>
-        {% csrf_token %}
-    </form>
-    {% endif %}
-    {% if commande.statut.nom == "Validée" or commande.statut.nom == "En cours" %}
-        <div class="col-md-auto"><a target="_blank" href="{% url 'order:order-print' commande.id %}?download=1" class="btn btn-warning"><i class="bi bi-clipboard-check"></i> Bon de commande</a></div>
-    {% endif %}
-    {% if commande.statut.nom == "Terminée" or commande.statut.nom == "Validée"%}
-        <div class="col-md-auto"><a target="_blank" href="{% url 'order:order-print' commande.id %}?download=1&mode=1" class="btn btn-warning"><i class="bi bi-clipboard-check"></i> Facture</a></div>
-    {% endif %}
-</div>
-<div class="modal modal-danger fade in" id="modal-delete" style="display:none;">
+<div class="modal modal-danger fade in" id="modal" style="display:none;">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-light">
-                <h4 class="modal-title">Supprimer le produit de la commande ?</h4>
+            <div class="modal-header" id="modal-header">
+                <h4 class="modal-title" id="modal-title">Créer la commande ?</h4>
                 <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
-            <div class="modal-body" id="body-delete">
+            <div class="modal-body" id="modal-body">
             </div>
-            <div class="modal-body">Cela remettra les stocks à jour pour le produit supprimé.</div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <a href="" id="button-delete">
-                    <button type="button" class="btn btn-danger">Supprimer</button>
+                <a href="" id="modal-a">
+                    <button type="button" class="btn btn-info" id="modal-button">Créer</button>
                 </a>
             </div>
         </div>
@@ -304,11 +324,92 @@ function checkform(stock_bis, id)
 function delete_this_product(product_id, nom) {
     var url = "{% url 'order:order-product-remove' 'XXX' %}"
     var html;
-    html = "Cela va supprimer le produit suivant de la commande : <strong>" + nom + "</strong>"
+    html = "Cela va supprimer le produit suivant de la commande : <strong>" + nom + "</strong><br/>Cela remettra les stocks à jour pour le produit supprimé."
     url = url.replace('XXX', product_id);
-    $('#modal-delete').modal('toggle');
-    $('#body-delete').html(html);
-    $('#button-delete').attr('href',url);
+    $('#modal').modal('toggle');
+    $('#modal-body').html(html);
+    $('#modal-a').attr('href',url);
+    $('#modal-header').addClass('bg-danger text-light');
+    $('#modal-title').text("Supprimer un produit");
+    $('#modal-button').text("Supprimer");
+}
+
+function cancel_this_order(commande_id) {
+    var url = "{% url 'order:order-cancel' 'XXX' %}"
+    var html;
+    html = "Cela va annuler la commande !<br>Les stocks seront mis à jour en conséquence."
+    url = url.replace('XXX', commande_id);
+    $('#modal').modal('toggle');
+    $('#modal-body').html(html);
+    $('#modal-a').attr('href',url);
+    $('#modal-header').addClass('bg-danger text-light');
+    $('#modal-title').text("Annuler la commande");
+    $('#modal-button').text("Valider");
+}
+
+function create_pre_order(commande_id) {
+    var url = "{% url 'order:pre-order-create' 'XXX' %}"
+    var html;
+    html = "Cela va créer une pré-commande à partir de la commande séléctionnée !<br>Seul le stock futur sera impacté."
+    url = url.replace('XXX', commande_id);
+    $('#modal').modal('toggle');
+    $('#modal-body').html(html);
+    $('#modal-a').attr('href',url);
+    $('#modal-header').addClass('bg-info text-light');
+    $('#modal-title').text("Créer une pré-commande");
+    $('#modal-button').text("Créer");
+}
+
+function valid_this_order(commande_id) {
+    var url = "{% url 'order:order-valid' 'XXX' %}"
+    var html;
+    html = "Cela va valider la commande ! (Edition toujours possible)"
+    url = url.replace('XXX', commande_id);
+    $('#modal').modal('toggle');
+    $('#modal-body').html(html);
+    $('#modal-a').attr('href',url);
+    $('#modal-header').addClass('bg-primary text-light');
+    $('#modal-title').text("Valider la commande");
+    $('#modal-button').text("Valider");
+}
+
+function pre_valid_this_order(commande_id) {
+    var url = "{% url 'order:order-pre-valid' 'XXX' %}"
+    var html;
+    html = "Cela va créer une commande à partir de la pré-commande (changement de statut)"
+    url = url.replace('XXX', commande_id);
+    $('#modal').modal('toggle');
+    $('#modal-body').html(html);
+    $('#modal-a').attr('href',url);
+    $('#modal-header').addClass('bg-info text-light');
+    $('#modal-title').text("Créer la commande");
+    $('#modal-button').text("Créer");
+}
+
+function accept_this_order(commande_id) {
+    var url = "{% url 'order:order-accept' 'XXX' %}"
+    var html;
+    html = "Cela va accepter la commande en attente et passer le statut de celle-ci en \"En cours\""
+    url = url.replace('XXX', commande_id);
+    $('#modal').modal('toggle');
+    $('#modal-body').html(html);
+    $('#modal-a').attr('href',url);
+    $('#modal-header').addClass('bg-info text-light');
+    $('#modal-title').text("Créer la commande");
+    $('#modal-button').text("Créer");
+}
+
+function end_this_order(commande_id) {
+    var url = "{% url 'order:order-end' 'XXX' %}"
+    var html;
+    html = "Cela va terminer la commande ... Elle ne pourra plus être modifiée par la suite !"
+    url = url.replace('XXX', commande_id);
+    $('#modal').modal('toggle');
+    $('#modal-body').html(html);
+    $('#modal-a').attr('href',url);
+    $('#modal-header').addClass('bg-success text-light');
+    $('#modal-title').text("Terminer la commande");
+    $('#modal-button').text("Terminer");
 }
 
 function add_product_order(order_id) {

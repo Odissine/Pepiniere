@@ -1,0 +1,135 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}Administration - Greffons{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary bg-opacity-50 text-black">
+                <div class="h3 mb-0">{% if greffon %}Modifier un Greffon{% else %}Ajouter un Greffon{% endif %}</div>
+            </div>
+            <div class="card-body">
+                <form class="form-horizontal" action="{% if greffon %}{% url 'onlineshop:edit-greffon' greffon_id %}{% else %}{% url 'onlineshop:add-greffon' %}{% endif %}" method="post" accept-charset="utf-8">
+                    {% csrf_token %}
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.produit.label }}</span>
+                                {{ form.produit }}
+                                {% if form.produit.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.produit.label }}" data-bs-html="true" data-bs-content="{{ form.produit.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.greffons.label }}</span>
+                                {{ form.greffons }}
+                                {% if form.greffons.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.greffons.label }}" data-bs-html="true" data-bs-content="{{ form.greffons.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.comm.label }}</span>
+                                {{ form.comm }}
+                                {% if form.comm.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.comm.label }}" data-bs-html="true" data-bs-content="{{ form.comm.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.objectif.label }}</span>
+                                {{ form.objectif }}
+                                {% if form.objectif.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.objectif.label }}" data-bs-html="true" data-bs-content="{{ form.objectif.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.date.label }}</span>
+                                {{ form.date }}
+                                {% if form.date.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.date.label }}" data-bs-html="true" data-bs-content="{{ form.date.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.couleur.label }}</span>
+                                {{ form.couleur }}
+                                {% if form.couleur.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.couleur.label }}" data-bs-html="true" data-bs-content="{{ form.couleur.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.realise.label }}</span>
+                                {{ form.realise }}
+                                {% if form.realise.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.realise.label }}" data-bs-html="true" data-bs-content="{{ form.realise.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.reussi.label }}</span>
+                                {{ form.reussi }}
+                                {% if form.reussi.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.reussi.label }}" data-bs-html="true" data-bs-content="{{ form.reussi.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-sm-6 d-grid gap-2">
+                            <a href="{{ previous_page }}" class="d-grid gap-2">
+                                <button type="button" class="btn btn-secondary">RETOUR</button>
+                            </a>
+                        </div>
+                        <div class="col-sm-6 d-grid gap-2">
+                            <input type="submit" value="{% if greffon %}MODIFIER{% else %}AJOUTER{% endif %}" class="btn btn-primary" id="search-btn"/>
+                        </div>
+                    </div>
+                    <br/>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

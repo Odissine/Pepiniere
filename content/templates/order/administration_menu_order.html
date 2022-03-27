@@ -1,7 +1,7 @@
 {% extends "layout/base.html" %}
 {% load static %}
 {% load i18n %}
-{% block title %}La Pépinière - Administration{% endblock %}
+{% block title %}Administration - Commandes{% endblock %}
 {% block content %}
 <div class="card">
     <div class="card-header py-2 border-bottom border-primary">
@@ -23,7 +23,21 @@
                     <a href="{% url 'order:manage-order' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Commandes</button></a>
                     <a href="{% url 'order:manage-client' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Clients</button></a>
                     <a href="{% url 'order:manage-divers' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les Frais, la TVA, les Statuts</button></a>
+                    <a href="{% url 'order:manage-inventaire' %}"><button type="button" class="list-group-item list-group-item-action">Gérer les périodes de commande</button></a>
                     <a href="{% url 'order:order-etiquettes' %}"><button type="button" class="list-group-item list-group-item-action">Imprimer les étiquettes</button></a>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header bg-danger bg-opacity-25 text-black">
+                <div class="row align-items-center">
+                    <h5 class="col-12 h4 mb-0">Réinitialisation</h5>
+                </div>
+            </div>
+            <div class="card-body py-2">
+                <div class="list-group">
+                    <a href="{% url 'order:reset-order' %}"><button type="button" class="list-group-item list-group-item-action">Valider toutes les Commandes de la précédente période <span class="bx-pull-right">Total : {{ waiting_orders|length }}</span></button></a>
+                    <a href="{% url 'order:all-order-pre-valid' False %}"><button type="button" class="list-group-item list-group-item-action">Créer toutes les commandes a partir des pré-commandes en cours ! <span class="bx-pull-right">Total : {{ pre_orders|length }}</span></button></a>
                 </div>
             </div>
         </div>

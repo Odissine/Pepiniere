@@ -1,0 +1,14 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% block title %}La Pépinière - Accès Interdit{% endblock %}
+{% block content %}
+<div class="row justify-content-md-center px-0">
+    <div class="card col-8 px-0">
+        <h1 class="card-header mx-0 bg-danger text-light text-center">Accès interdit</h1>
+        <div class="card-body p-5">
+            <div class="">Vous n'avez pas accès à cette partie du site. <br>Peut-être utilisez vous un mauvais compte ?</div>
+            <div class=""><a href="{% url 'account:logout' %}">Déconnectez-vous</a> puis reconnectez-vous en tant qu'administrateur !</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
