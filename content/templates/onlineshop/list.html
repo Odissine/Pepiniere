@@ -3,9 +3,8 @@
 {% load my_templatetag %}
 {% block title %}Produits{% endblock %}
 {% block content %}
-{% if produits|length > 0 %}
 {% include 'onlineshop/search.html' %}
-{% include 'onlineshop/modal_search_order.html' %}
+{% if produits|length > 0 %}
 <div class="nav justify-content-between">
     <div class="h3">Liste des produits en stock au {% now "j F Y" %}</div>
 </div>

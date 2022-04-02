@@ -95,7 +95,6 @@ class Cart(object):
                 item = self.cart[produit_id]
                 item['qte'] = qte
                 self.save()
-                print(qte)
             message = "Quantité mise à jour !"
             tags = "success"
         # return self.cart.values()

@@ -3,6 +3,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.utils.html import format_html
+from django.contrib.auth.decorators import login_required
+
 from .core import *
 from .forms import *
 from .models import *
@@ -57,8 +59,6 @@ def register(request):
     client_form = FormAddClient(request.POST or None)
 
     if request.method == "POST":
-        print(user_form.errors)
-        print(client_form.errors)
         if user_form.is_valid() and client_form.is_valid():
             user_form.save()
             email = user_form.cleaned_data['email']
@@ -66,12 +66,18 @@ def register(request):
             last_user = User.objects.get(email=email)
             last_user.set_password(password)
             last_user.save()
-            client_form.save()
-            last_client = Client.objects.last()
-            last_client.user = last_user
-            last_client.prenom = last_user.first_name
-            last_client.nom = last_user.last_name
-            last_client.mail = last_user.email
+
+            check_mail_client = Client.objects.filter(mail=email)
+            if len(check_mail_client) > 0:
+                last_client = Client.objects.get(mail=email)
+                last_client.user = last_user
+            else:
+                client_form.save()
+                last_client = Client.objects.last()
+                last_client.user = last_user
+                last_client.prenom = last_user.first_name
+                last_client.nom = last_user.last_name
+                last_client.mail = last_user.email
             last_client.save()
             messages.success(request, "Compte créé avec succès.")
             return redirect('account:login')
@@ -82,6 +88,60 @@ def register(request):
         'client_form': client_form,
     }
     return render(request, "account/register.html", context)
+
+
+@login_required
+def user_profil(request):
+    user = request.user
+    client = Client.objects.get(user=user)
+    user_form = RegisterModifyForm(request.POST or None, instance=user)
+    client_form = FormAddClient(request.POST or None, instance=client)
+
+    if request.POST:
+        if request.POST.get('mode') == "profil":
+            if user_form.is_valid() and client_form.is_valid():
+                user_form.save()
+                email = user_form.cleaned_data['email']
+                last_user = User.objects.get(email=email)
+                last_user.save()
+                try:
+                    client = Client.objects.get(user=last_user)
+                    client.adresse = client_form.cleaned_data['adresse']
+                    client.ville = client_form.cleaned_data['ville']
+                    client.cp = client_form.cleaned_data['cp']
+                    client.tel = client_form.cleaned_data['tel']
+                    client.societe = client_form.cleaned_data['societe']
+                    client.mail = email
+                    client_form.save()
+                except:
+                    try:
+                        client = Client.objects.get(email=email)
+                        client.user = last_user
+                    except:
+                        client_form.save()
+                        client = Client.objects.get(email=email)
+                        client.user = last_user
+
+
+                client.prenom = last_user.first_name
+                client.nom = last_user.last_name
+
+                client.save()
+                messages.success(request, "Profil modifié avec succès.")
+                return redirect('account:profil')
+        elif request.POST.get('mode') == 'password':
+            if user.check_password(request.POST.get('old-pass')):
+                print("Go")
+
+        else:
+            messages.error(request, "Action interdite !.")
+            return redirect('account:profil')
+    context = {
+        'user_form': user_form,
+        'client_form': client_form,
+        'client': client,
+    }
+    return render(request, "account/modify.html", context)
 
 
 def error_view(request):

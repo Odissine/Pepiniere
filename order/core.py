@@ -1,5 +1,4 @@
-import datetime
-
+from datetime import datetime
 from order.models import *
 
 
@@ -19,9 +18,9 @@ def get_tva_from_id(id):
 
 def set_inventaire_for_pre_order(order_id):
     order = Commande.objects.get(id=order_id)
-    inventaire = Inventaire.objects.filter(start_date__gte=datetime.datetime.now())
+    inventaire = Inventaire.objects.filter(start_date__gte=datetime.now())
     if len(inventaire) > 0:
-        inventaire = Inventaire.objects.filter(start_date__gte=datetime.datetime.now()).order_by('end_date').first()
+        inventaire = Inventaire.objects.filter(start_date__gte=datetime.now()).order_by('end_date').first()
         print(inventaire)
         order.inventaire = inventaire
         order.save()
@@ -30,7 +29,7 @@ def set_inventaire_for_pre_order(order_id):
         print(last_inventaire)
         # start_date = datetime.datetime.strptime(last_inventaire.start_date, "%d/%m/%Y")
         start_date = last_inventaire.end_date + datetime.timedelta(days=1)
-        end_date = datetime.datetime(last_inventaire.end_date.year+1, last_inventaire.end_date.month, last_inventaire.end_date.day)
+        end_date = datetime(last_inventaire.end_date.year+1, last_inventaire.end_date.month, last_inventaire.end_date.day)
         inventaire = Inventaire.objects.create(start_date=start_date, end_date=end_date)
         inventaire.save()
     order.inventaire = inventaire

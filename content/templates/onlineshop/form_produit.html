@@ -7,7 +7,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header bg-primary bg-opacity-50 text-black">
-                <div class="h3 mb-0">{% if data %}Modifier un Produit{% else %}Ajouter un Produit{% endif %}</div>
+                <div class="h3 mb-0">{% if produit %}Modifier un Produit{% else %}Ajouter un Produit{% endif %}</div>
             </div>
             <div class="card-body">
                 <form class="form-horizontal" action="{% if produit %}{% url 'onlineshop:edit-produit' produit_id %}{% else %}{% url 'onlineshop:add-produit' %}{% endif %}" method="post" accept-charset="utf-8">
@@ -85,6 +85,32 @@
                                 {% if form.stock.help_text %}
                                 <span class="input-group-btn">
                                     <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.stock.label }}" data-bs-html="true" data-bs-content="{{ form.stock.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.stock_bis.label }}</span>
+                                {{ form.stock_bis }}
+                                {% if form.stock_bis.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.stock_bis.label }}" data-bs-html="true" data-bs-content="{{ form.stock_bis.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.stock_future.label }}</span>
+                                {{ form.stock_future }}
+                                {% if form.stock_future.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.stock_future.label }}" data-bs-html="true" data-bs-content="{{ form.stock_future.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
                                 </span>
                                 {% endif %}
                             </div>

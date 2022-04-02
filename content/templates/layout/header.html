@@ -1,5 +1,6 @@
 {% load static %}
 {% load bootstrap5 %}
+{% load auth_extras %}
 <header id="header" class="header fixed-top d-flex align-items-center color-a">
     <div class="d-flex align-items-center justify-content-between">
       <a href="{% url 'onlineshop:produit-list' %}" class="logo d-flex align-items-center">
@@ -11,37 +12,47 @@
     <nav class="header-nav ms-auto">
       <ul class="d-flex align-items-center">
         {% if user.is_authenticated %}
-        <li class="nav-item pe-3 fs-5">
-            <span class="d-none d-md-block ps-2">{{ request.user.first_name }} {{ request.user.last_name }}</span>
+        <li class="nav-item">
+            {% if 'cart' in request.session %}
+            <a href="/cart" class="nav-link nav-icon" id="cartLink">
+                <i class="bi bi-bag"></i>
+                {% if request.session.cart|length > 0 %}
+                <span class='badge bg-primary badge-number' id='lblCartCount'> {{ request.session.cart|length }} </span>
+                {% else %}
+                <span class='badge bg-primary badge-number' id='lblCartCount'></span>
+                {% endif %}
+            </a>
+            {% else %}
+            <a class="nav-link nav-icon" href="/" id="cartLink">
+                <i class="bi bi-bag"></i>
+                <span class='badge bg-primary badge-number' id='lblCartCount'></span>
+            </a>
+            {% endif %}
         </li>
-        {% endif %}<!--
         <li class="nav-item dropdown pe-3">
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-            <img src="assets/img/profile-img.jpg" alt="Profile" class="rounded-circle">
-            <span class="d-none d-md-block dropdown-toggle ps-2">K. Anderson</span>
+            <!-- <img src="assets/img/profile-img.jpg" alt="Profile" class="rounded-circle"> -->
+            <span class="d-none d-md-block dropdown-toggle">{{ request.user.first_name }} {{ request.user.last_name }}</span>
           </a>
--->
-          <!-- End Profile Iamge Icon -->
-<!--
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
             <li class="dropdown-header">
-              <h6>Kevin Anderson</h6>
-              <span>Web Designer</span>
+              <h6>{{ request.user.first_name }} {{ request.user.last_name }}</h6>
+              <span>{% if request.Clients.societe %} {{ request.Clients.societe }} {% endif %}</span>
             </li>
             <li>
               <hr class="dropdown-divider">
             </li>
 
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="users-profile.html">
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'account:profil' %}">
                 <i class="bi bi-person"></i>
-                <span>My Profile</span>
+                <span>Mon profil</span>
               </a>
             </li>
             <li>
               <hr class="dropdown-divider">
             </li>
-
+<!--
             <li>
               <a class="dropdown-item d-flex align-items-center" href="users-profile.html">
                 <i class="bi bi-gear"></i>
@@ -58,59 +69,34 @@
                 <span>Need Help?</span>
               </a>
             </li>
+-->
             <li>
               <hr class="dropdown-divider">
             </li>
 
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="#">
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'account:logout' %}">
                 <i class="bi bi-box-arrow-right"></i>
-                <span>Sign Out</span>
+                <span>Déconnexion</span>
               </a>
             </li>
 
           </ul>
--->
         <!-- End Profile Dropdown Items -->
-<!--
-        </li>
--->
-        <!-- End Profile Nav -->
-        {% if user.is_authenticated %}
-        <li class="nav-item">
-            {% if 'cart' in request.session %}
-            <a href="/cart" class="nav-link nav-icon fs-4" id="cartLink">
-                <i class="bi bi-bag fs-3"></i>
-                {% if request.session.cart|length > 0 %}
-                <span class='badge bg-primary badge-number' id='lblCartCount'> {{ request.session.cart|length }} </span>
-                {% else %}
-                <span class='badge bg-primary badge-number' id='lblCartCount'></span>
-                {% endif %}
-            </a>
-            {% else %}
-            <a class="nav-link nav-icon fs-4" href="/" id="cartLink">
-                <i class="bi bi-bag fs-3"></i>
-                <span class='badge bg-primary badge-number' id='lblCartCount'></span>
-            </a>
-            {% endif %}
-        </li>
-        <li class="nav-item">
-          <a class="nav-link nav-icon fs-4" href="{% url 'account:logout' %}">
-            <i class="bi bi-lock fs-3"></i>
-          </a>
         </li>
         {% else %}
+        <!-- End Profile Nav -->
 <!-- OPTION A ACTIVER QUAND LE SITE SERA OUVERT A TOUS -->
-<!--
+        {% if True|allow_register %}
         <li class="nav-item">
-          <a class="nav-link nav-icon" href="{#% url 'account:register' %#}">
-            <i class="bi bi-person-plus-fill"></i>
+          <a class="nav-link nav-icon nav-profile" href="{% url 'account:register' %}">
+            <i class="bi bi-person-plus-fill"> </i> <span> Inscription </span>
           </a>
         </li>
--->
+        {% endif %}
         <li class="nav-item">
-          <a class="nav-link nav-icon" href="{% url 'account:login' %}">
-            <i class="bi bi-unlock-fill"></i>
+          <a class="nav-link nav-icon nav-profile" href="{% url 'account:login' %}">
+            <i class="bi bi-box-arrow-right"></i> <span> Connexion</span>
           </a>
         </li>
         {% endif %}

@@ -38,7 +38,7 @@
                 {% for client in clients %}
                 <div style="cursor: pointer" class="row align-items-center py-2 {% cycle 'bg-transparent' 'bg-secondary bg-opacity-25' as rowcolors %} collapsed" data-bs-target="#flush-collapse{{ client.id }}" data-bs-toggle="collapse" aria-expanded="false" aria-controls="flush-collapse{{ client.id }}"">
                     <div class="col-2">
-                        {{ client.nom|upper }}
+                        {% if client.user %}<i class="bi bi-patch-check-fill"></i> {% endif %}{{ client.nom|upper }}
                     </div>
                     <div class="col-2">
                         {{ client.prenom }}

@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+'''
 @admin.register(TokenLogin)
 class TokenAdmin(admin.ModelAdmin):
     list_display = ['id', 'user', 'token']
@@ -7,7 +8,7 @@ class TokenAdmin(admin.ModelAdmin):
     list_filter = ['user']
 
 
-'''
+
 @admin.register(Config)
 class ConfigAdmin(admin.ModelAdmin):
     list_display = ['id', 'register']

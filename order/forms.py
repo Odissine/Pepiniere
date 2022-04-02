@@ -122,11 +122,11 @@ class FormResetOrder(forms.Form):
 
         self.fields['inventaire'] = forms.ModelChoiceField(
             label="Période",
-            queryset=Inventaire.objects.exclude(end_date__gte=datetime.datetime.now()).order_by('-start_date'),
+            queryset=Inventaire.objects.exclude(actif=True).order_by('-start_date'),
             required=True,
             widget=Select2Widget(attrs={'placeholder': 'Période', 'class': 'form-control js-example-basic-single'}),
             help_text='Choisir une période',
-            initial=Inventaire.objects.get(start_date__lte=datetime.datetime.now(), end_date__gte=datetime.datetime.now())
+            initial=Inventaire.objects.get(start_date__lte=datetime.now(), end_date__gte=datetime.now())
         )
 
         self.fields['mode'] = forms.ChoiceField(
@@ -193,9 +193,16 @@ class SearchClientForm(forms.Form):
             help_text='Séléctionner un type de client.',
         )
 
+        self.fields['mail'] = forms.CharField(
+            label="Mail",
+            required=False,
+            widget=forms.TextInput(attrs={'placeholder': 'Mail', 'class': 'form-control'}),
+            help_text='Saisir une adresse mail'
+        )
+
     class Meta:
         model = Client
-        fields = ['cp', 'ville', 'remise', 'activate']
+        fields = ['cp', 'ville', 'remise', 'activate', 'mail']
 
 
 class FormAddTva(forms.ModelForm):
@@ -391,9 +398,17 @@ class FormAddClient(forms.ModelForm):
             widget=forms.NumberInput(attrs={'placeholder': 'Saisir un taux de remise', 'class': 'form-control'}, )
         )
 
+        self.fields['user'] = forms.ModelChoiceField(
+            label="Utilisateur",
+            queryset=User.objects.all(),
+            required=False,
+            widget=Select2Widget(attrs={'placeholder': 'Utilisateur', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir un utilisateur du site'
+        )
+
     class Meta:
         model = Client
-        fields = ['prenom', 'nom', 'societe', 'adresse', 'cp', 'ville', 'tel', 'mail', 'remise', 'commentaire']
+        fields = ['prenom', 'nom', 'societe', 'adresse', 'cp', 'ville', 'tel', 'mail', 'remise', 'commentaire', 'user']
 
 
 class FormAddOrder(forms.ModelForm):

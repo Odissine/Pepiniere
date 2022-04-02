@@ -1,13 +1,14 @@
 {% extends "layout/base.html" %}
 {% load static %}
 {% load i18n %}
+{% load calcul_order %}
 {% block title %}Administration - Greffons{% endblock %}
 {% block content %}
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-header bg-primary bg-opacity-50 text-black">
-                <div class="h3 mb-0">{% if greffon %}Modifier un Greffon{% else %}Ajouter un Greffon{% endif %}</div>
+                <div class="h3 mb-0">{% if greffon %}Modifier le Greffon : {{ greffon.produit }} {% else %}Ajouter un Greffon{% endif %}</div>
             </div>
             <div class="card-body">
                 <form class="form-horizontal" action="{% if greffon %}{% url 'onlineshop:edit-greffon' greffon_id %}{% else %}{% url 'onlineshop:add-greffon' %}{% endif %}" method="post" accept-charset="utf-8">
@@ -117,6 +118,19 @@
                         </div>
                     </div>
                     <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.inventaire.label }}</span>
+                                {{ form.inventaire }}
+                                {% if form.inventaire.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.inventaire.label }}" data-bs-html="true" data-bs-content="{{ form.inventaire.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
                         <div class="col-sm-6 d-grid gap-2">
                             <a href="{{ previous_page }}" class="d-grid gap-2">
                                 <button type="button" class="btn btn-secondary">RETOUR</button>
@@ -132,4 +146,25 @@
         </div>
     </div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+    $(document).ready(function(){
+        $('#id_produit').change(function() {
+            console.log($(this).val());
+            console.log("test");
+            $.ajax({
+                type: 'POST',
+                url:'/produits/greffons/comm',
+                data:{
+                    produit:$(this).val(),
+                    'csrfmiddlewaretoken': "{{ csrf_token }}"
+                    },
+                    success: function (data){
+                        $('#id_comm').val(data);
+                    }
+            })
+        })
+    })
+</script>
 {% endblock %}

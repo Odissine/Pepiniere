@@ -91,6 +91,65 @@ class RegisterForm(forms.ModelForm):
         fields = ('username', 'first_name', 'last_name', 'email', 'password', 'password2')
 
 
+class RegisterModifyForm(forms.ModelForm):
+    username = forms.CharField(
+        required=False,
+        disabled=True,
+        error_messages={'required': 'Merci de saisir un nom d\'utilisateur'},
+        label="Nom d'utilisateur",
+        widget=forms.TextInput(attrs={'placeholder': 'Nom d\'utilisateur', 'autocomplete': 'off', 'class': 'form-control'}),
+        help_text="Si vous laissez le champ vide, pour vous connecter il vous faudra saisir votre adresse mail.",
+
+    )
+
+    first_name = forms.CharField(
+        required=True,
+        error_messages={'required': 'Merci de saisir votre prénom'},
+        label='Prénom',
+        widget=forms.TextInput(attrs={'placeholder': 'Prénom', 'autocomplete': 'off', 'class': 'form-control', 'required': 'required'})
+    )
+
+    last_name = forms.CharField(
+        required=True,
+        error_messages={'required': 'Merci de saisir votre nom de famille'},
+        label='Nom',
+        widget=forms.TextInput(attrs={'placeholder': 'Nom', 'autocomplete': 'off', 'class': 'form-control', })
+    )
+
+    email = forms.EmailField(
+        required=True,
+        error_messages={'required': 'Merci de saisir une adresse mail valide'},
+        label='Email',
+        disabled=True,
+        widget=forms.TextInput(attrs={'placeholder': 'Email', 'autocomplete': 'off', 'class': 'form-control', })
+    )
+
+    def clean(self):
+        error = {}
+        cleaned_data = super().clean()
+        email = self.cleaned_data['email']
+        try:
+            old_email = self.changed_data['email']
+            email_exist = User.objects.filter(email=email)
+            if len(email_exist) > 0 and email != old_email:
+                error['email'] = "L'adresse mail existe déjà !"
+                # raise forms.ValidationError("L'adresse mail existe déjà !")
+            if error:
+                raise forms.ValidationError(error)
+        except:
+            pass
+
+    def save(self, commit=True):
+        instance = super(RegisterModifyForm, self).save(commit=False)
+        if commit:
+            instance.save()
+        return instance
+
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'email')
+
+
 class UserLoginForm(forms.ModelForm):
     username = forms.CharField(widget=forms.TextInput(attrs={'placeholder': "Nom d'utilisateur", 'autofocus': 'None'}), label="", required=True)
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Mot de passe', 'autocomplete': 'off'}), label='Mot de passe')
@@ -124,7 +183,7 @@ class FormResetPassword(forms.Form):
         fields = ['password2', 'password']
 
 
-'''
+
 class FormConfig(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
@@ -148,4 +207,3 @@ class FormConfig(forms.ModelForm):
     class Meta:
         model = Config
         fields = ['register']
-'''

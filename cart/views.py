@@ -5,12 +5,14 @@ from .cart import Cart
 from .forms import CartAddProduitForm, CartValidForm, CartUpdateForm
 from onlineshop.models import Produit
 from order.models import *
+from account.core import *
 from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.utils.html import format_html
+from pepiniere.settings import DEBUG
 
 
 @require_POST
@@ -61,8 +63,6 @@ def cart_remove(request, produit_id):
 def cart_update(request, produit_id):
     cart = Cart(request)
     # form = CartUpdateForm(request.POST or None)
-    # print(form.errors)
-    # print(form)
     # if form.is_valid():
         # cd = form.cleaned_data
     produit = get_object_or_404(Produit, id=produit_id)
@@ -122,6 +122,7 @@ def cart_valid(request):
 
     if request.method == "POST":
         if form.is_valid():
+            inventaire = Inventaire.objects.get(actif=True)
             if not request.user.is_staff:
                 client = Client.objects.get(user=request.user)
             else:
@@ -150,7 +151,7 @@ def cart_valid(request):
                     remise_client = client.remise
                     tva = Tva.objects.get(default=True)
 
-                    commande_create = Commande.objects.create(client=client, remise=remise_client, statut=statut_en_cours, tva=tva)
+                    commande_create = Commande.objects.create(client=client, remise=remise_client, statut=statut_en_cours, tva=tva, inventaire=inventaire)
                     # commande_create.save()
 
                     for item in cart:
@@ -160,6 +161,27 @@ def cart_valid(request):
                             produit = Produit.objects.get(nom=item['produit'])
                             new_qte = produit.stock_bis - item['qte']
                             Produit.objects.filter(nom=item['produit']).update(stock_bis=new_qte)
+
+                    if DEBUG is True:
+                        href = "http://127.0.0.1:8000/order/detail/" + str(commande_create.id)
+                    else:
+                        href = "https://stock.lapetitepepiniere.fr/order/detail/" + str(commande_create.id)
+
+                    # MAIL AU RESPONSABLE
+                    email_html = "<br/><br/>Bonjour,<br/><br/>"
+                    email_html += "Une nouvelle commande vient d'être passée."
+                    email_html += "Client : " + str(client) + "<br/><br/>"
+                    email_html += "<a href='" + href + "'>Accéder à la commande</a><br/><br/>"
+                    email_html += "La petite pepinière"
+                    send_mail("Nouvelle Commande de " + str(client), email_html, '', '', config_mail['sender'], '')
+
+                    # MAIL AU CLIENT
+                    email_html = "<br/><br/>Bonjour " + str(client) + ",<br/><br/>"
+                    email_html += "Votre commande a bien été enregistrée.<br/>"
+                    email_html += "Elle sera étudiée prochainement et vous serez informé par mail dès lors qu'elle sera validée ou annulée.<br/><br/>"
+                    email_html += "<a href='" + href + "'>Accéder à la commande</a><br/><br/>"
+                    email_html += "La petite pepinière"
+                    send_mail("La petite pépinère : Commande enregistrée", email_html, '', '', client.mail, '')
 
                     message = "Commande créée avec succès !"
 

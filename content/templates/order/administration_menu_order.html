@@ -52,17 +52,13 @@
             <div class="card-body py-2">
                 <div class="h5 text-primary">Export</div>
                 <div class="list-group">
-                    <a href="{% url 'order:export-commandes-xls' %}"><button type="button" class="list-group-item list-group-item-action">Exporter les Commandes</button></a>
-                    <a href="{% url 'order:export-clients-xls' %}"><button type="button" class="list-group-item list-group-item-action">Exporter les Clients</button></a>
-                    <a href="{% url 'order:export-divers-xls' %}"><button type="button" class="list-group-item list-group-item-action">Exporter TVA / Frais / Statut</button></a>
+                    <a href="{% url 'order:export-order-xls' %}"><button type="button" class="list-group-item list-group-item-action">Exporter les Commandes/Clients/Tva/Frais/...</button></a>
                 </div>
             </div>
             <div class="card-body py-2">
                 <div class="h5 text-primary">Import</div>
                 <div class="list-group">
-                    <a href="{% url 'order:import-commandes-xls' %}"><button type="button" class="list-group-item list-group-item-action">Importer les Commandes</button></a>
-                    <a href="{% url 'order:import-clients-xls' %}"><button type="button" class="list-group-item list-group-item-action">Importer les Clients</button></a>
-                    <a href="{% url 'order:import-divers-xls' %}"><button type="button" class="list-group-item list-group-item-action">Importer TVA / Frais / Statut</button></a>
+                    <a href="{% url 'order:import-order-xls' %}"><button type="button" class="list-group-item list-group-item-action">Importer les Commandes/Clients/Tva/Frais/...</button></a>
                 </div>
             </div>
         </div>

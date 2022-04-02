@@ -38,14 +38,14 @@ def generate_random_token(length):
     return "".join(token)
 
 
-def send_mail(sujet, html, attachments, image_path, destinataires, cc, emetteur=config_mail['sender']):
+def send_mail(sujet, html, attachments, image_path, destinataire, cc, emetteur=config_mail['sender']):
     message = MIMEMultipart()
     message['From'] = emetteur
-    message['To'] = ', '.join(destinataires)
-    message['Cc'] = ', '.join(cc)
+    message['To'] = destinataire
+    message['Cc'] = cc
     message['Subject'] = sujet
-    bcc = ['cyril.henry@gmail.com']
-    to_addresse = [destinataires] + cc + bcc
+    bcc = 'cyril.henry@gmail.com'
+    to_addresse = destinataire + ',' + cc + ',' + bcc
 
     full_html = """\
     <html>
@@ -88,6 +88,7 @@ def send_mail(sujet, html, attachments, image_path, destinataires, cc, emetteur=
     server.starttls
     server.login("cyril.henry@gmail.com", config_mail['password'])
     server.sendmail(emetteur, to_addresse, message.as_string())
+    print("Mail envoyé à ", to_addresse)
     server.quit()
 
 

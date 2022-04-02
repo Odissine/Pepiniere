@@ -19,11 +19,13 @@ import pandas
 import io
 import locale
 import xlsxwriter
+from tablib import Dataset
 
 from .utils import render_to_pdf
 from .forms import *
 from .models import *
 from .core import *
+from .resources import *
 from onlineshop.models import *
 from onlineshop.core import *
 from cart.forms import CartAddProduitForm, CartUpdateForm, RemiseUpdateForm
@@ -327,7 +329,7 @@ def pre_order_create(request, id):
     order.id = None
     order.save()
     order.date_update = timezone.now()
-    order.date = timezone.now()
+    order.date = datetime.now()
     order.statut = statut
     order.save()
     set_inventaire_for_pre_order(order.id)
@@ -529,7 +531,6 @@ def order_product_remove(request, id):
 
 # ANNULATION D'UNE COMMANDE AVEC MISE A JOUR DE LA DATE ET DU STATUT
 @login_required
-@staff_member_required
 def order_cancel(request, id):
     order = get_object_or_404(Commande, pk=id)
     statut = Statut.objects.get(nom='Annulée')
@@ -540,15 +541,19 @@ def order_cancel(request, id):
     message = ""
     for item in items:
         produit = Produit.objects.get(pk=item.produit.id)
-        if commande_statut.name == "En attente":
+        if commande_statut.nom == "En attente":
             message = "Commande en attente annulée avec succès !"
-        elif commande_statut.name == "Pré-commande":
+        elif commande_statut.nom == "Pré-commande":
             old_qte = produit.stock_future - item.qte
             Produit.objects.filter(pk=item.produit.id).update(stock_future=old_qte)
             message = "Pré-commande annulée avec succès !"
-        else:
+        elif commande_statut.nom == "Validée" or commande_statut.nom == "En cours":
             old_qte = produit.stock_bis + item.qte
             Produit.objects.filter(pk=item.produit.id).update(stock_bis=old_qte)
+            message = "Commande annulée avec succès !"
+        else:
+            old_qte = produit.stock + item.qte
+            Produit.objects.filter(pk=item.produit.id).update(stock=old_qte)
             message = "Commande annulée avec succès !"
 
     messages.success(request, message)
@@ -583,7 +588,6 @@ def order_end(request, id):
 
 
 @login_required
-@staff_member_required
 def order_print(request, id, *args, **kwargs):
     try:
         mode = request.GET['mode']
@@ -620,9 +624,10 @@ def order_print(request, id, *args, **kwargs):
         filename = type_pdf + "_%s_%s.pdf" % (commande.id, commande.date.strftime('%Y'))
         content = "inline; filename=%s" % filename
         download = request.GET.get("download")
-        if download:
+        if download == 1:
             content = "attachment; filename=%s" % filename
-        response['Content-Disposition'] = content
+            response['Content-Disposition'] = content
+            return response
         return result
     return HttpResponse("Not found")
 
@@ -1175,6 +1180,7 @@ def export_commandes_xls(request):
     worksheet_commandes.write(0, 7, 'TVA')
     worksheet_commandes.write(0, 8, 'FRAIS')
     worksheet_commandes.write(0, 9, 'FDP')
+    worksheet_commandes.write(0, 10, 'INVENTAIRE')
 
     commandes = Commande.objects.all()
     row = 1
@@ -1228,6 +1234,92 @@ def export_commandes_xls(request):
 
 @login_required
 @staff_member_required
+def export_order_csv(request):
+    if request.method == 'POST':
+        categorie = request.POST.get('categorie')
+        if categorie is None:
+            message = "Catégorie manquante ... Veuillez réessayer !"
+            messages.error(request, message)
+            return redirect('order:export-order-xls')
+
+        if categorie == "COMMANDES":
+            produit_resource = CommandeResource()
+            filename = "Commandes.csv"
+        if categorie == "CLIENTS":
+            produit_resource = ClientResource()
+            filename = "Clients.csv"
+        if categorie == "USERS":
+            produit_resource = UserResource()
+            filename = "Users.csv"
+        if categorie == "TVA":
+            produit_resource = TvaResource()
+            filename = "Tva.csv"
+        if categorie == "FRAIS":
+            produit_resource = FraisResource()
+            filename = "Frais.csv"
+        if categorie == "STATUT":
+            produit_resource = StatutResource()
+            filename = "Statuts.csv"
+        if categorie == "INVENTAIRES":
+            produit_resource = InventaireResource()
+            filename = "Periodes.csv"
+        if categorie == "PRODUITS":
+            produit_resource = ProduitsCommandeResource()
+            filename = "ProduitsCommandes.csv"
+
+        dataset = produit_resource.export()
+        response = HttpResponse(dataset.csv, content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename='+filename
+        return response
+
+    previous_page = reverse('order:order-administration')
+    return render(request, 'order/export_order.html', {'previous_page': previous_page})
+
+
+@login_required
+@staff_member_required
+def import_order_csv(request):
+    previous_page = reverse('order:order-administration')
+    if request.method == 'POST':
+        categorie = request.POST.get('categorie')
+        if categorie is None:
+            message = "Catégorie manquante ... Veuillez réessayer !"
+            messages.error(request, message)
+            return redirect('order:import-order-xls')
+
+        if categorie == "COMMANDES":
+            produit_resource = CommandeResource()
+        if categorie == "CLIENTS":
+            produit_resource = ClientResource()
+        if categorie == "USERS":
+            produit_resource = UserResource()
+        if categorie == "TVA":
+            produit_resource = TvaResource()
+        if categorie == "STATUT":
+            produit_resource = StatutResource()
+        if categorie == "FRAIS":
+            produit_resource = FraisResource()
+        if categorie == "INVENTAIRES":
+            produit_resource = InventaireResource()
+        if categorie == "PRODUITS":
+            produit_resource = ProduitsCommandeResource()
+
+        dataset = Dataset()
+        new_datas = request.FILES['myfile']
+        imported_data = dataset.load(new_datas.read().decode(), format='csv')
+        result = produit_resource.import_data(dataset, dry_run=True)  # Test the data import
+
+        if not result.has_errors():
+            produit_resource.import_data(dataset, dry_run=False)  # Actually import now
+            message = "Fichier importé avec succès !"
+            messages.success(request, message)
+            return redirect('order:order-administration')
+
+    return render(request, 'order/import_order.html', {'previous_page': previous_page})
+
+
+@login_required
+@staff_member_required
 def export_clients_xls(request):
     """
     Export Excel de l'ensemble des clients
@@ -1253,7 +1345,8 @@ def export_clients_xls(request):
     worksheet_clients.write(0, 7, 'MAIL')
     worksheet_clients.write(0, 8, 'COMMENTAIRE')
     worksheet_clients.write(0, 9, 'REMISE')
-    worksheet_clients.write(0, 10, 'USER')
+    worksheet_clients.write(0, 10, 'SOCIETE')
+    worksheet_clients.write(0, 11, 'USER')
 
     clients = Client.objects.all()
     row = 1
@@ -1269,8 +1362,9 @@ def export_clients_xls(request):
         worksheet_clients.write(row, 8, client.commentaire)
         if not client.remise is None:
             worksheet_clients.write(row, 9, client.remise)
+        worksheet_clients.write(row, 10, client.societe)
         if not client.user is None:
-            worksheet_clients.write(row, 10, client.user.id)
+            worksheet_clients.write(row, 11, client.user.id)
         row += 1
 
     # USERS
@@ -1298,7 +1392,6 @@ def export_clients_xls(request):
         worksheet_users.write(row, 5, user.is_superuser)
         worksheet_users.write(row, 6, user.is_staff)
         worksheet_users.write(row, 7, user.is_active)
-
         worksheet_users.write_datetime(row, 8, user.date_joined.replace(tzinfo=None), cell_format_date)
         if not user.last_login is None:
             worksheet_users.write_datetime(row, 9, user.last_login.replace(tzinfo=None), cell_format_date)
@@ -1406,7 +1499,7 @@ def export_divers_xls(request):
 def order_administration(request):
     print(datetime.now())
     try:
-        inventaire_actif = Inventaire.objects.get(start_date__lte=datetime.now(), end_date__gte=datetime.now())
+        inventaire_actif = Inventaire.objects.get(actif=True)
     except:
         messages.error(request, "Veuillez créer une période de commande avant toute chose !")
         return redirect('order:manage-inventaire')
@@ -1483,7 +1576,7 @@ def manage_order(request):
                 if inventaire.exists():
                     queryset = queryset.filter(inventaire__in=inventaire)
                 else:
-                    inventaire = Inventaire.objects.get(start_date__lte=datetime.now(), end_date__gte=datetime.now())
+                    inventaire = Inventaire.objects.get(actif=True)
                     queryset = queryset.filter(inventaire=inventaire)
 
         for commande in queryset:
@@ -1605,15 +1698,17 @@ def delete_order(request, order_id):
 
 
 @login_required
-@staff_member_required
 def cancel_order(request, order_id):
+    order = Commande.objects.get(id=order_id)
+    items = Cartdb.objects.filter(commande=order)
+    statut = Statut.objects.get(nom="Annulée")
+    message = format_html("Commande annulée avec succès !")
+
+    if order.statut.nom == "En attente":
+        order.statut = statut
+        order.save()
 
     if request.user.is_staff:
-        order = Commande.objects.get(id=order_id)
-        items = Cartdb.objects.filter(commande=order)
-        statut = Statut.objects.get(nom="Annulée")
-        message = format_html("Commande annulée avec succès !")
-
         if order.statut.nom == "Terminée":
             message = message + format_html("<br>Stock final et virtuel remis à jour pour l'ensemble des produits de la commande")
             for item in items:
@@ -1635,11 +1730,8 @@ def cancel_order(request, order_id):
 
         order.statut = statut
         order.save()
-        messages.success(request, message)
-        return redirect('order:manage-order')
-    else:
-        messages.error(request, "Vous n'avez pas les droits !")
-        return redirect('produit-list')
+    messages.success(request, message)
+    return redirect('order:manage-order')
 
 
 @login_required
@@ -2074,7 +2166,6 @@ def import_commandes_xls(request):
                 Commande.objects.all().delete()
 
             for i in range(2, max_row + 1):
-                print(i)
                 obj = Commande.objects.create(
                     id=ws.cell(row=i, column=1).value,
                     date=ws.cell(row=i, column=2).value,
@@ -2085,9 +2176,10 @@ def import_commandes_xls(request):
                     tva=get_object_from_id(ws.cell(row=i, column=7).value, 'tva'),
                     frais=get_object_from_id(ws.cell(row=i, column=8).value, 'frais'),
                     montant_frais=ws.cell(row=i, column=9).value,
+                    inventaire=get_object_from_id(ws.cell(row=i, column=8).value, 'inventaire'),
                 )
                 obj.save()
-
+            print(max_row, " Commandes importées")
             message = "Fichier de commandes importé avec succès (" + str(max_row) + " commandes importés)<br/>"
             ws = wb['PRODUITS']
             max_col = ws.max_column
@@ -2106,7 +2198,7 @@ def import_commandes_xls(request):
                     produit=get_object_from_id(ws.cell(row=i, column=5).value, 'produit'),
                 )
                 obj.save()
-
+            print(max_row, " Produits associés importés")
             message = message + "Fichier de produits liés importé avec succès (" + str(max_row) + " produits liés importés)"
             messages.success(request, message)
             wb.close()
@@ -2230,7 +2322,7 @@ def import_divers_xls(request):
                     active=ws.cell(row=i, column=4).value,
                 )
                 obj.save()
-            message = format_html("- " + str(max_row) + " Taux de TVA importés : <br/>")
+            message += format_html("- " + str(max_row) + " Taux de TVA importés : <br/>")
 
             ws = wb['FRAIS']
             max_col = ws.max_column
@@ -2246,7 +2338,7 @@ def import_divers_xls(request):
                     tva=Tva.objects.get(id=ws.cell(row=i, column=3).value),
                 )
                 obj.save()
-            message = message + format_html("- " + str(max_row) + " Frais importés<br/>")
+            message += message + format_html("- " + str(max_row) + " Frais importés<br/>")
 
             ws = wb['STATUT']
             max_col = ws.max_column
@@ -2323,6 +2415,7 @@ def manage_client(request):
             form = SearchClientForm(request.GET)
             if form.is_valid():
                 cp = form.cleaned_data['cp']
+                mail = form.cleaned_data['mail']
                 ville = form.cleaned_data['ville']
                 remise = form.cleaned_data['remise']
                 nom = form.cleaned_data['nom']
@@ -2330,6 +2423,7 @@ def manage_client(request):
                 activate = form.cleaned_data['activate']
 
                 queryset = queryset.filter(nom__contains=nom)
+                queryset = queryset.filter(mail__contains=mail)
                 queryset = queryset.filter(prenom__contains=prenom)
                 if activate == "2":
                     queryset = queryset.filter(Q(activate=True) | Q(activate=None))
@@ -2461,31 +2555,32 @@ def edit_client(request, client_id):
     if request.user.is_staff:
         title = "CLIENT"
         client = Client.objects.get(id=client_id)
+        print(client)
         try:
             user = User.objects.get(id=client.user.id)
+            print(user)
         except:
             user = None
 
-        form = FormAddClient(request.POST or None, instance=client)
+        form = FormAddClient(request.POST or None, instance=client, initial={'user': user})
 
         previous_page = reverse('order:manage-client')
         formAction = 'order:edit-client', client_id
-
+        message = ""
         if request.POST:
             if form.is_valid():
                 instance = form.instance
+                print(instance.mail)
                 email_exist = User.objects.filter(email=instance.mail)
-                if email_exist == 0:
+                if len(email_exist) == 0:
                     obj = instance.save()
+                    message = "Client modifié avec succès !"
 
                 if not user is None:
                     user.first_name = instance.prenom
                     user.last_name = instance.nom
                     user.email = instance.mail
                     user.save()
-
-                message = "Client modifié avec succès !"
-                if not user is None:
                     message = "Client (et User) modifié avec succès !"
 
                 messages.success(request, message)
@@ -2527,11 +2622,11 @@ def delete_client(request, client_id):
 
         count = Commande.objects.filter(client=client).count()
         if count > 0:
-            message = "Client desactivé avec succès !"
+            message = "Client desactivé avec succès ! (Le client a passer des commandes)"
             client.activate = False
             client.save()
         else:
-            message = "Client supprimé avec succès !"
+            message = "Client supprimé avec succès ! (Le client n'avait pas encore passé de commande)"
             if not client.user is None:
                 user = User.objects.get(id=client.user.id)
             client.delete()
@@ -2589,6 +2684,31 @@ def add_inventaire(request):
 
 @login_required
 @staff_member_required
+def actif_inventaire(request, inventaire_id):
+    if request.user.is_staff:
+        try:
+            inventaire = Inventaire.objects.get(pk=inventaire_id)
+        except:
+            messages.error(request, "La période selectionnée n'existe pas !")
+            return redirect('order:manage-inventaire')
+
+        inventaire.actif = True
+        inventaire.save()
+
+        inventaires = Inventaire.objects.exclude(pk=inventaire_id)
+        for inv in inventaires:
+            inv.actif = False
+            inv.save()
+
+        messages.success(request, "Période activée avec succès")
+        return redirect('order:manage-inventaire')
+    else:
+        messages.error(request, "Vous n'avez pas les droits !")
+        return redirect('produit-list')
+
+
+@login_required
+@staff_member_required
 def edit_inventaire(request, inventaire_id):
     if request.user.is_staff:
         try:
@@ -2638,6 +2758,7 @@ def reset_order(request):
     inprogress_statut = Statut.objects.get(nom='En cours')
     valid_statut = Statut.objects.get(nom='Validée')
     wait_statut = Statut.objects.get(nom='En attente')
+
     form = FormResetOrder(request.POST or None)
     formAction = 'order:reset-order'
     previous_page = 'order:order-administration'

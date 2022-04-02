@@ -1,5 +1,6 @@
 {% extends "layout/base.html" %}
 {% load static %}
+{% load my_templatetag %}
 {% block title %}{% if espece %}{{ espece.nom }}{% else %}Produits{% endif %}{% endblock %}
 {% block content %}
 <div class="container">
@@ -15,6 +16,7 @@
         <div class="row fs-4">
             <div class="col"><strong>Porte-Greffe</strong> : {{ produit.portegreffe }}</div>
         </div>
+        {% if produit.stock_bis > 0 or request.user|mode_admin %}
         <div class="row">
             <div class="input-group mb-3 col">
                 <label for="qte" class="input-group-text">Qte</label>
@@ -24,8 +26,11 @@
             </div>
             <div class="col"></div>
         </div>
+        {% endif %}
         <div class="row">
+            {% if produit.stock_bis > 0 or request.user|mode_admin %}
             <button type="submit" value="" class="btn btn-success col m-2">Ajouter au panier</button>
+            {% endif %}
             <a type="button" href="{% url previous_page %}" class="btn btn-secondary col m-2">Retour</a>
         </div>
         <p></p>

@@ -73,9 +73,14 @@ urlpatterns = [
     path('inventaire/add/', views.add_inventaire, name='add-inventaire'),
     path('inventaire/edit/<inventaire_id>', views.edit_inventaire, name='edit-inventaire'),
     path('inventaire/delete/<inventaire_id>', views.delete_inventaire, name='delete-inventaire'),
+    path('inventaire/actif/<inventaire_id>', views.actif_inventaire, name='actif-inventaire'),
 
-    path('export_commandes/', views.export_commandes_xls, name='export-commandes-xls'),
-    path('import_commandes/', views.import_commandes_xls, name='import-commandes-xls'),
+    # path('export_commandes/', views.export_commandes_xls, name='export-commandes-xls'),
+    # path('import_commandes/', views.import_commandes_xls, name='import-commandes-xls'),
+
+    # CSV IMPORT / EXPORT
+    path('export_commandes/', views.export_order_csv, name='export-order-xls'),
+    path('import_commandes/', views.import_order_csv, name='import-order-xls'),
 
     path('export_clients/', views.export_clients_xls, name='export-clients-xls'),
     path('import_clients/', views.import_clients_xls, name='import-clients-xls'),

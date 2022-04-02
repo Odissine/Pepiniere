@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'import_export',
     'onlineshop.apps.OnlineshopConfig',
     'cart.apps.CartConfig',
     'account.apps.AccountConfig',
@@ -129,7 +130,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+# USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
@@ -157,6 +158,8 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+IMPORT_EXPORT_USE_TRANSACTIONS = True
 
 # Logging
 LOG_DIR = os.path.join(BASE_DIR, 'logs')

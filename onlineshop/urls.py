@@ -11,9 +11,13 @@ urlpatterns = [
 
     # ADMINISTRATION ONLINESHOP
     path("administration/", onlineshop_administration, name="onlineshop-administration"),
-    path('export_xls/', export_produits_xls, name='export-produits-xls'),
+    # path('export_xls/', export_produits_xls, name='export-produits-xls'),
+    path('export_xls/', export_produits_csv, name='export-produits-xls'),
+    path('export_greffons_xls/', export_greffons_xls, name='export-greffons-xls'),
     path('export_xls_custom/', export_produits_xls_custom, name='export-produits-xls-custom'),
-    path('import_xls/', import_produits_xls, name='import-produits-xls'),
+    # path('import_xls/', import_produits_xls, name='import-produits-xls'),
+    path('import_xls/', import_produits_csv, name='import-produits-xls'),
+    path('import_greffons_xls/', import_greffons_xls, name='import-greffons-xls'),
     path('reset/', reset_stock, name='reset-stock'),
 
     # PRODUITS
@@ -26,10 +30,12 @@ urlpatterns = [
     # GREFFONS
     path('greffons/manage', manage_greffons, name='manage-greffons'),
     path('greffons/add', add_greffon, name='add-greffon'),
+    path('greffons/init', init_greffons, name='init-greffons'),
     path('greffons/edit/<greffon_id>', edit_greffon, name='edit-greffon'),
     path('greffons/delete/<greffon_id>', delete_greffon, name='delete-greffon'),
     path('greffons/edit/qte/', edit_qte_greffon, name='edit-qte-greffon'),
-    path('greffons/valid', valid_greffons, name='valid-greffon'),
+    path('greffons/valid', valid_greffons, name='valid-greffons'),
+    path('greffons/comm', comm_greffons, name='comm-greffons'),
 
     path('couleurs/manage', manage_couleurs, name='manage-couleurs'),
     path('couleurs/add', add_couleur, name='add-couleur'),

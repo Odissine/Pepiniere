@@ -1,16 +1,16 @@
 {% extends "layout/base.html" %}
 {% load static %}
 {% load i18n %}
-{% block title %}Administration - Import données{% endblock %}
+{% block title %}Administration - Export données{% endblock %}
 {% block content %}
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <form action="{% url 'onlineshop:import-produits-xls' %}" class="form-horizontal" method="post" accept-charset="utf-8" enctype="multipart/form-data" id="import-produit-form">
+                <form action="{% url 'onlineshop:export-produits-xls' %}" class="form-horizontal" method="post" accept-charset="utf-8" enctype="multipart/form-data" id="import-produit-form">
                     <div class="card-header bg-primary bg-opacity-50 text-black">
                         <div class="row align-items-center">
-                            <h5 class="col-8 h3 mb-0">Importer des données</h5>
+                            <h5 class="col-8 h3 mb-0">Exporter des données</h5>
                         </div>
                     </div>
                     {% csrf_token %}
@@ -29,12 +29,6 @@
                                     <option value="GREFFONS">Greffons</option>
                                 </select>
                             </div>
-                            <div class="input-group">
-                                <input type="file" name="myfile" class="form-control" required="" accept=".csv">
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="Fichier Excel" data-bs-html="true" data-bs-content="Import du fichier excel exporté dans l'outil pour écraser les produits existant !"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
-                                </span>
-                            </div>
                         </div>
                     </div>
                     <div class="row g-2">
@@ -44,7 +38,7 @@
                             </a>
                         </div>
                         <div class="col-sm-6 d-grid gap-2">
-                            <button type="submit" value="IMPORTER" class="btn btn-primary" id="search-btn" onclick="unhideloader();">IMPORTER</button>
+                            <button type="submit" value="EXPORTER" class="btn btn-primary" id="search-btn">EXPORTER</button>
                         </div>
                     </div>
                 </form>
@@ -71,12 +65,25 @@
     </div>
 </div>
 <script>
+    function import_produit() {
+        var url = "{% url 'onlineshop:import-produits-xls' %}"
+        var html;
+        html = "Cela va importer tous les produits dans le fichier et supprimer l'ensemble des produits existants !!"
+        // url = url.replace('XXX', produit_id);
+        $('#modal-import-produit').modal('toggle');
+        $('#import-produit-body').html(html);
+        $('#button-import-produit').attr('href',url);
+    };
+
     function confirm_import_produit() {
         $('#import-produit-form').submit();
-    }
+    };
 
     function unhideloader() {
         document.getElementById("loading").style.display = "block";
-    }
+    };
+
+
+
 </script>
 {% endblock %}

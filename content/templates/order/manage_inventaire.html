@@ -28,7 +28,7 @@
                     <div class="col-2"></div>
                 </div>
                 {% for inventaire in inventaires %}
-                <div class="row align-items-center py-2 {% cycle 'bg-transparent' 'bg-secondary bg-opacity-25' as rowcolors %}">
+                <div class="row align-items-center py-2 {% if inventaire.actif == True %}bg-success bg-opacity-25 important{% else %}{% cycle 'bg-transparent' 'bg-secondary bg-opacity-25' as rowcolors %}{% endif %}">
                     <div class="col-4">
                         {{ inventaire.start_date|date:"j F Y" }}
                     </div>
@@ -40,6 +40,9 @@
                     </div>
                     <div class="col-2 text-end px-5">
                         <a href="{% url 'order:edit-inventaire' inventaire.id %}"><button class="btn btn-warning btn-sm" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Editer la période"><i class="bi bi-pencil"></i></button></a>
+                        {% if inventaire.actif == False %}
+                        <a href="{% url 'order:actif-inventaire' inventaire.id %}"><button class="btn btn-success btn-sm" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Activer la période"><i class="bi bi-check"></i></button></a>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}

@@ -24,14 +24,15 @@ select option[value="{{ couleur.nom }}"] {
                         </a>
                     </h5>
                     <h5 class="col-5 h3 mb-0">Gestion des Greffons</h5>
-                    <h5 class="col-3 text-end mb-0">
-                        <a class="bx-pull-right" href="{% url 'onlineshop:add-greffon' %}">
-                            <button class="btn btn-success" type="button"><i class="bi bi-plus me-1"></i> Nouveau</button>
+                    <h5 class="col-6 text-end mb-0">
+                        <a class="" href="{% url 'onlineshop:add-greffon' %}">
+                            <button class="btn btn-success" type="button"><i class="bi bi-plus-circle me-1"></i> Nouveau</button>
                         </a>
-                    </h5>
-                    <h5 class="col-3 text-end mb-0">
-                        <a class="bx-pull-right" href="{% url 'onlineshop:valid-greffon' %}">
-                            <button class="btn btn-primary" type="button"><i class="bi bi-plus me-1"></i> Créer les stocks !</button>
+                        <a class="" href="#">
+                            <button data-bs-toggle="modal" data-bs-target="#modal-init-greffons" class="btn btn-warning" type="button"><i class="bi bi-play-btn-fill me-1"></i> Initialisation</button>
+                        </a>
+                        <a class="" href="#">
+                            <button data-bs-toggle="modal" data-bs-target="#modal-valid-greffons" class="btn btn-primary" type="button"><i class="bi bi-bookmark-check-fill  me-1"></i> Créer les stocks !</button>
                         </a>
                     </h5>
                 </div>
@@ -58,27 +59,20 @@ select option[value="{{ couleur.nom }}"] {
                             <div class="col-6"><a class="link-warning" href="?{{ query_string }}&g=-reussi">REUSSIS</a></div>
                         </div>
                     </div>
-                    <!--
-                    <div class="col-1">
+                    <div class="col-2">
                         <div class="row">
-                            <div class="col-12"><a class="link-warning" href="?{{ query_string }}&g=-objectif">OBJECTIF</a></div>
+                            <div class="col-6"><a class="link-warning" href="?{{ query_string }}&g=comm">PRE-COMM</a></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6"><a class="link-warning" href="?{{ query_string }}&g=-inventaire">PERIODE</a></div>
                         </div>
                     </div>
-                    -->
                     <div class="col-2">
                         <div class="row">
                             <div class="col-6"><a class="link-warning" href="?{{ query_string }}&g=-date">DATE</a></div>
                         </div>
                         <div class="row">
                             <div class="col-6"><a class="link-warning" href="?{{ query_string }}&g=couleur">COULEUR</a></div>
-                        </div>
-                    </div>
-                    <div class="col-2">
-                        <div class="row">
-                            <div class="col-6"><a class="link-warning" href="?{{ query_string }}&g=rang">RANG</a></div>
-                        </div>
-                        <div class="row">
-                            <div class="col-6"><a class="link-warning" href="?{{ query_string }}&g=-inventaire">PERIODE</a></div>
                         </div>
                     </div>
                     <div class="col-1"></div>
@@ -106,18 +100,18 @@ select option[value="{{ couleur.nom }}"] {
                     </div>
                     <div class="col-2">
                         <div class="row">
-                            <div class="col-12"><a class="link-warning" href="?g=-date">DATE</a></div>
+                            <div class="col-12"><a class="link-warning" href="?g=comm">PRE-COMM</a></div>
                         </div>
                         <div class="row">
-                            <div class="col-12"><a class="link-warning" href="?g=couleur">COULEUR</a></div>
+                            <div class="col-12"><a class="link-warning" href="?g=-inventaire">PERIODE</a></div>
                         </div>
                     </div>
                     <div class="col-2">
                         <div class="row">
-                            <div class="col-12"><a class="link-warning" href="?g=rang">RANG</a></div>
+                            <div class="col-12"><a class="link-warning" href="?g=-date">DATE</a></div>
                         </div>
                         <div class="row">
-                            <div class="col-12"><a class="link-warning" href="?g=-inventaire">PERIODE</a></div>
+                            <div class="col-12"><a class="link-warning" href="?g=couleur">COULEUR</a></div>
                         </div>
                     </div>
                     <div class="col-1"></div>
@@ -146,6 +140,21 @@ select option[value="{{ couleur.nom }}"] {
                     </div>
                     <div class="col-2">
                         <div class="row">
+                            <div class="col-12"><input id="comm_{{ greffon.id }}" name="comm_{{ greffon.id }}" class="form-control" type="number" min="0" value="{{ greffon.comm }}" /></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <select id="inventaire_{{ greffon.id }}" class="select2 form-control js-example-basic-single">
+                                    <option selected value=""></option>
+                                    {% for inventaire in inventaires %}
+                                        <option {% if greffon.inventaire == inventaire %}selected{% endif %} value="{{ inventaire.id }}">{{ inventaire }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="row">
                             <div class="col-12"><input id="date_{{ greffon.id }}" name="date_{{ greffon.id }}" type="text" class="datepicker_input form-control" value="{{ greffon.date|date:'d/m/Y' }}" /></div>
                         </div>
                         <div class="row">
@@ -154,21 +163,6 @@ select option[value="{{ couleur.nom }}"] {
                                     <option selected value=""></option>
                                     {% for couleur in couleurs %}
                                         <option {% if greffon.couleur == couleur %}selected{% endif %} data-color="{{ couleur.couleur }}" style="background-color: {{ couleur.couleur }}" value="{{ couleur.id }}">{{ couleur.nom }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-2">
-                        <div class="row">
-                            <div class="col-12"><input id="rang_{{ greffon.id }}" name="rang_{{ greffon.id }}" class="form-control" type="number" min="0" value="{{ greffon.rang }}" /></div>
-                        </div>
-                        <div class="row">
-                            <div class="col-12">
-                                <select id="inventaire_{{ greffon.id }}" class="select2 form-control">
-                                    <option selected value=""></option>
-                                    {% for inventaire in inventaires %}
-                                        <option {% if greffon.inventaire == inventaire %}selected{% endif %} value="{{ inventaire.id }}">{{ inventaire }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -217,7 +211,7 @@ select option[value="{{ couleur.nom }}"] {
         </ul>
     </nav>
 {% endif %}
-<!-- MODAL DE SUPPRESSION DE L'ESPECE ----------------------------------------------------------------------------------->
+<!-- MODAL DE SUPPRESSION DU GREFFON ----------------------------------------------------------------------------------->
 <div class="modal modal-danger fade in" id="modal-delete-greffon" style="display:none;">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -236,11 +230,89 @@ select option[value="{{ couleur.nom }}"] {
         </div>
     </div>
 </div>
+
+<!-- MODAL DE VALIDATION DES GREFFONS ----------------------------------------------------------------------------------->
+<div class="modal modal-danger fade in" id="modal-valid-greffons" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{% url 'onlineshop:valid-greffons' %}" method="POST" name="valid-greffons">
+                {% csrf_token %}
+            <div class="modal-header bg-success text-light">
+                <h4 class="modal-title">Valider ces greffons ?</h4>
+                <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="valid-greffons-body">
+                <div class="row py-2"><div class="col-12"> Les greffons de quelle période souhaitez vous valider ?</div></div>
+                <div class="row">
+                    <div class="col-12">
+                        <select id="inventaire" name="inventaire" class="select2 form-control">
+                            <option selected value=""></option>
+                            {% for inventaire in inventaires %}
+                                <option value="{{ inventaire.id }}">{{ inventaire }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row py-2 mt-2"><div class="col-12"> On met à jour les stocks a partir des Réalisés ou des Réussis ?</div></div>
+                <div class="row">
+                    <div class="col-12">
+                        <select id="stock" name="stock" class="select2 form-control">
+                            <option value="auto" selected="">Auto</option>
+                            <option value="realises">Réalisés</option>
+                            <option value="reussis">Réussis</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="" id="button-valid-greffons">
+                    <button type="submit" class="btn btn-success">Valider</button>
+                </a>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL D'INITIALISATION DES GREFFONS ----------------------------------------------------------------------------------->
+<div class="modal modal-danger fade in" id="modal-init-greffons" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{% url 'onlineshop:init-greffons' %}" method="POST" name="init-greffons">
+                {% csrf_token %}
+            <div class="modal-header bg-success text-light">
+                <h4 class="modal-title">Initialiser les greffons ?</h4>
+                <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="init-greffons-body">
+                <div class="row py-2"><div class="col-12"> Initialisation des greffons pour quelle période ?</div></div>
+                <div class="row">
+                    <div class="col-12">
+                        <select id="inventaire-init" name="inventaire" class="select2 form-control">
+                            <option selected value=""></option>
+                            {% for inventaire in inventaires %}
+                                <option value="{{ inventaire.id }}">{{ inventaire }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="" id="button-init-greffons">
+                    <button type="submit" class="btn btn-success">Valider</button>
+                </a>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
 <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
 <script>
 
     function delete_divis_greffon(greffon_id, nom) {
-        var url = "{% url 'onlineshop:delete-greffon' 'XXX' %}"
+        var url = "{% url 'onlineshop:delete-greffon' 'XXX' %}";
         var html;
         html = "Cela va supprimer le greffon"
         url = url.replace('XXX', greffon_id);
@@ -254,28 +326,26 @@ select option[value="{{ couleur.nom }}"] {
             var code = $(this).attr("data-code");
 
             var greffon_id = $("#greffon_" + code);
-            // var comm_id = $("#comm_" + code);
+            var comm_id = $("#comm_" + code);
             var objectif_id = $("#objectif_" + code);
             var realise_id = $("#realise_" + code);
             var reussi_id = $("#reussi_" + code);
-            var rang_id = $("#rang_" + code);
             var couleur_id = $("#couleur_" + code);
             var date_id = $("#date_" + code);
             var inventaire_id = $("#inventaire_" + code);
 
             var greffon = $(greffon_id).val();
-            // var comm = $(comm_id).val();
+            var comm = $(comm_id).val();
             var objectif = $(objectif_id).val();
             var realise = $(realise_id).val();
             var reussi = $(reussi_id).val();
-            var rang = $(rang_id).val();
             var couleur = $(couleur_id).val();
             var date = $(date_id).val();
             var inventaire = $(inventaire_id).val();
 
-            console.log(code, greffon, objectif, realise, reussi, rang, couleur, date, inventaire)
+            console.log(code, greffon, comm, objectif, realise, reussi, couleur, date, inventaire)
 
-            launchJquery(code, greffon, objectif, realise, reussi, rang, couleur, date, inventaire);
+            launchJquery(code, greffon, comm, objectif, realise, reussi, couleur, date, inventaire);
 
             $('#textErrorMessageAjax').text("Mise à jour des greffons effectuée avec succès !");
             $('#errorMessageAjax').addClass('show');
@@ -290,17 +360,16 @@ select option[value="{{ couleur.nom }}"] {
             setTimeout(hideMsg,5000);
         });
 
-        function launchJquery(code, greffon, objectif, realise, reussi, rang, couleur, date, inventaire) {
+        function launchJquery(code, greffon, comm, objectif, realise, reussi, couleur, date, inventaire) {
             $.post("{% url 'onlineshop:edit-qte-greffon' %}",
                 {
                     json_data: JSON.stringify({
                         code: code,
                         greffon: greffon,
-                        // comm: comm,
+                        comm: comm,
                         objectif: objectif,
                         realise: realise,
                         reussi: reussi,
-                        rang: rang,
                         couleur: couleur,
                         date: date,
                         inventaire: inventaire,

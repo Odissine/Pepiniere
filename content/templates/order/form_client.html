@@ -99,8 +99,19 @@
                 </div>
             </div>
             <div class="row g-2">
-                <div class="d-grid gap-2 my-3">
-                    <input type="submit" value="{% if client %}MODIFIER{% else %}AJOUTER{% endif %}" class="btn btn-primary" id="search-btn"/>
+                <div class="col-6 mb-2 input-group">
+                    <div class="input-group-prepend col-2">
+                        <span class="input-group-text">{{ form.user.label }}</span>
+                    </div>
+                    {{ form.user }}
+                </div>
+            </div>
+            <div class="row g-2">
+                <div class="d-grid gap-2 my-3 col-6">
+                    <input type="submit" value="{% if client %}MODIFIER{% else %}AJOUTER{% endif %}" class="btn btn-primary" id="add-btn"/>
+                </div>
+                <div class="d-grid gap-2 my-3 col-6">
+                    <a type="button" href="{{ previous_page }}" class="btn btn-secondary" id="cancel-btn">ANNULER</a>
                 </div>
             </div>
         </form>

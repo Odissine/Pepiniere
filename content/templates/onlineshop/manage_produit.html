@@ -53,7 +53,7 @@
                     <div class="col-1">{{ produit.espece.nom }}</div>
                     <div class="col-2">{{ produit.variete.nom }}</div>
                     <div class="col-1">{{ produit.portegreffe.nom }}</div>
-                    <div class="col-1">{{ produit|total_qte }}</div>
+                    <div class="col-1">{{ produit|total_qte_inventaire }} ({{ produit|total_qte_global }})</div>
                     <div class="col-1"><input id="stock_{{ produit.id }}" name="stock_{{ produit.id }}" class="form-control" type="number" min="0" value="{{ produit.stock }}" /></div>
                     <div class="col-1"><input id="stock_bis_{{ produit.id }}" name="stock_bis_{{ produit.id }}" class="form-control" type="number" min="0" value="{{ produit.stock_bis }}" /></div>
                     <div class="col-1"><input id="stock_future_{{ produit.id }}" name="stock_future_{{ produit.id }}" class="form-control" type="number" min="0" value="{{ produit.stock_future }}" /></div>
@@ -135,7 +135,7 @@
 
             $(document).ready(function(){
                 $('.edit-stock-button').click(function() {
-                    console.log("COUCOU")
+
                     var code = $(this).attr("data-code");
                     var stock_id = $("#stock_" + code);
                     var stock_bis_id = $("#stock_bis_" + code);
@@ -143,7 +143,7 @@
                     var stock = $(stock_id).val();
                     var stock_bis = $(stock_bis_id).val();
                     var stock_future = $(stock_future_id).val();
-
+                    console.log(code, stock, stock_bis, stock_future)
                     launchJquery(code, stock, stock_bis, stock_future);
 
                     $('#textErrorMessageAjax').text("Mise à jour des stocks effectuée avec succès !");

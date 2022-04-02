@@ -61,7 +61,7 @@ class Inventaire(models.Model):
     objects = models.Manager()
     start_date = models.DateTimeField(default=datetime.now)
     end_date = models.DateTimeField(default=datetime.now() + timedelta(days=360))
-    # actif = models.BooleanField(default=False)
+    actif = models.BooleanField(default=False)
 
     def __str__(self):
         if self.end_date is not None:

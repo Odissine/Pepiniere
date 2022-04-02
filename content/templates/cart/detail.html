@@ -83,7 +83,7 @@
     <div class="d-flex col-9 text-start">
         <a href="{% url 'onlineshop:produit-list' %}" class="btn btn-warning me-2">Continuer les achats </a>
         {% if access_mode.admin == False or not user|is_staff %}
-        <button type="button" onclick="submitCart('normal')" class="btn btn-success me-2">Créer la commande (Valider le panier)</button>
+        <button type="button" onclick="submitCart('normal'); unhideloader();" class="btn btn-success me-2">Créer la commande (Valider le panier)</button>
         {% endif %}
         {% if user|is_staff %}
         <button type="button" class="btn btn-secondary me-2" onclick="submitCart('pre')">Créer une pré-commande (N+1)</button>

@@ -44,9 +44,10 @@
             </div>
             <div class="card-body py-2">
                 <div class="list-group">
-                    <a href="{% url 'onlineshop:export-produits-xls' %}"><button type="button" class="list-group-item list-group-item-action">Exporter les Produits</button></a>
-                    <a href="{% url 'onlineshop:export-produits-xls-custom' %}"><button type="button" class="list-group-item list-group-item-action">Export personnalisé des Produits</button></a>
-                    <a href="{% url 'onlineshop:import-produits-xls' %}"><button type="button" class="list-group-item list-group-item-action">Importer les Produits</button></a>
+                    <span class="list-group-item bg-primary-light">EXPORTS</span>
+                    <a href="{% url 'onlineshop:export-produits-xls' %}"><button type="button" class="list-group-item list-group-item-action">Exporter les Produits/Greffons/Especes/...</button></a>
+                    <span class="list-group-item bg-primary-light">IMPORTS</span>
+                    <a href="{% url 'onlineshop:import-produits-xls' %}"><button type="button" class="list-group-item list-group-item-action">Importer les Produits/Greffons/Especes/...</button></a>
                 </div>
             </div>
         </div>

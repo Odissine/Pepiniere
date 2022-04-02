@@ -1,0 +1,143 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% block title %}La Pépinière - Inscription{% endblock %}
+{% block content %}
+<div id="formContent" class=" row justify-content-md-center">
+    <!-- Login Form -->
+    <div class="col-8">
+    <div class="card-body pt-3">
+        <ul class="nav nav-tabs nav-tabs-bordered">
+            <li class="nav-item">
+                <button class="nav-link active bg-transparent" data-bs-toggle="tab" data-bs-target="#profile-overview">Aperçu</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link bg-transparent" data-bs-toggle="tab" data-bs-target="#profile-edit">Edition</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link bg-transparent" data-bs-toggle="tab" data-bs-target="#profile-change-password">Changer de mot de passe</button>
+            </li>
+        </ul>
+        <div class="tab-content pt-2">
+            <div class="tab-pane fade profile-overview active show" id="profile-overview">
+                <h5 class="card-title">Aperçu du profil</h5>
+                <div class="row"><div class="col-lg-3 col-md-4 label ">Nom</div><div class="col-lg-9 col-md-8">{{ user.last_name }} {{ user.first_name }}</div></div>
+                {% if client.societe %}
+                <div class="row"><div class="col-lg-3 col-md-4 label">Société</div><div class="col-lg-9 col-md-8">{{ client.societe }}</div></div>
+                {% endif %}
+                <div class="row"><div class="col-lg-3 col-md-4 label">Adresse</div><div class="col-lg-9 col-md-8">{{ client.adresse }}</div></div>
+                <div class="row"><div class="col-lg-3 col-md-4 label">Code Postal</div><div class="col-lg-9 col-md-8">{{ client.cp }}</div></div>
+                <div class="row"><div class="col-lg-3 col-md-4 label">Ville</div><div class="col-lg-9 col-md-8">{{ client.ville }}</div></div>
+                <div class="row"><div class="col-lg-3 col-md-4 label">Tel.</div><div class="col-lg-9 col-md-8">{{ client.tel }}</div></div>
+                <div class="row"><div class="col-lg-3 col-md-4 label">Email</div><div class="col-lg-9 col-md-8">{{ client.mail }}</div></div>
+                <div class="row"><div class="col-lg-3 col-md-4 label">Pseudo</div><div class="col-lg-9 col-md-8">{{ user.username }}</div></div>
+            </div>
+            <div class="tab-pane fade profile-edit" id="profile-edit">
+                <h5 class="card-title">Modifier votre profil !</h5>
+                <form class="form-group" action="" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="mode" value="profil">
+                {% if user_form.errors %}
+                <div class="alert alert-danger">
+                {% for field in user_form %}
+                    {% for error in field.errors %}
+                            <strong>{{ error|escape }}</strong><br>
+                    {% endfor %}
+                {% endfor %}
+                </div>
+                {% endif %}
+                <div class="col-12">
+                    {{ user_form.username.label }}
+                    <div class="input-group">
+                        <div class="input-group-text bi bi-person"></div>
+                        {{ user_form.username }}
+                        <input type="hidden" value="{{ request.user.mail }}" name=old_mail">
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <label class="require">{{ user_form.email.label }}</label>
+                    <div class="input-group ">
+                        <div class="input-group-text">@</div>
+                        {{ user_form.email }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="require">{{ user_form.first_name.label }}</label>
+                    <div class="input-group">
+                        <div class="input-group-text bg-danger text-light">Prénom</div>
+                        {{ user_form.first_name }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="require">{{ user_form.last_name.label }}</label>
+                    <div class="input-group">
+                        <div class="input-group-text bg-danger text-light">Nom</div>
+                        {{ user_form.last_name }}
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    {{ client_form.societe.label }}
+                    <div class="input-group">
+                        <div class="input-group-text bi bi-vector-pen"></div>
+                        {{ client_form.societe }}
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <label class="require">{{ client_form.adresse.label }}</label>
+                    <div class="input-group">
+                        <div class="input-group-text bi bi-house bg-danger text-light"></div>
+                        {{ client_form.adresse }}
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <label class="require">{{ client_form.ville.label }}</label>
+                    <div class="input-group">
+                        <div class="input-group-text bi bi-building bg-danger text-light"></div>
+                        {{ client_form.ville }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="require">{{ client_form.cp.label }}</label>
+                    <div class="input-group">
+                        <div class="input-group-text bi bi-123 bg-danger text-light"></div>
+                        {{ client_form.cp }}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="require">{{ client_form.tel.label }}</label>
+                    <div class="input-group">
+                        <div class="input-group-text bi bi-telephone bg-danger text-light"></div>
+                        {{ client_form.tel }}
+                    </div>
+                </div>
+                <div class="col-12 d-grid gap-2 mt-4">
+                    <button class="btn btn-primary bx-pull-right" type="submit">Modifier</button>
+                </div>
+                </form>
+            </div>
+            <div class="tab-pane fade" id="profile-change-password">
+                <h5 class="card-title">Changement du mot de passe</h5>
+                <form method="POST" action="">
+                    {% csrf_token %}
+                    <input type="hidden" name="mode" value="password">
+                <div class="input-group mb-3">
+                    <span class="input-group-text bi-key" id="old-password"></span>
+                    <input name="old-pass" id="old-pass" type="password" class="form-control" placeholder="Mot de passe actuel" aria-label="password" required="" value="">
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text bi-key" id="basic-password"></span>
+                    <input name="pass1" id="pass1" type="password" class="form-control" placeholder="Nouveau Mot de passe" aria-label="password" required="" value="">
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text bi-key" id="basic-password2"></span>
+                    <input name="pass2" id="pass2" type="password" class="form-control" placeholder="Confirmation du mot de passe" aria-label="password confirmation" required="">
+                </div>
+                <div class="col-12 d-grid gap-2 mt-4">
+                    <button class="btn btn-primary bx-pull-right" type="submit">Modifier</button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+{% endblock %}

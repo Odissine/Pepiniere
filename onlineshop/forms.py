@@ -134,11 +134,8 @@ class SearchGreffonsForm(forms.Form):
 
 class FormGreffon(forms.ModelForm):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self,  *args, **kwargs):
         self.produit = kwargs.pop('produit', None)
-        # self.varietes = kwargs.pop('varietes', None)
-        # self.portegreffes = kwargs.pop('portegreffes', None)
-        # self.specs = kwargs.pop('specs', None)
         self.greffons = kwargs.pop('greffons', None)
         self.comm = kwargs.pop('comm', None)
         self.objectif = kwargs.pop('objectif', None)
@@ -147,46 +144,22 @@ class FormGreffon(forms.ModelForm):
         self.date = kwargs.pop('date', None)
         self.couleur = kwargs.pop('couleur', None)
         self.rang = kwargs.pop('rang', None)
+        self.inventaire = kwargs.pop('inventaire', None)
         super(FormGreffon, self).__init__(*args, **kwargs)
+
+        inventaire_actif = Inventaire.objects.get(actif=True)
 
         self.fields['produit'] = forms.ModelChoiceField(
             label="Produits",
-            queryset=Produit.objects.all(),
+            queryset=Produit.objects.exclude(Greffons__inventaire=inventaire_actif),
             required=False,
             widget=Select2Widget(attrs={'placeholder': 'Produit', 'class': 'form-control js-example-basic-single'}),
             help_text='Choisir un produit dans la liste des produit existant !')
-        '''
-        self.fields['especes'] = forms.ModelChoiceField(
-            label="Espèces",
-            queryset=Espece.objects.all(),
-            required=False,
-            widget=Select2Widget(attrs={'placeholder': 'Especes', 'class': 'form-control js-example-basic-single'}),
-            help_text='Choisir une espèce')
 
-        self.fields['varietes'] = forms.ModelChoiceField(
-            label="Variétés",
-            queryset=Variete.objects.all(),
-            required=False,
-            widget=Select2Widget(attrs={'placeholder': 'Variétés', 'class': 'form-control js-example-basic-single'}),
-            help_text='Choisir une variété')
-
-        self.fields['portegreffes'] = forms.ModelChoiceField(
-            label="Porte-Greffes",
-            queryset=PorteGreffe.objects.all(),
-            required=False,
-            widget=Select2Widget(attrs={'placeholder': 'Porte-Greffes', 'class': 'form-control js-example-basic-single'}),
-            help_text='Choisir un porte-greffe')
-
-        self.fields['specs'] = forms.ModelChoiceField(
-            label="Spécialités",
-            queryset=Spec.objects.all(),
-            required=False,
-            widget=Select2Widget(attrs={'placeholder': 'Spécialités', 'class': 'form-control js-example-basic-single'}),
-            help_text='Choisir une spécialités')
-        '''
         self.fields['date'] = forms.DateField(
             label="Date du greffon",
             required=False,
+            initial=datetime.now(),
             widget=forms.DateInput(attrs={'placeholder': 'Date du greffon', 'class': 'datepicker_input form-control'}),
             help_text='Saisir une date à laquelle le greffon a été réalisé',
         )
@@ -197,10 +170,10 @@ class FormGreffon(forms.ModelForm):
             help_text='Quantité de greffon',
         )
         self.fields['comm'] = forms.CharField(
-            label="Nombre de comm ??",
+            label="Quantité de produits pré-commandés",
             required=False,
-            widget=forms.NumberInput(attrs={'placeholder': 'Nombre de comm ??', 'class': 'form-control'}),
-            help_text='Quantité de comm ??',
+            widget=forms.NumberInput(attrs={'placeholder': 'Quantité de produits pré-commandés', 'class': 'form-control'}),
+            help_text='Quantité de produits pré-commandés',
         )
         self.fields['objectif'] = forms.CharField(
             label="Objectif",
@@ -233,10 +206,107 @@ class FormGreffon(forms.ModelForm):
             widget=forms.NumberInput(attrs={'placeholder': 'Reussi', 'class': 'form-control'}),
             help_text='Reussi',
         )
+        self.fields['inventaire'] = forms.ModelChoiceField(
+            label="Période",
+            queryset=Inventaire.objects.all(),
+            required=False,
+            initial=inventaire_actif,
+            widget=Select2Widget(attrs={'placeholder': 'Période', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir une période',
+        )
 
     class Meta:
         model = Greffons
-        fields = ['produit', 'date', 'greffons', 'comm','objectif', 'realise', 'reussi', 'couleur', 'rang']
+        fields = ['produit', 'date', 'greffons', 'comm', 'objectif', 'realise', 'reussi', 'couleur', 'rang', 'inventaire']
+
+
+class FormEditGreffon(forms.ModelForm):
+
+    def __init__(self,  *args, **kwargs):
+        self.produit = kwargs.pop('produit', None)
+        self.greffons = kwargs.pop('greffons', None)
+        self.comm = kwargs.pop('comm', None)
+        self.objectif = kwargs.pop('objectif', None)
+        self.realise = kwargs.pop('realise', None)
+        self.reussi = kwargs.pop('reussi', None)
+        self.date = kwargs.pop('date', None)
+        self.couleur = kwargs.pop('couleur', None)
+        self.rang = kwargs.pop('rang', None)
+        self.inventaire = kwargs.pop('inventaire', None)
+        super(FormEditGreffon, self).__init__(*args, **kwargs)
+
+        inventaire_actif = Inventaire.objects.get(actif=True)
+
+        self.fields['produit'] = forms.ModelChoiceField(
+            label="Produits",
+            queryset=Produit.objects.all(),
+            required=False,
+            disabled=True,
+            widget=Select2Widget(attrs={'placeholder': 'Produit', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir un produit dans la liste des produit existant !')
+
+        self.fields['date'] = forms.DateField(
+            label="Date du greffon",
+            required=False,
+            initial=datetime.now(),
+            widget=forms.DateInput(attrs={'placeholder': 'Date du greffon', 'class': 'datepicker_input form-control'}),
+            help_text='Saisir une date à laquelle le greffon a été réalisé',
+        )
+        self.fields['greffons'] = forms.CharField(
+            label="Nombre de greffons",
+            required=False,
+            widget=forms.NumberInput(attrs={'placeholder': 'Nombre de greffons', 'class': 'form-control'}),
+            help_text='Quantité de greffon',
+        )
+        self.fields['comm'] = forms.CharField(
+            label="Quantité de produits pré-commandés",
+            required=False,
+            widget=forms.NumberInput(attrs={'placeholder': 'Quantité de produits pré-commandés', 'class': 'form-control'}),
+            help_text='Quantité de produits pré-commandés',
+        )
+        self.fields['objectif'] = forms.CharField(
+            label="Objectif",
+            required=False,
+            widget=forms.NumberInput(attrs={'placeholder': 'Objectif', 'class': 'form-control'}),
+            help_text='Objectif',
+        )
+        self.fields['realise'] = forms.CharField(
+            label="Réalisé",
+            required=False,
+            widget=forms.NumberInput(attrs={'placeholder': 'Réalisé', 'class': 'form-control'}),
+            help_text='Réalisé',
+        )
+        self.fields['couleur'] = forms.ModelChoiceField(
+            label="Couleur du scotch",
+            queryset=Couleur.objects.all(),
+            required=False,
+            widget=Select2Widget(attrs={'placeholder': 'Couleur du scotch', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir une couleur de scotch'
+        )
+        self.fields['rang'] = forms.CharField(
+            label="N° du Rang",
+            required=False,
+            widget=forms.TextInput(attrs={'placeholder': 'N° du rang', 'class': 'form-control'}),
+            help_text='Saisir un numéro de rang'
+        )
+        self.fields['reussi'] = forms.CharField(
+            label="Reussi",
+            required=False,
+            widget=forms.NumberInput(attrs={'placeholder': 'Reussi', 'class': 'form-control'}),
+            help_text='Reussi',
+        )
+        self.fields['inventaire'] = forms.ModelChoiceField(
+            label="Période",
+            queryset=Inventaire.objects.all(),
+            required=False,
+            initial=inventaire_actif,
+            widget=Select2Widget(attrs={'placeholder': 'Période', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir une période',
+        )
+
+    class Meta:
+        model = Greffons
+        fields = ['produit', 'date', 'greffons', 'comm', 'objectif', 'realise', 'reussi', 'couleur', 'rang', 'inventaire']
 
 
 # FORMULAIRE DEDIE A L'AJOUT/EDITION D'UNE ESPECE ------------------------------------------------------------------------
@@ -306,6 +376,7 @@ class FormSpec(forms.ModelForm):
         model = Spec
         fields = ['nom']
 
+
 # FORMULAIRE DEDIE A L'AJOUT/EDITION D'UN PRODUIT ------------------------------------------------------------------------
 class FormProduit(forms.ModelForm):
 
@@ -352,6 +423,18 @@ class FormProduit(forms.ModelForm):
             widget=forms.NumberInput(attrs={'placeholder': 'Stock du produit', 'class': 'form-control', 'value': 0}),
             help_text='Saisir une valeur pour le stock initial... <br/>Valeur par défaut : 0')
 
+        self.fields['stock_bis'] = forms.IntegerField(
+            label="Stock Virtuel (Commande en cours)",
+            required=False,
+            widget=forms.NumberInput(attrs={'placeholder': 'Stock en cours du produit', 'class': 'form-control', 'value': 0}),
+            help_text='Saisir une valeur pour le stock en cours... <br/>Valeur par défaut : Identique à celle du stock final')
+
+        self.fields['stock_future'] = forms.IntegerField(
+            label="Stock Future (Pré-commande)",
+            required=False,
+            widget=forms.NumberInput(attrs={'placeholder': 'Stock futur du produit', 'class': 'form-control', 'value': 0}),
+            help_text='Saisir une valeur pour le stock future... <br/>Valeur par défaut : 0')
+
         self.fields['gaf'] = forms.BooleanField(
             label="Greffe à façon",
             required=False,
@@ -360,7 +443,7 @@ class FormProduit(forms.ModelForm):
 
     class Meta:
         model = Produit
-        fields = ['nom', 'espece', 'variete', 'portegreffe', 'spec', 'stock', 'gaf']
+        fields = ['nom', 'espece', 'variete', 'portegreffe', 'spec', 'stock', 'stock_bis', 'stock_future', 'gaf']
 
 
 # FORMULAIRE DEDIE A L'UPLOAD DU FICHIER EXCEL DE LA LISTE DES PRODUITS ------------------------------------------------------------------------

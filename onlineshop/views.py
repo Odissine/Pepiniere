@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlite3 import DatabaseError
-
+from tablib import Dataset
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.files.storage import FileSystemStorage
 from django.db.models import Sum
+from django.db.models import Q
 from django.utils.text import slugify
 from django.http import JsonResponse
 from django.forms import formset_factory
@@ -19,6 +20,7 @@ from account.decorators import unauthenticated_user
 from account.decorators import allowed_users
 
 from onlineshop.models import *
+from onlineshop.resources import *
 from onlineshop.forms import *
 from onlineshop.core import *
 from cart.forms import CartAddProduitForm
@@ -29,6 +31,7 @@ from order.forms import *
 import xlsxwriter
 import io
 import json
+import pandas as pd
 
 from openpyxl import load_workbook
 
@@ -289,19 +292,28 @@ def add_produit(request):
             if form.is_valid():
                 instance = form.instance
                 stock = instance.stock
+                stock_bis = instance.stock_bis
+                stock_future = instance.stock_future
                 if stock is None or stock < 0 or not str(stock).isnumeric():
                     instance.stock = 0
+                if stock_bis is None or stock_bis < 0 or not str(stock_bis).isnumeric():
                     instance.stock_bis = 0
-                    instance.stock_Future = 0
-                else:
-                    instance.stock_bis = stock
-                    instance.stock_future = stock
+                if stock_future is None or stock_future < 0 or not str(stock_future).isnumeric():
+                    instance.stock_future = 0
+                if instance.stock_bis > instance.stock:
+                    instance.stock = instance.stock_bis
+
+                if instance.nom is None or instance.nom == "":
+                    espece = str(instance.espece)
+                    variete = str(instance.variete)
+                    portegreffe = str(instance.portegreffe)
+                    instance.nom = espece + "-" + variete + "-" + portegreffe
+
+                if check_produit_exist(instance.espece, instance.variete, instance.portegreffe, instance.spec) > 0:
+                    messages.error(request, "Ce produit existe déjà ! Merci de réessayer.")
+                    return redirect('onlineshop:manage-produit')
+
                 instance.save()
-                # try:
-
-                # except:
-                #     messages.error(request, "Un problème est survenue. Meri de réessayer")
-
                 messages.success(request, message)
                 return redirect('onlineshop:manage-produit')
         context_header = {
@@ -335,13 +347,23 @@ def edit_produit(request, produit_id):
             if form.is_valid():
                 instance = form.instance
                 stock = instance.stock
+                stock_bis = instance.stock_bis
+                stock_future = instance.stock_future
                 if stock is None or stock < 0 or not str(stock).isnumeric():
                     instance.stock = 0
+                if stock_bis is None or stock_bis < 0 or not str(stock_bis).isnumeric():
                     instance.stock_bis = 0
+                if stock_future is None or stock_future < 0 or not str(stock_future).isnumeric():
                     instance.stock_future = 0
-                else:
-                    instance.stock_bis = stock
-                    instance.stock_future = stock
+                if instance.stock_bis > instance.stock:
+                    instance.stock = instance.stock_bis
+
+                if instance.nom is None or instance.nom == "":
+                    espece = str(instance.espece)
+                    variete = str(instance.variete)
+                    portegreffe = str(instance.portegreffe)
+                    instance.nom = espece + "-" + variete + "-" + portegreffe
+
                 obj = instance.save()
                 messages.success(request, message)
                 return redirect('onlineshop:manage-produit')
@@ -365,10 +387,15 @@ def delete_produit(request, produit_id):
     if request.user.is_staff:
         title = "Produits"
         produit = Produit.objects.get(id=produit_id)
-        form = FormProduit(request.POST or None, instance=produit)
-        message = "Produit supprimé avec succès !"
+
+        in_order = Cartdb.objects.filter(produit=produit)
+        if len(in_order) > 0:
+            message = "Impossible de supprimer ce produit ... présent dans une ou plusieurs commande !"
+            messages.error(request, message)
+            return redirect('onlineshop:manage-produit')
 
         produit.delete()
+        message = "Produit supprimé avec succès !"
         messages.success(request, message)
         return redirect('onlineshop:manage-produit')
     else:
@@ -384,7 +411,6 @@ def manage_greffons(request):
     inventaires = Inventaire.objects.all()
 
     if request.user.is_staff:
-
         if 'g' in request.GET:
             order_value = request.GET['g']
             queryset = Greffons.objects.all().order_by(order_value)
@@ -405,7 +431,6 @@ def manage_greffons(request):
                 start_date = form.cleaned_data['start_date']
                 end_date = form.cleaned_data['end_date']
                 couleur = form.cleaned_data['couleur']
-                rang = form.cleaned_data['rang']
                 inventaire = form.cleaned_data['inventaire']
 
                 if espece is not None:
@@ -423,7 +448,13 @@ def manage_greffons(request):
                 if couleur.exists():
                     queryset = queryset.filter(couleur__in=couleur)
                 if inventaire is not None:
-                    queryset = queryset.filter(inventaire__in=inventaire)
+                    queryset = queryset.filter(inventaire=inventaire)
+                else:
+                    inventaire_actif = Inventaire.objects.get(actif=True)
+                    queryset = queryset.filter(inventaire=inventaire_actif)
+            else:
+                inventaire_actif = Inventaire.objects.get(actif=True)
+                queryset = queryset.filter(inventaire=inventaire_actif)
 
         title = "Greffons"
         header = "Ajouter un Greffon"
@@ -439,7 +470,7 @@ def manage_greffons(request):
             page = request.GET['page']
             request.session['page_g'] = page
         elif 'page_g' in request.session:
-            page = request.session['page_p']
+            page = request.session['page_g']
 
         try:
             greffons = paginator.page(page)
@@ -473,20 +504,71 @@ def manage_greffons(request):
         messages.error(request, "Vous n'avez pas les droits !")
         return redirect('onlineshop:produit-list')
 
+
 @login_required
 @staff_member_required
 def valid_greffons(request):
-    greffons = Greffons.objects.all()
-    pass
+    if request.POST:
+        try:
+            inventaire = Inventaire.objects.get(pk=request.POST.get('inventaire'))
+        except:
+            messages.error(request, "Période inexistante !")
+            return redirect('onlineshop:manage-greffons')
 
+        check_stock_produits = Produit.objects.filter(Q(stock__gt=0) | Q(stock_bis__gt=0))
+        if len(check_stock_produits) > 0:
+            messages.error(request, "Attention certains produits ont encore du stock ... Réinitaliser les stocks avant de poursuivre !")
+            return redirect('onlineshop:manage-greffons')
+
+        greffons = Greffons.objects.filter(inventaire=inventaire)
+        for greffon in greffons:
+            if request.POST.get('stock') == "realises":
+                greffon.produit.stock = greffon.realise
+            elif request.POST.get('stock') == "reussis":
+                greffon.produit.stock = greffon.reussi
+            else:
+                if greffon.reussi > 0:
+                    greffon.produit.stock = greffon.reussi
+                else:
+                    greffon.produit.stock = greffon.realise
+            # greffon.produit.save()
+
+    return redirect('onlineshop:manage-greffons')
+
+
+@login_required
+@staff_member_required
+def init_greffons(request):
+    if request.user.is_staff:
+        if request.POST:
+            inventaire_id = request.POST.get('inventaire')
+            inventaire = Inventaire.objects.get(pk=inventaire_id)
+
+            # TEST SI INITIALISATION DEJA REALISE SUR LA PERIODE
+            check_inventaire_greffons = Greffons.objects.filter(inventaire=inventaire)
+            if len(check_inventaire_greffons) > 0:
+                message = "Greffons déjà initialisés sur cette période !"
+                messages.error(request, message)
+                return redirect('onlineshop:manage-greffons')
+
+            produits = Produit.objects.all()
+            for produit in produits:
+                greffon = Greffons.objects.create(produit=produit, date=datetime.now(), inventaire=inventaire, comm=produit.stock_future)
+                greffon.save()
+            message = "Greffons initialisés avec succès pour cette nouvelle période !"
+            messages.success(request, message)
+            return redirect('onlineshop:manage-greffons')
+    return redirect('onlineshop:manage-greffons')
 
 @login_required
 @staff_member_required
 def add_greffon(request):
     if request.user.is_staff:
         title = "Greffons"
-        form = FormGreffon(request.POST or None)
-        message = "Greffon ajouté avec succès !"
+        inventaire = Inventaire.objects.get(actif=True)
+        greffons = Greffons.objects.filter(inventaire=inventaire)
+        produit_restant = Produit.objects.exclude(Greffons__in=greffons)
+        form = FormGreffon(request.POST or None, produit_restant, initial={'inventaire': inventaire})
 
         previous_page = reverse('onlineshop:manage-greffons')
         formAction = 'onlineshop:add-greffon'
@@ -494,6 +576,14 @@ def add_greffon(request):
         if request.POST:
             if form.is_valid():
                 instance = form.instance
+                produit = instance.produit
+
+                test_greffons = Greffons.objects.filter(produit=produit, inventaire=instance.inventaire)
+                if len(test_greffons) > 0:
+                    message = "Greffon déjà présent pour cette période !"
+                    messages.error(request, message)
+                    return redirect('onlineshop:manage-greffons')
+
                 greffons = instance.greffons
                 comm = instance.comm
                 objectif = instance.objectif
@@ -515,7 +605,14 @@ def add_greffon(request):
                 if reussi is None or reussi == "":
                     instance.reussi = 0
 
+                if instance.date is None:
+                    instance.date = datetime.now()
+
+                if instance.inventaire is None:
+                    instance.inventaire = inventaire
+
                 instance.save()
+                message = "Greffon ajouté avec succès !"
                 messages.success(request, message)
                 return redirect('onlineshop:manage-greffons')
         context_header = {
@@ -539,7 +636,8 @@ def edit_greffon(request, greffon_id):
     if request.user.is_staff:
         title = "Greffons"
         greffon = Greffons.objects.get(id=greffon_id)
-        form = FormGreffon(request.POST or None, instance=greffon)
+
+        form = FormEditGreffon(request.POST or None, instance=greffon, initial={'produit': greffon.produit})
         message = "Greffon modifié avec succès !"
 
         previous_page = reverse('onlineshop:manage-greffons')
@@ -548,6 +646,8 @@ def edit_greffon(request, greffon_id):
         if request.POST:
             if form.is_valid():
                 instance = form.instance
+                # print(instance.produit)
+                # instance.produit = greffon.produit
                 qte = instance.greffons
                 comm = instance.comm
                 realise = instance.realise
@@ -565,8 +665,8 @@ def edit_greffon(request, greffon_id):
                 instance.date = date
                 instance.couleur = couleur
                 instance.rang = rang
-
                 obj = instance.save()
+
                 messages.success(request, message)
                 return redirect('onlineshop:manage-greffons')
         context = {
@@ -610,16 +710,15 @@ def edit_qte_greffon(request):
         try:
             greffon_id = data_dict['code']
             qte = data_dict['greffon']
-            # comm = data_dict['comm']
+            comm = data_dict['comm']
             objectif = data_dict['objectif']
             realise = data_dict['realise']
             reussi = data_dict['reussi']
-            rang = data_dict['rang']
             date = datetime.strptime(data_dict['date'], '%d/%m/%Y')
             couleur_id = data_dict['couleur']
             inventaire_id = data_dict['inventaire']
         except Exception as e:
-            print(e)
+            print("Exception", e)
 
         if couleur_id is None or couleur_id == "":
             couleur = None
@@ -638,12 +737,11 @@ def edit_qte_greffon(request):
             return redirect('onlineshop:manage-greffons')
 
         try:
-            greffon.greffon = int(qte)
-            # greffon.comm = int(comm)
+            greffon.greffons = int(qte)
+            greffon.comm = int(comm)
             greffon.objectif = int(objectif)
             greffon.realise = int(realise)
             greffon.reussi = int(reussi)
-            greffon.rang = rang
             greffon.date = date
             greffon.couleur = couleur
             greffon.inventaire = inventaire
@@ -940,24 +1038,32 @@ def delete_data(request, categorie, data_id):
 
     if request.user.is_staff:
         if categorie == 'espece':
-            title = "Espèces"
             data = Espece.objects.get(id=data_id)
-            form = FormEspece(request.POST or None, instance=data)
+            if len(Produit.objects.filter(espece=data)) > 0:
+                message = "Impossible de supprimer l'espèce, un ou plusieurs produits sont encore associés à cette espèce !"
+                messages.error(request, message)
+                return redirect('onlineshop:manage-data', categorie)
             message = "Espèce supprimée avec succès !"
         if categorie == 'variete':
-            title = "Variétés"
             data = Variete.objects.get(id=data_id)
-            form = FormVariete(request.POST or None, instance=data)
+            if len(Produit.objects.filter(variete=data)) > 0:
+                message = "Impossible de supprimer la variété, un ou plusieurs produits sont encore associés à cette variété !"
+                messages.error(request, message)
+                return redirect('onlineshop:manage-data', categorie)
             message = "Variété supprimée avec succès !"
         if categorie == 'portegreffe':
-            title = "Porte-Greffes"
             data = PorteGreffe.objects.get(id=data_id)
-            form = FormPorteGreffe(request.POST or None, instance=data)
+            if len(Produit.objects.filter(portegreffe=data)) > 0:
+                message = "Impossible de supprimer le porte-greffe, un ou plusieurs produits sont encore associés à ce porte-greffe !"
+                messages.error(request, message)
+                return redirect('onlineshop:manage-data', categorie)
             message = "Porte-Greffe supprimé avec succès !"
         if categorie == 'spec':
-            title = "Spécialités"
             data = Spec.objects.get(id=data_id)
-            form = FormSpec(request.POST or None, instance=data)
+            if len(Produit.objects.filter(spec=data)) > 0:
+                message = "Impossible de supprimer la spécialité, un ou plusieurs produits sont encore associés à cete spécialité !"
+                messages.error(request, message)
+                return redirect('onlineshop:manage-data', categorie)
             message = "Spécialité supprimée avec succès !"
 
         data.delete()
@@ -1086,6 +1192,153 @@ def export_produits_xls(request):
 
 @login_required
 @staff_member_required
+def export_produits_csv(request):
+    if request.method == 'POST':
+        categorie = request.POST.get('categorie')
+        if categorie is None:
+            message = "Catégorie manquante ... Veuillez réessayer !"
+            messages.error(request, message)
+            return redirect('onlineshop:export-produits-xls')
+
+        if categorie == "PRODUITS":
+            produit_resource = ProduitResource()
+            filename = "Produits.csv"
+        if categorie == "ESPECES":
+            produit_resource = EspeceResource()
+            filename = "Especes.csv"
+        if categorie == "VARIETES":
+            produit_resource = VarieteResource()
+            filename = "Varietes.csv"
+        if categorie == "PORTE-GREFFES":
+            produit_resource = PorteGreffeResource()
+            filename = "Portegreffes.csv"
+        if categorie == "SPECIALITES":
+            produit_resource = SpecResource()
+            filename = "Specialites.csv"
+        if categorie == "COULEURS":
+            produit_resource = CouleurResource()
+            filename = "Couleurs.csv"
+        if categorie == "GREFFONS":
+            produit_resource = GreffonResource()
+            filename = "Greffons.csv"
+
+        dataset = produit_resource.export()
+        response = HttpResponse(dataset.csv, content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename='+filename
+        return response
+
+    previous_page = reverse('onlineshop:onlineshop-administration')
+    return render(request, 'onlineshop/export_produit.html', {'previous_page': previous_page})
+
+
+@login_required
+@staff_member_required
+def import_produits_csv(request):
+    previous_page = reverse('onlineshop:onlineshop-administration')
+    if request.method == 'POST':
+        categorie = request.POST.get('categorie')
+        if categorie is None:
+            message = "Catégorie manquante ... Veuillez réessayer !"
+            messages.error(request, message)
+            return redirect('onlineshop:import-produits-xls')
+
+        if categorie == "PRODUITS":
+            produit_resource = ProduitResource()
+        if categorie == "ESPECES":
+            produit_resource = EspeceResource()
+        if categorie == "VARIETES":
+            produit_resource = VarieteResource()
+        if categorie == "PORTE-GREFFES":
+            produit_resource = PorteGreffeResource()
+        if categorie == "SPECIALITES":
+            produit_resource = SpecResource()
+        if categorie == "COULEURS":
+            produit_resource = CouleurResource()
+        if categorie == "GREFFONS":
+            produit_resource = GreffonResource()
+
+        dataset = Dataset()
+        new_datas = request.FILES['myfile']
+        imported_data = dataset.load(new_datas.read().decode(), format='csv')
+        result = produit_resource.import_data(dataset, dry_run=True)  # Test the data import
+
+        if not result.has_errors():
+            produit_resource.import_data(dataset, dry_run=False)  # Actually import now
+            message = "Fichier importé avec succès !"
+            messages.success(request, message)
+            return redirect('onlineshop:onlineshop-administration')
+
+    return render(request, 'onlineshop/import_produit.html', {'previous_page': previous_page})
+
+
+
+@login_required
+@staff_member_required
+def export_greffons_xls(request):
+    output = io.BytesIO()
+
+    # Create a workbook and add a worksheet.
+    workbook = xlsxwriter.Workbook(output)
+    worksheet_greffons = workbook.add_worksheet("GREFFONS")
+    worksheet_couleurs = workbook.add_worksheet("COULEURS")
+
+    # GREFFONS
+    worksheet_greffons.write(0, 0, 'ID')
+    worksheet_greffons.write(0, 1, 'PRODUIT')
+    worksheet_greffons.write(0, 2, 'GREFFONS')
+    worksheet_greffons.write(0, 3, 'OBJECTIFS')
+    worksheet_greffons.write(0, 4, 'COMM')
+    worksheet_greffons.write(0, 5, 'REALISES')
+    worksheet_greffons.write(0, 6, 'REUSSIS')
+    worksheet_greffons.write(0, 7, 'DATE')
+    worksheet_greffons.write(0, 8, 'COULEUR')
+    worksheet_greffons.write(0, 9, 'RANG')
+    worksheet_greffons.write(0, 10, 'PERIODE')
+
+    greffons = Greffons.objects.all()
+    row = 1
+    for greffon in greffons:
+        worksheet_greffons.write(row, 0, greffon.id)
+        worksheet_greffons.write(row, 1, greffon.produit.id)
+        worksheet_greffons.write(row, 2, greffon.greffons)
+        worksheet_greffons.write(row, 3, greffon.objectif)
+        worksheet_greffons.write(row, 4, greffon.comm)
+        worksheet_greffons.write(row, 5, greffon.realise)
+        worksheet_greffons.write(row, 6, greffon.reussi)
+        worksheet_greffons.write(row, 7, greffon.date)
+        worksheet_greffons.write(row, 8, greffon.couleur.id)
+        worksheet_greffons.write(row, 9, greffon.rang)
+        worksheet_greffons.write(row, 10, greffon.inventaire.id)
+        row += 1
+
+    # COULEURS
+    worksheet_couleurs.write(0, 0, 'ID')
+    worksheet_couleurs.write(0, 1, 'NOM')
+    worksheet_couleurs.write(0, 2, 'COULEUR')
+
+    couleurs = Couleur.objects.all()
+    row = 1
+    for couleur in couleurs:
+        worksheet_couleurs.write(row, 0, couleur.id)
+        worksheet_couleurs.write(row, 1, couleur.nom)
+        worksheet_couleurs.write(row, 2, couleur.couleur)
+        row += 1
+
+    workbook.close()
+    output.seek(0)
+
+    filename = 'ExportGreffons.xlsx'
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+
+    return response
+
+
+@login_required
+@staff_member_required
 def export_produits_xls_custom(request):
     output = io.BytesIO()
 
@@ -1193,7 +1446,6 @@ def import_produits_xls(request):
                         spec=get_object_from_id(ws.cell(row=i, column=12).value, 'spec'),
                         gaf=ws.cell(row=i, column=13).value,
                     )
-                    message = "Fichier de produits importé avec succès (" + str(max_row) + " produits importés)"
 
                 if categorie == "ESPECES":
                     obj = Espece.objects.create(
@@ -1201,7 +1453,7 @@ def import_produits_xls(request):
                         nom=ws.cell(row=i, column=2).value,
                         slug=ws.cell(row=i, column=3).value
                     )
-                    message = "Fichier d'espèces importé avec succès (" + str(max_row) + " espèces importées)"
+                    # message = "Fichier d'espèces importé avec succès (" + str(max_row) + " espèces importées)"
 
                 if categorie == "VARIETES":
                     obj = Variete.objects.create(
@@ -1209,7 +1461,7 @@ def import_produits_xls(request):
                         nom=ws.cell(row=i, column=2).value,
                         slug=ws.cell(row=i, column=3).value
                     )
-                    message = "Fichier de variétés importé avec succès (" + str(max_row) + " varietés importées)"
+                    # message = "Fichier de variétés importé avec succès (" + str(max_row) + " varietés importées)"
 
                 if categorie == "PORTE-GREFFES":
                     obj = PorteGreffe.objects.create(
@@ -1217,7 +1469,7 @@ def import_produits_xls(request):
                         nom=ws.cell(row=i, column=2).value,
                         slug=ws.cell(row=i, column=3).value
                     )
-                    message = "Fichier de porte-greffe importé avec succès (" + str(max_row) + " porte-greffes importés)"
+                    # message = "Fichier de porte-greffe importé avec succès (" + str(max_row) + " porte-greffes importés)"
 
                 if categorie == "SPECIALITES":
                     obj = Spec.objects.create(
@@ -1225,10 +1477,11 @@ def import_produits_xls(request):
                         nom=ws.cell(row=i, column=2).value,
                         slug=ws.cell(row=i, column=3).value
                     )
-                    message = "Fichier de spécialités importé avec succès (" + str(max_row) + " spécialités importées)"
+                    # message = "Fichier de spécialités importé avec succès (" + str(max_row) + " spécialités importées)"
 
                 obj.save()
-
+            print(max_row, "produits importés !")
+            message = "Fichier importé avec succès (" + str(max_row) + " données importées)"
             messages.success(request, message)
             wb.close()
 
@@ -1241,6 +1494,152 @@ def import_produits_xls(request):
 
     return render(request, 'onlineshop/import_produit.html', {'previous_page': previous_page})
     # return response
+
+
+# IMPORT DES PRODUITS A PARTIR D'UN FICHIER EXCEL
+@login_required
+@staff_member_required
+def import_produits_xls_pandas(request):
+
+    previous_page = reverse('onlineshop:onlineshop-administration')
+
+    try:
+        if request.method == 'POST' and request.FILES['myfile']:
+            myfile = request.FILES['myfile']
+            fs = FileSystemStorage()
+            filename = fs.save(myfile.name, myfile)
+            uploaded_file_url = fs.url(filename)
+            excel_file = uploaded_file_url
+            categorie = request.POST.get('categorie')
+            message = ""
+            empexceldata = pd.read_excel(settings.CONTENT_DIR + excel_file, sheet_name=categorie)
+            dbframe = empexceldata
+
+            # REMOVE DATA FROM TABLE PRODUITS
+            if request.POST.get('delete_data', True):
+                if categorie == "PRODUITS":
+                    pass
+                    # Produit.objects.all().delete()
+                if categorie == "ESPECES":
+                    Espece.objects.all().delete()
+                if categorie == "VARIETES":
+                    Variete.objects.all().delete()
+                if categorie == "PORTE-GREFFES":
+                    PorteGreffe.objects.all().delete()
+                if categorie == "SPECIALITES":
+                    Spec.objects.all().delete()
+            max_row = 0
+            for dbframe in dbframe.itertuples():
+                if categorie == "PRODUITS":
+                    obj = Produit.objects.create(
+                        id=dbframe.id,
+                        nom=dbframe.nom,
+                        slug=dbframe.slug,
+                        description=dbframe.description,
+                        prix=dbframe.prix,
+                        stock=dbframe.stock,
+                        stock_bis=dbframe.stock_bis,
+                        available=dbframe.available,
+                        espece=get_object_from_id(dbframe.espece, 'espece'),
+                        variete=get_object_from_id(dbframe.variete, 'variete'),
+                        portegreffe=get_object_from_id(dbframe.portegreffe, 'portegreffe'),
+                        spec=get_object_from_id(dbframe.spec, 'spec'),
+                        gaf=dbframe.gaf,
+                    )
+                # obj.save()
+                max_row += 1
+            print(max_row, "produits importés !")
+            message = "Fichier importé avec succès (" + str(max_row) + " données importées)"
+            messages.success(request, message)
+
+            return render(request, 'onlineshop/import_produit.html', {'previous_page': previous_page})
+
+    except Exception as identifier:
+        message = format_html("Une erreur est survenue ... merci de réessayer !<br>[ <i>" + str(identifier) + "</i> ]")
+        messages.error(request, message)
+        print(identifier)
+
+    return render(request, 'onlineshop/import_produit.html', {'previous_page': previous_page})
+    # return response
+
+
+# IMPORT DES GREFFONS A PARTIR D'UN FICHIER EXCEL
+@login_required
+@staff_member_required
+def import_greffons_xls(request):
+
+    previous_page = reverse('onlineshop:onlineshop-administration')
+
+    try:
+        if request.method == 'POST' and request.FILES['myfile']:
+            myfile = request.FILES['myfile']
+            fs = FileSystemStorage()
+            filename = fs.save(myfile.name, myfile)
+            uploaded_file_url = fs.url(filename)
+            excel_file = uploaded_file_url
+            message = format_html("Fichier de greffons importé avec succès<br/>")
+
+            wb = load_workbook(filename=settings.CONTENT_DIR + excel_file, read_only=True)
+            ws_greffons = wb["GREFFONS"]
+            ws_couleurs = wb["COULEURS"]
+            max_col_greffons = ws_greffons.max_column
+            max_row_greffons = ws_greffons.max_row
+            max_col_couleurs = ws_couleurs.max_column
+            max_row_couleurs = ws_couleurs.max_row
+
+            # REMOVE DATA FROM TABLE PRODUITS
+            if request.POST.get('delete_data', True):
+                    Greffons.objects.all().delete()
+                    Couleur.objects.all().delete()
+
+            # GREFFONS
+            for i in range(2, ws_greffons + 1):
+                obj = Produit.objects.create(
+                    id=ws_greffons.cell(row=i, column=1).value,
+                    produit=get_object_from_id(ws_greffons.cell(row=i, column=2).value, 'produit'),
+                    greffons=ws_greffons.cell(row=i, column=3).value,
+                    comm=ws_greffons.cell(row=i, column=4).value,
+                    objectif=ws_greffons.cell(row=i, column=5).value,
+                    realise=ws_greffons.cell(row=i, column=6).value,
+                    reussi=ws_greffons.cell(row=i, column=7).value,
+                    date=ws_greffons.cell(row=i, column=8).value,
+                    couleur=get_object_from_id(ws_greffons.cell(row=i, column=9).value, 'couleur'),
+                    rang=ws_greffons.cell(row=i, column=10).value,
+                    periode=get_object_from_id(ws_greffons.cell(row=i, column=11).value, 'inventaire'),
+                )
+                message += format_html("- " + str(max_row_greffons) + " greffons importés<br/>")
+
+                # GREFFONS
+                for i in range(2, ws_couleurs + 1):
+                    obj = Couleur.objects.create(
+                        id=ws_couleurs.cell(row=i, column=1).value,
+                        nom=ws_couleurs.cell(row=i, column=2).value,
+                        couleur=ws_couleurs.cell(row=i, column=3).value,
+                    )
+                message += format_html("- " + str(max_row_couleurs) + " couleurs importés")
+
+                obj.save()
+
+            messages.success(request, message)
+            wb.close()
+
+            return render(request, 'onlineshop/import_greffons.html', {'previous_page': previous_page})
+
+    except Exception as identifier:
+        message = format_html("Une erreur est survenue ... merci de réessayer !<br>[ <i>" + str(identifier) + "</i> ]")
+        messages.error(request, message)
+        print(identifier)
+
+    return render(request, 'onlineshop/import_greffons.html', {'previous_page': previous_page})
+    # return response
+
+
+@login_required
+@staff_member_required
+def comm_greffons(request):
+    if request.method == 'POST':
+        qte = get_qte_pre_commande(request.POST.get('produit'))
+        return HttpResponse(qte)
 
 
 @login_required
@@ -1297,13 +1696,18 @@ def edit_stock_produit(request):
 
         try:
             produit = Produit.objects.get(id=produit_id)
-        except:
+        except Exception as e:
+            print(e)
             messages.error(request, "Le produit n'existe pas !")
             return redirect('onlineshop:manage-produit')
-
-        produit.stock = int(stock)
-        produit.stock_bis = int(stock_bis)
-        produit.stock_future = int(stock_future)
+        if check_stock_value(stock) is not None:
+            produit.stock = int(stock)
+        if check_stock_value(stock_bis) is not None:
+            produit.stock_bis = int(stock_bis)
+        if check_stock_value(stock_future) is not None:
+            produit.stock_future = int(stock_future)
+        if int(stock_bis) > int(stock):
+            produit.stock = stock_bis
         produit.save()
         messages.success(request, "Quantité mise à jour pour le produit ;)")
     return redirect('onlineshop:manage-produit')

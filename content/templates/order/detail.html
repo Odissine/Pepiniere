@@ -13,7 +13,7 @@
         <h1>{% if commande.statut.nom == "Pré-commande" %}Pré-commande{% else %}Commande{% endif %} FA-{{ commande.id }}-{{ commande.date|date:'Y' }}</h1>
         <h4>{{ commande.client.prenom }} {{ commande.client.nom }} du {{ commande.date|date:'d F Y' }}</h4>
     </div>
-    {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée" and commande.statut.nom != "En attente" %}
+    {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée" and commande.statut.nom != "En attente" and user|is_staff%}
     <div class="col-5 align-middle pt-3">
         <button type="button" class="btn btn-primary bx-pull-right btn-lg" onclick="add_product_order('{{ commande.id }}')">Ajouter un produit</button>
     </div>
@@ -26,8 +26,8 @@
 {% endlanguage %}
 {% endwith %}
 <!-- HEADER TABLE --------------------------------------------------------------------->
-<div class="{% if commande.statut.nom == 'Annulée' %}border-secondary{% endif %}{% if commande.statut.nom == 'Terminée' %}border-success{% endif %}{% if commande.statut.nom == 'Validée' %}border-primary{% endif %}{% if commande.statut.nom == 'En cours' %}border-warning{% endif %}{% if commande.statut.nom == 'Pré-commande' %}border-info{% endif %} border-3 border">
-<div class="row align-items-center fw-bold g-0 {% if commande.statut.nom == 'Annulée' %}bg-secondary text-black{% endif %}{% if commande.statut.nom == 'Terminée' %}bg-success text-light{% endif %}{% if commande.statut.nom == 'Validée' %}bg-primary text-light{% endif %}{% if commande.statut.nom == 'En cours' %}bg-warning text-black{% endif %}{% if commande.statut.nom == 'Pré-commande' %}bg-info text-black{% endif %}">
+<div class="{% if commande.statut.nom == 'Annulée' %}border-secondary{% endif %}{% if commande.statut.nom == 'Terminée' %}border-success{% endif %}{% if commande.statut.nom == 'Validée' %}border-primary{% endif %}{% if commande.statut.nom == 'En cours' %}border-warning{% endif %}{% if commande.statut.nom == 'Pré-commande' %}border-info{% endif %}{% if commande.statut.nom == 'En attente' %}border-warning{% endif %} border-3 border">
+<div class="row align-items-center fw-bold g-0 {% if commande.statut.nom == 'Annulée' %}bg-secondary text-black{% endif %}{% if commande.statut.nom == 'Terminée' %}bg-success text-light{% endif %}{% if commande.statut.nom == 'Validée' %}bg-primary text-light{% endif %}{% if commande.statut.nom == 'En cours' %}bg-warning text-black{% endif %}{% if commande.statut.nom == 'Pré-commande' %}bg-info text-black{% endif %}{% if commande.statut.nom == 'En attente' %}bg-warning text-black{% endif %}">
     <div class="py-2 ps-3 col-4">PRODUIT</div>
     <div class="py-2 col-2 text-start">QUANTITE</div>
     <div class="py-2 col-2 text-end">PU (TTC)</div>
@@ -42,7 +42,7 @@
         <a class="btn" href="{% url 'onlineshop:produit-detail' produit.produit.id %}">{{ produit.produit.nom }}</a>
     </div>
     <div class="py-2 col-2 align-middle">
-        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" or commande.statut.nom == "En attente" %}
+        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" or commande.statut.nom == "En attente" or user|is_staff == False %}
         <div class="py-2">{{ produit.qte }}</div>
         {% else %}
         <div class="">
@@ -57,7 +57,7 @@
         {% endif %}
     </div>
     <div class="py-2 col-2 align-middle text-end">
-        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" or commande.statut.nom == "En attente" %}
+        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" or commande.statut.nom == "En attente" or user|is_staff == False %}
         <div class="py-2">{{ produit.prix }} €</div>
         {% else %}
         <div class="text-end bx-pull-right input-group">
@@ -70,7 +70,7 @@
     </div>
     <div class="py-3 pe-3 col-3 align-middle text-end" style="height:54px !important;">{{ produit.prix|mul:produit.qte }} €</div>
     <div class="py-2 col-1 text-center align-middle">
-        {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée" and commande.statut.nom != "En attente" %}
+        {% if user|is_staff and commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée" and commande.statut.nom != "En attente" %}
         <button onclick="delete_this_product('{{ produit.id }}', '{{ produit.produit.nom }}');" type="button" class="btn btn-danger px-1 py-0 mx-1"><i class="bi-trash float-start"></i></button>
         <button type="submit" class="btn btn-warning py-0 px-1" id="editQte{{ produit.id }}"><i class="bi-pencil-square"></i></button>
         {% endif %}
@@ -81,18 +81,18 @@
 
 <!-- TOTAL AVANT REMISE TABLE --------------------------------------------------------------------->
 <div class="row text-light align-items-center g-0 bg-dark ">
-    <div class="py-2 col-8 align-middle ps-3">TOTAL {% if commande.statut.nom != "Annulée" or commande.statut.nom != "Terminée" and commande.montant_frais > 0 %}(AVANT REMISE){% endif %}  </div>
+    <div class="py-2 col-8 align-middle ps-3">TOTAL {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée" and commande.statut.nom != "En attente" and commande.remise > 0 %}(AVANT REMISE){% endif %}  </div>
     <div class="py-2 col-3 align-middle text-end pe-3">{{ commande.id|total_order }} €</div>
     <div class="col-1"></div>
 </div>
-
+{% if commande.remise > 0 and user|is_staff == False %}
 <!-- REMISE  -------------------------------------------------------------------------------------->
 {% if commande.statut.nom != "Annulée" or commande.statut.nom != "Terminée" and commande.montant_frais > 0 or commande.statut.nom == "En attente" %}
 <form class="" method="post" name="remiseForm" id="remiseForm" action="{% url 'order:order-update-remise' commande.id %}">
 <div class="row align-items-center g-0 bg-opacity-10 bg-success ">
     <div class="col-6 align-middle text-start py-3 ps-3">Remise</div>
     <div class="col-2 align-middle py-2 pe-3">
-        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" or commande.statut.nom == "En attente" %}
+        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" or commande.statut.nom == "En attente" or user|is_staff == False %}
         <div class="text-end">{{ commande.remise }} %</div>
         {% else %}
         <div class="input-group">
@@ -123,6 +123,7 @@
     <div class="col-1"></div>
 </div>
 {% endif %}
+    {% endif %}
 <!-- TOTAL HT ------------------------------------------------------------------------------------->
 <div class="row bg-opacity-10 bg-danger align-items-center g-0">
     <div class="py-2 col-8 align-middle text-end ps-3">HT</div>
@@ -138,11 +139,11 @@
     <div class="col-1"></div>
 </div>
 <!-- FRAIS ------------------------------------------------------------------------------------------>
-{% if commande.statut.nom != "Annulée" or commande.statut.nom != "Terminée" or commande.statut.nom == "En attente" and commande.montant_frais > 0 %}
+{% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée" and commande.statut.nom == "En attente" and commande.montant_frais > 0 %}
 <form class="" method="post" name="fraisForm" id="fraisForm" action="{% url 'order:order-update-frais' commande.id %}">
 <div class="row align-items-center py-2 g-0">
     <div class="col-7 align-middle text-start ps-3">
-        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" or commande.statut.nom == "En attente" %}
+        {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" or commande.statut.nom == "En attente" or user|is_staff == False %}
             {{ commande.frais.nom }}
         {% else %}
         <select id="frais" class="form-select bg-transparent" name="frais_type">
@@ -155,7 +156,7 @@
     </div>
     <div class="col-1 align-middle text-end">TTC</div>
     <div class="col-3 align-middle text-end pe-3">
-        {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée" and commande.statut.nom != "En attente" %}
+        {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée" and commande.statut.nom != "En attente" and user|is_staff %}
             <div class="input-group">
                 <input type="text" name="fraisMontant" value="{{ commande.montant_frais }}" min="0" id="fraisMontant" class="form-control text-end" width="95" style="width:95px;" aria-label="Montant des frais" />
                 <span class="input-group-text">€</span>
@@ -221,19 +222,22 @@
             <button onclick="create_pre_order('{{ commande.id }}');" type="button" class="btn btn-info me-md-2 bx-pull-right">Créer une pré-commande</button>
         {% endif %}
 <!-- PERMET D'ANNULER UNE COMMANDE SAUF SI DEJA ANNULEE OU TERMINEE -->
-        {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée"  %}
+        {% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée" and request.user|is_staff  %}
             <button onclick="cancel_this_order('{{ commande.id }}');" type="button" class="btn btn-danger me-md-2 bx-pull-right">Annuler la commande</button>
         {% endif %}
+        {% if commande.statut.nom == "En attente" and request.user|is_staff == False %}
+            <button onclick="cancel_this_order_user('{{ commande.id }}');" type="button" class="btn btn-danger me-md-2 bx-pull-right">Annuler la commande</button>
+        {% endif %}
 <!-- PERMET DE TERMINER UNE COMANDE SI STATUT VALIDEE -->
-        {% if commande.statut.nom == "Validée" %}
+        {% if commande.statut.nom == "Validée" and request.user|is_staff %}
             <button onclick="end_this_order('{{ commande.id }}');" type="button" class="btn btn-success me-md-2 bx-pull-right">Terminer la commande</button>
         {% endif %}
 <!-- PERMET DE VALIDER UNE COMMANDE SI EN COURS UNIQUEMENT -->
-        {% if commande.statut.nom == "En cours" %}
+        {% if commande.statut.nom == "En cours" and request.user|is_staff %}
             <button onclick="valid_this_order('{{ commande.id }}');" type="button" class="btn btn-primary bx-pull-right">Valider la commande</button>
         {% endif %}
 <!-- PERMET DE CREER LA COMMANDE A PARTIR D'UNE PRECOMMANDE -->
-        {% if commande.statut.nom == "Pré-commande" %}
+        {% if commande.statut.nom == "Pré-commande" and request.user|is_staff %}
             <button onclick="pre_valid_this_order('{{ commande.id }}');" type="button" class="btn btn-info bx-pull-right">Créer la commande</button>
         {% endif %}
 <!-- PERMET D'ACCEPETER LA COMMANDE A PARTIR D'UNE COMMANDE EN ATTENTE -->
@@ -242,7 +246,7 @@
         {% endif %}
 
 <!-- POUR IMPRIMER LE BON DE COMMANDE -->
-        {% if commande.statut.nom == "Validée" or commande.statut.nom == "En cours" %}
+        {% if request.user|is_staff and commande.statut.nom == "Validée" or commande.statut.nom == "En cours" %}
             <div class="col-md-auto bx-pull-right"><a target="_blank" href="{% url 'order:order-print' commande.id %}?download=1" class="btn btn-warning"><i class="bi bi-clipboard-check"></i> Bon de commande</a></div>
         {% endif %}
 <!-- POUR IMPRIMER LA FACTURE -->
@@ -265,9 +269,9 @@
             <div class="modal-body" id="modal-body">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-secondary bx-pull-left" data-bs-dismiss="modal">Annuler</button>
                 <a href="" id="modal-a">
-                    <button type="button" class="btn btn-info" id="modal-button">Créer</button>
+                    <button type="button" class="btn btn-success bx-pull-right" id="modal-button">Créer</button>
                 </a>
             </div>
         </div>
@@ -291,9 +295,9 @@
                 {% csrf_token %}
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-secondary bx-pull-left" data-bs-dismiss="modal">Annuler</button>
                 <a href="" id="button-add-product">
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                    <button type="submit" class="btn btn-success">Ajouter</button>
                 </a>
             </div>
             </form>
@@ -332,6 +336,19 @@ function delete_this_product(product_id, nom) {
     $('#modal-header').addClass('bg-danger text-light');
     $('#modal-title').text("Supprimer un produit");
     $('#modal-button').text("Supprimer");
+}
+
+function cancel_this_order_user(commande_id) {
+    var url = "{% url 'order:order-cancel' 'XXX' %}"
+    var html;
+    html = "Cela va annuler votre commande !"
+    url = url.replace('XXX', commande_id);
+    $('#modal').modal('toggle');
+    $('#modal-body').html(html);
+    $('#modal-a').attr('href',url);
+    $('#modal-header').addClass('bg-danger text-light');
+    $('#modal-title').text("Annuler la commande");
+    $('#modal-button').text("Valider");
 }
 
 function cancel_this_order(commande_id) {
