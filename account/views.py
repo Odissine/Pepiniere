@@ -131,10 +131,18 @@ def user_profil(request):
                 return redirect('account:profil')
         elif request.POST.get('mode') == 'password':
             if user.check_password(request.POST.get('old-pass')):
-                print("Go")
-
+                if request.POST.get('pass1') == request.POST.get('pass2'):
+                    user.set_password(request.POST.get('pass1'))
+                    messages.success(request, "Mot de passe modifié avec succès !")
+                    return redirect('account:profil')
+                else:
+                    messages.error(request, "Les mots de passe saisis sont différents !")
+                    return redirect('account:profil')
+            else:
+                messages.error(request, "L'ancien mot de passe ne correspont pas !")
+                return redirect('account:profil')
         else:
-            messages.error(request, "Action interdite !.")
+            messages.error(request, "Action interdite !")
             return redirect('account:profil')
     context = {
         'user_form': user_form,
