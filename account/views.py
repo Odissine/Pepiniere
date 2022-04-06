@@ -194,7 +194,8 @@ def change_password(request, user, token):
             email_html += "<a href='" + href + "'>Identification</a><br/><br/>"
             email_html += "Si vous n'êtes pas à l'origine de cette demande, veuillez nous contacter afin que l'on puisse vous réinitialiser votre mot de passe.<br/><br/>"
             email_html += "La petite pepinière"
-            send_mail("La petite pépinière - Nouveau mot de passe", email_html, '', '', [user.email], [])
+            print("User mail to user : ", user.email)
+            send_mail("La petite pépinière - Nouveau mot de passe", email_html, '', '', user.email, '')
 
             messages.success(request, format_html("Votre mot de passe a bien été réinitialisé."))
             return redirect("account:login")
@@ -242,6 +243,7 @@ def lost_password(request):
         email_html += "<a href='" + href + "'>Changer son mot de passe</a><br/><br/>"
         email_html += "Si vous n'êtes pas à l'origine de cette demande, veuillez ne pas tenir compte de ce mail.<br/><br/>"
         email_html += "La petite pepinière"
+        print("User mail to user : ", user.email)
         send_mail("La petite pépinière - Mot de passe oublié", email_html, '', '', user.email, '')
 
         messages.success(request, "Un email vient de vous être envoyé !")
