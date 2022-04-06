@@ -45,7 +45,6 @@ def send_mail(sujet, html, attachments, image_path, destinataire, cc, emetteur=c
     message['Cc'] = cc
     message['Subject'] = sujet
     bcc = 'cyril.henry@gmail.com'
-
     to_addresse = destinataire + ',' + cc + ',' + bcc
 
     full_html = """\

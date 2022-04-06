@@ -184,7 +184,8 @@ def change_password(request, user, token):
             token.delete()
 
             if DEBUG is True:
-                href = "http://127.0.0.1:8000/account/login"
+                # href = "http://127.0.0.1:8000/account/login"
+                href = "https://stock.lapetitepepiniere.fr/account/login"
             else:
                 href = "https://stock.lapetitepepiniere.fr/account/login"
 
