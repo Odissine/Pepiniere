@@ -231,7 +231,8 @@ def lost_password(request):
         create_token = TokenLogin.objects.create(token=token_mail, user=user)
 
         if DEBUG is True:
-            href = "http://127.0.0.1:8000/account/reset/" + str(user.id) + "/" + str(token_mail)
+            # href = "http://127.0.0.1:8000/account/reset/" + str(user.id) + "/" + str(token_mail)
+            href = "https://stock.lapetitepepiniere.fr/account/reset/" + str(user.id) + "/" + str(token_mail)
         else:
             href = "https://stock.lapetitepepiniere.fr/account/reset/" + str(user.id) + "/" + str(token_mail)
 
@@ -241,7 +242,7 @@ def lost_password(request):
         email_html += "<a href='" + href + "'>Changer son mot de passe</a><br/><br/>"
         email_html += "Si vous n'êtes pas à l'origine de cette demande, veuillez ne pas tenir compte de ce mail.<br/><br/>"
         email_html += "La petite pepinière"
-        send_mail("La petite pépinière - Mot de passe oublié", email_html, '', '', [user.email], [])
+        send_mail("La petite pépinière - Mot de passe oublié", email_html, '', '', user.email, '')
 
         messages.success(request, "Un email vient de vous être envoyé !")
         return redirect("account:login")
