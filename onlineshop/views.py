@@ -1671,7 +1671,7 @@ def reset_stock(request):
     for produit in produits:
         produit.stock = 0
         produit.stock_bis = 0
-        produit.stock_future = 0
+        # produit.stock_future = 0
         produit.save()
 
     message = format_html("Les stocks (initiaux, virtuels et futurs) ont bien été réinitalisés !")
