@@ -1648,8 +1648,9 @@ def reset_stock(request):
     cancel_statut = Statut.objects.get(nom='Annulée')
     done_statut = Statut.objects.get(nom='Terminée')
     inprogress_statut = Statut.objects.filter(nom='En cours')
+    future_statut = Statut.objects.filter(nom='Pré-commande')
     form_statut = Statut.objects.filter(nom__in=['Validée', 'En cours'])
-    commandes = Commande.objects.exclude(statut__in=[cancel_statut, done_statut])
+    commandes = Commande.objects.exclude(statut__in=[cancel_statut, done_statut, future_statut])
     context = {}
 
     if commandes.count() > 0:
