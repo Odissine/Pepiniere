@@ -64,7 +64,7 @@ def cart_update(request, produit_id):
     cart = Cart(request)
     # form = CartUpdateForm(request.POST or None)
     # if form.is_valid():
-        # cd = form.cleaned_data
+    # cd = form.cleaned_data
     produit = get_object_or_404(Produit, id=produit_id)
     try:
         qte = int(request.POST.get('qte'))
@@ -103,7 +103,6 @@ def cart_detail(request):
         return redirect('onlineshop:produit-list')
 
     clients = Client.objects.all()
-    connected_client = Client.objects.get(user=request.user)
 
     context = {
         'form': form,
@@ -122,7 +121,7 @@ def cart_valid(request):
 
     if request.method == "POST":
         if form.is_valid():
-            inventaire = Inventaire.objects.get(actif=True)
+
             if not request.user.is_staff:
                 client = Client.objects.get(user=request.user)
             else:
@@ -132,6 +131,7 @@ def cart_valid(request):
                 message = ""
                 # COMMANDE NORMALE (STATUT EN COURS)
                 if mode == 'normal':
+                    inventaire = Inventaire.objects.get(actif=True)
                     for item in cart:
                         produit = Produit.objects.get(nom=item['produit'])
                         new_qte = produit.stock_bis - item['qte']
@@ -187,11 +187,17 @@ def cart_valid(request):
 
                 # PRE COMMANDE (STATUT PRE-COMMANDE)
                 if mode == 'pre':
+
+                    # TODO
+                    # ZONE A MODIFIER POUR L'ANNEE PROCHAINE
+                    # ###############################################
+                    inventaire = Inventaire.objects.get(actif=True)
                     statut_en_cours = Statut.objects.get(nom="Pré-commande")
                     remise_client = client.remise
                     tva = Tva.objects.get(default=True)
 
-                    commande_create = Commande.objects.create(date=datetime.now(), client=client, remise=remise_client, statut=statut_en_cours, tva=tva)
+                    commande_create = Commande.objects.create(date=datetime.now(), client=client, remise=remise_client, statut=statut_en_cours, tva=tva,
+                                                              inventaire=inventaire)
                     commande_create.save()
 
                     for item in cart:
