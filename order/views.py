@@ -2838,15 +2838,13 @@ def warning_order(request):
                 produits = Cartdb.objects.filter(commande=commande)
                 list_produit = []
                 for produit in produits:
-                    if total_qte_inventaire_progress(produit.produit) > produit.produit.stock_bis:
-                        print(produit.produit.stock_bis)
+                    if total_qte_inventaire_progress(produit.produit) > produit.produit.stock:
                         orders_warning.append(commande)
                         produits_warning.append(produit.produit)
                     list_produit.append(produit)
                 produits_commande[commande.id] = list_produit
 
             orders_warning = list(set(orders_warning))
-        print(produits_warning)
         title = "Commandes"
         header = "Ajouter un Produit"
         javascript = "Cela va supprimer la commande"
