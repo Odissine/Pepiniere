@@ -519,7 +519,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 .header-nav .badge-number {
   position: absolute;
-  inset: 12px 65px auto auto;
+  inset: 12px 130px auto auto;
   font-weight: normal;
   font-size: 11px;
   padding: 3px 6px;
