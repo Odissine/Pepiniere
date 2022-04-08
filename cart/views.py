@@ -162,26 +162,29 @@ def cart_valid(request):
                             new_qte = produit.stock_bis - item['qte']
                             Produit.objects.filter(nom=item['produit']).update(stock_bis=new_qte)
 
-                    if DEBUG is True:
-                        href = "http://127.0.0.1:8000/order/detail/" + str(commande_create.id)
-                    else:
-                        href = "https://stock.lapetitepepiniere.fr/order/detail/" + str(commande_create.id)
+                    config = Config.objects.first()
+                    if config.register is True:
+                        if DEBUG is True:
+                            # href = "http://127.0.0.1:8000/order/detail/" + str(commande_create.id)
+                            href = "https://stock.lapetitepepiniere.fr/order/detail/" + str(commande_create.id)
+                        else:
+                            href = "https://stock.lapetitepepiniere.fr/order/detail/" + str(commande_create.id)
 
-                    # MAIL AU RESPONSABLE
-                    email_html = "<br/><br/>Bonjour,<br/><br/>"
-                    email_html += "Une nouvelle commande vient d'être passée."
-                    email_html += "Client : " + str(client) + "<br/><br/>"
-                    email_html += "<a href='" + href + "'>Accéder à la commande</a><br/><br/>"
-                    email_html += "La petite pepinière"
-                    send_mail("Nouvelle Commande de " + str(client), email_html, '', '', config_mail['sender'], '')
+                        # MAIL AU RESPONSABLE
+                        email_html = "<br/><br/>Bonjour,<br/><br/>"
+                        email_html += "Une nouvelle commande vient d'être passée."
+                        email_html += "Client : " + str(client) + "<br/><br/>"
+                        email_html += "<a href='" + href + "'>Accéder à la commande</a><br/><br/>"
+                        email_html += "La petite pepinière"
+                        send_mail("Nouvelle Commande de " + str(client), email_html, '', '', config_mail['sender'], '')
 
-                    # MAIL AU CLIENT
-                    email_html = "<br/><br/>Bonjour " + str(client) + ",<br/><br/>"
-                    email_html += "Votre commande a bien été enregistrée.<br/>"
-                    email_html += "Elle sera étudiée prochainement et vous serez informé par mail dès lors qu'elle sera validée ou annulée.<br/><br/>"
-                    email_html += "<a href='" + href + "'>Accéder à la commande</a><br/><br/>"
-                    email_html += "La petite pepinière"
-                    send_mail("La petite pépinère : Commande enregistrée", email_html, '', '', client.mail, '')
+                        # MAIL AU CLIENT
+                        email_html = "<br/><br/>Bonjour " + str(client) + ",<br/><br/>"
+                        email_html += "Votre commande a bien été enregistrée.<br/>"
+                        email_html += "Elle sera étudiée prochainement et vous serez informé par mail dès lors qu'elle sera validée ou annulée.<br/><br/>"
+                        email_html += "<a href='" + href + "'>Accéder à la commande</a><br/><br/>"
+                        email_html += "La petite pepinière"
+                        send_mail("La petite pépinère : Commande enregistrée", email_html, '', '', client.mail, '')
 
                     message = "Commande créée avec succès !"
 
