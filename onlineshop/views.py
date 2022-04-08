@@ -532,6 +532,7 @@ def valid_greffons(request):
                 else:
                     greffon.produit.stock = greffon.realise
             greffon.produit.save()
+            messages.success(request, "Stock mis à jour avec succès !")
 
     return redirect('onlineshop:manage-greffons')
 
