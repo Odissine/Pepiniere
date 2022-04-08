@@ -30,6 +30,7 @@ urlpatterns = [
 
     # COMMANDES
     path("order/manage", views.manage_order, name="manage-order"),
+    path("order/warning", views.warning_order, name="warning-order"),
     path("order/reset", views.reset_order, name="reset-order"),
     path('order/prevalidall/<action>', views.all_order_pre_valid, name='all-order-pre-valid'),
     path('order/add/<order_id>/<manage>', views.add_produit_order, name='add-produit-order'),

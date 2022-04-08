@@ -1,5 +1,6 @@
 from datetime import datetime
 from order.models import *
+from django.db.models import Sum, F
 
 
 def get_frais_from_id(id):
@@ -36,3 +37,16 @@ def set_inventaire_for_pre_order(order_id):
     order.save()
 
     return True
+
+
+# QUANTITE TOTALE COMMANDE SUR DES COMMANDES DE LA PERIODE STATUT EN COURS / VALIDEE
+def total_qte_inventaire_progress(produit):
+    statut_valide = Statut.objects.get(nom="Validée")
+    statut_encours = Statut.objects.get(nom="En cours")
+    inventaire = Inventaire.objects.get(actif=True)
+    total_qte = Commande.objects.filter(Cartdbs__produit=produit, inventaire=inventaire, statut__in=[statut_valide, statut_encours]).aggregate(sum=Sum('Cartdbs__qte'))['sum']
+
+    if total_qte is None:
+        total_qte = 0
+
+    return total_qte

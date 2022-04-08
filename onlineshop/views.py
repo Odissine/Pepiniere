@@ -521,17 +521,22 @@ def valid_greffons(request):
             return redirect('onlineshop:manage-greffons')
 
         greffons = Greffons.objects.filter(inventaire=inventaire)
+        # Pour Chaque Greffon
+        # JUIN : REUSSI = REALISE > MAJ DES STOCK ET STOCK BIS
+        # AVRIL : REALISE > MAJ DES STOCKS ET STOCKS BIS
         for greffon in greffons:
             if request.POST.get('stock') == "realises":
                 greffon.produit.stock = greffon.realise
                 greffon.produit.stock_bis = greffon.realise
             elif request.POST.get('stock') == "reussis":
+                if greffon.produit.stock == greffon.produit.stock_bis:
+                    greffon.produit.stock_bis = greffon.reussi
                 greffon.produit.stock = greffon.reussi
-                greffon.produit.stock_bis = greffon.reussi
             else:
                 if greffon.reussi > 0:
+                    if greffon.produit.stock == greffon.produit.stock_bis:
+                        greffon.produit.stock_bis = greffon.reussi
                     greffon.produit.stock = greffon.reussi
-                    greffon.produit.stock_bis = greffon.reussi
                 else:
                     greffon.produit.stock = greffon.realise
                     greffon.produit.stock_bis = greffon.realise

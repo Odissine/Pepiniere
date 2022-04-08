@@ -176,7 +176,7 @@ def cart_valid(request):
                         email_html += "Client : " + str(client) + "<br/><br/>"
                         email_html += "<a href='" + href + "'>Accéder à la commande</a><br/><br/>"
                         email_html += "La petite pepinière"
-                        send_mail("Nouvelle Commande de " + str(client), email_html, '', '', config_mail['sender'], '')
+                        # send_mail("Nouvelle Commande de " + str(client), email_html, '', '', config_mail['sender'], '')
 
                         # MAIL AU CLIENT
                         email_html = "<br/><br/>Bonjour " + str(client) + ",<br/><br/>"
@@ -184,7 +184,7 @@ def cart_valid(request):
                         email_html += "Elle sera étudiée prochainement et vous serez informé par mail dès lors qu'elle sera validée ou annulée.<br/><br/>"
                         email_html += "<a href='" + href + "'>Accéder à la commande</a><br/><br/>"
                         email_html += "La petite pepinière"
-                        send_mail("La petite pépinère : Commande enregistrée", email_html, '', '', client.mail, '')
+                        # send_mail("La petite pépinère : Commande enregistrée", email_html, '', '', client.mail, '')
 
                     message = "Commande créée avec succès !"
 

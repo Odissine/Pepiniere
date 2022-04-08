@@ -2816,3 +2816,59 @@ def reset_order(request):
     }
     return render(request, "order/form_reset_order.html", context)
 
+
+def warning_order(request):
+    inventaire = Inventaire.objects.get(actif=True)
+    statut_valide = Statut.objects.get(nom="Validée")
+    statut_encours = Statut.objects.get(nom="En cours")
+    statut_attente = Statut.objects.get(nom="En attente")
+    statut_future = Statut.objects.get(nom="Pré-commande")
+    statut_annulee = Statut.objects.get(nom="Annulée")
+    statut_terminee = Statut.objects.get(nom="Terminée")
+
+    if request.user.is_staff:
+        produits_commande = {}
+        form = SearchOrderForm()
+        queryset = Commande.objects.filter(inventaire=inventaire, statut__in=[statut_valide, statut_encours]).exclude(statut__in=[statut_attente, statut_annulee, statut_terminee, statut_future]).distinct()
+        # queryset = list(set(queryset))
+        orders_warning = []
+        produits_warning = []
+        if len(queryset) > 0:
+            for commande in queryset:
+                produits = Cartdb.objects.filter(commande=commande)
+                list_produit = []
+                for produit in produits:
+                    if total_qte_inventaire_progress(produit.produit) > produit.produit.stock_bis:
+                        print(produit.produit.stock_bis)
+                        orders_warning.append(commande)
+                        produits_warning.append(produit.produit)
+                    list_produit.append(produit)
+                produits_commande[commande.id] = list_produit
+
+            orders_warning = list(set(orders_warning))
+        print(produits_warning)
+        title = "Commandes"
+        header = "Ajouter un Produit"
+        javascript = "Cela va supprimer la commande"
+        formAction = "order:manage-order"
+        previous_page = reverse('order:order-administration')
+
+        context_header = {
+            'header': header,
+            'javascript': javascript,
+        }
+        context = {
+            'orders_warning': orders_warning,
+            'produits_commande': produits_commande,
+            'produits_warning': produits_warning,
+            'previous_page': previous_page,
+            'title': title,
+            'context_header': context_header,
+            'formAction': formAction,
+            'form': form,
+            'orders_list': queryset,
+        }
+        return render(request, "order/manage_warning_order.html", context)
+    else:
+        messages.error(request, "Vous n'avez pas les droits !")
+        return redirect('onlineshop:produit-list')
