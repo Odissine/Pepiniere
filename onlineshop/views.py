@@ -531,7 +531,7 @@ def valid_greffons(request):
                     greffon.produit.stock = greffon.reussi
                 else:
                     greffon.produit.stock = greffon.realise
-            # greffon.produit.save()
+            greffon.produit.save()
 
     return redirect('onlineshop:manage-greffons')
 
