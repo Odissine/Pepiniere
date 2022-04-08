@@ -289,7 +289,7 @@ def all_order_pre_valid(request, action=None):
             messages.error(request, message)
             return redirect('order:order-administration')
 
-        inventaire = Inventaire.objects.get(start_date__lte=datetime.datetime.now(), end_date__gte=datetime.datetime.now())
+        inventaire = Inventaire.objects.get(start_date__lte=datetime.now(), end_date__gte=datetime.now())
         for order in orders:
             items = Cartdb.objects.filter(commande=order)
             for item in items:
@@ -298,8 +298,8 @@ def all_order_pre_valid(request, action=None):
                 produit.stock_future = produit.stock_future - item.qte
                 produit.save()
             order.statut = statut
-            order.date_update = datetime.datetime.now()
-            order.date = datetime.datetime.now()
+            order.date_update = datetime.now()
+            order.date = datetime.now()
             order.inventaire = inventaire
             order.save()
 
@@ -1834,7 +1834,7 @@ def in_progress_order(request, order_id):
                 item.produit.stock_bis -= item.qte
                 item.produit.stock_future -= item.qte
                 item.produit.save()
-            order.date = datetime.datetime.now()
+            order.date = datetime.now()
 
         if order.statut.nom == "Annulée":
             message_produit = ""
@@ -1853,7 +1853,7 @@ def in_progress_order(request, order_id):
                 item.produit.stock_bis -= item.qte
                 item.produit.save()
 
-        order.date_update = datetime.datetime.now()
+        order.date_update = datetime.now()
         order.statut = statut
         order.save()
         messages.success(request, message)
