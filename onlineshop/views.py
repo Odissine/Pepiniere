@@ -524,13 +524,17 @@ def valid_greffons(request):
         for greffon in greffons:
             if request.POST.get('stock') == "realises":
                 greffon.produit.stock = greffon.realise
+                greffon.produit.stock_bis = greffon.realise
             elif request.POST.get('stock') == "reussis":
                 greffon.produit.stock = greffon.reussi
+                greffon.produit.stock_bis = greffon.reussi
             else:
                 if greffon.reussi > 0:
                     greffon.produit.stock = greffon.reussi
+                    greffon.produit.stock_bis = greffon.reussi
                 else:
                     greffon.produit.stock = greffon.realise
+                    greffon.produit.stock_bis = greffon.realise
             greffon.produit.save()
             messages.success(request, "Stock mis à jour avec succès !")
 
