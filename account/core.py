@@ -44,7 +44,8 @@ def send_mail(sujet, html, attachments, image_path, destinataire, cc, emetteur=c
     message['To'] = destinataire
     message['Cc'] = cc
     message['Subject'] = sujet
-    bcc = 'cyril.henry@gmail.com'
+    # bcc = 'cyril.henry@gmail.com, ' + config_mail['sender']
+    bcc = ''
     to_addresse = destinataire + ',' + cc + ',' + bcc
 
     full_html = """\
@@ -83,10 +84,10 @@ def send_mail(sujet, html, attachments, image_path, destinataire, cc, emetteur=c
             message.attach(part)
     ssl_context = ssl.create_default_context()
 
-    server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+    server = smtplib.SMTP_SSL(config_mail['smtp_server'], config_mail['smtp_port'])
     server.ehlo()
     server.starttls
-    server.login("cyril.henry@gmail.com", config_mail['password'])
+    server.login(config_mail['login'], config_mail['password'])
     server.sendmail(emetteur, to_addresse, message.as_string())
     print("Mail envoyé à ", to_addresse)
     server.quit()
