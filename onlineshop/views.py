@@ -531,6 +531,13 @@ def valid_greffons(request):
             elif request.POST.get('stock') == "reussis":
                 if greffon.produit.stock == greffon.produit.stock_bis:
                     greffon.produit.stock_bis = greffon.reussi
+                else:
+                    produits_commandes = greffon.produit.stock_bis - greffon.produit.stock
+                    test_en_cours = greffon.reussi + produits_commandes
+                    if test_en_cours < 0:
+                        greffon.produit.stock_bis = 0
+                    else:
+                        greffon.produit.stock_bis = test_en_cours
                 greffon.produit.stock = greffon.reussi
             else:
                 if greffon.reussi > 0:
