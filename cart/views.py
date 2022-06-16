@@ -73,7 +73,7 @@ def cart_update(request, produit_id):
     message, tags = cart.update_qte(request, produit, qte)
     if request.user.is_staff:
         try:
-            prix = float(request.POST.get('qte'))
+            prix = float(request.POST.get('prix'))
         except:
             prix = 15
         cart.update_prix(produit, prix)

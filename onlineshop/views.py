@@ -515,10 +515,10 @@ def valid_greffons(request):
             messages.error(request, "Période inexistante !")
             return redirect('onlineshop:manage-greffons')
 
-        check_stock_produits = Produit.objects.filter(Q(stock__gt=0) | Q(stock_bis__gt=0))
-        if len(check_stock_produits) > 0:
-            messages.error(request, "Attention certains produits ont encore du stock ... Réinitaliser les stocks avant de poursuivre !")
-            return redirect('onlineshop:manage-greffons')
+        # check_stock_produits = Produit.objects.filter(Q(stock__gt=0) | Q(stock_bis__gt=0))
+        # if len(check_stock_produits) > 0:
+        #     messages.error(request, "Attention certains produits ont encore du stock ... Réinitaliser les stocks avant de poursuivre !")
+        #    return redirect('onlineshop:manage-greffons')
 
         greffons = Greffons.objects.filter(inventaire=inventaire)
         # Pour Chaque Greffon
@@ -529,14 +529,17 @@ def valid_greffons(request):
                 greffon.produit.stock = greffon.realise
                 greffon.produit.stock_bis = greffon.realise
             elif request.POST.get('stock') == "reussis":
+
                 if greffon.produit.stock == greffon.produit.stock_bis:
                     greffon.produit.stock_bis = greffon.reussi
                 else:
-                    produits_commandes = greffon.produit.stock_bis - greffon.produit.stock
+                    produits_commandes = greffon.produit.stock_bis - greffon.produit.stock  # Nombre negatif
                     test_en_cours = greffon.reussi + produits_commandes
                     if test_en_cours < 0:
+                        print("Stock en cours negatif", test_en_cours)
                         greffon.produit.stock_bis = 0
                     else:
+                        print("On est encore pas mal", test_en_cours)
                         greffon.produit.stock_bis = test_en_cours
                 greffon.produit.stock = greffon.reussi
             else:

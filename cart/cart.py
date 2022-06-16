@@ -105,7 +105,10 @@ class Cart(object):
         if produit_id in self.cart:
 
             item = self.cart[produit_id]
-            prix = prix.replace(",", ".")
+            try:
+                prix = prix.replace(",", ".")
+            except:
+                prix = prix
 
             if is_float(prix):
                 prix = round(float(prix), 2)

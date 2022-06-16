@@ -2039,7 +2039,6 @@ def edit_produit_order(request, order_id, produit_id):
             if form.is_valid():
                 qte = form.cleaned_data['qte']
                 produit = form.cleaned_data['produit']
-
                 if produit.stock_bis >= qte:
                     obj = form.save(commit=False)
                     obj.commande = commande
@@ -2058,6 +2057,21 @@ def edit_produit_order(request, order_id, produit_id):
 
                     message = "Produit de la commande édité avec succès !"
                     messages.success(request, message)
+                elif previous_qte > qte and qte <= total_qte_inventaire_progress(produit):
+                    obj = form.save(commit=False)
+                    obj.commande = commande
+                    obj.save()
+
+                    # SI COMMANDE TERMINEE ON MET A JOUR LE STOCK FINAL EN PLUS DU STOCK VIRTUEL
+                    if commande.statut.nom == "Terminée":
+                        qte_to_modify_final = produit.stock + previous_qte - qte
+                        produit.stock = qte_to_modify_final
+
+                    # SI COMMANDE AUTRE QUE ANNULEE ON MET A JOUR LE STOCK VIRTUEL SINON RIEN
+                    if commande.statut.nom != "Annulée":
+                        qte_to_modify = produit.stock_bis + previous_qte - qte
+                        produit.stock_bis = qte_to_modify
+                        produit.save()
                 else:
                     message = "Stock insuffisant !"
                     messages.error(request, message)
