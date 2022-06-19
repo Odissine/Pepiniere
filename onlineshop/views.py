@@ -1291,6 +1291,43 @@ def import_produits_csv(request):
     return render(request, 'onlineshop/import_produit.html', {'previous_page': previous_page})
 
 
+@login_required
+@staff_member_required
+def import_produits_csv_backup(request):
+    previous_page = reverse('onlineshop:onlineshop-administration')
+    if request.method == 'POST':
+        produit_resource = ProduitResource()
+        # greffon_resource = GreffonResource()
+
+        dataset = Dataset()
+        new_datas = request.FILES['myfile']
+        categorie = request.POST.get('categorie')
+        if categorie is None:
+            message = "Catégorie manquante ... Veuillez réessayer !"
+            messages.error(request, message)
+            return redirect('onlineshop:import-produits-xls')
+
+        if categorie == "PRODUITS":
+            col_list = ["id", "stock", "stock_bis", "stock_future"]
+            df = pd.read_csv(new_datas, usecols=col_list)
+            print(df['id'], df['stock'])
+
+        if categorie == "GREFFONS":
+            col_list = ["id", "produit", "greffons", "comm", "objectif", "realise", "reussi"]
+            df = pd.read_csv(new_datas, usecols=col_list)
+            print(df['id'], df['greffons'])
+
+        # imported_data_produit = dataset.load(new_datas.read().decode(), format='csv')
+        # result = produit_resource.import_data(dataset, dry_run=True)  # Test the data import
+
+        # if not result.has_errors():
+        #     produit_resource.import_data(dataset, dry_run=False)  # Actually import now
+        #     message = "Fichier importé avec succès !"
+        #     messages.success(request, message)
+        #     return redirect('onlineshop:onlineshop-administration')
+
+    return render(request, 'onlineshop/import_produit.html', {'previous_page': previous_page})
+
 
 @login_required
 @staff_member_required

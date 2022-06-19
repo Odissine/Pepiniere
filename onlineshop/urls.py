@@ -18,6 +18,7 @@ urlpatterns = [
     # path('import_xls/', import_produits_xls, name='import-produits-xls'),
     path('import_xls/', import_produits_csv, name='import-produits-xls'),
     path('import_greffons_xls/', import_greffons_xls, name='import-greffons-xls'),
+    path('import_backup/', import_produits_csv_backup, name='import-produits-csv-backup'),
     path('reset/', reset_stock, name='reset-stock'),
 
     # PRODUITS
