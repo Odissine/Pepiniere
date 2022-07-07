@@ -2024,6 +2024,7 @@ def add_produit_order(request, order_id, manage):
 @login_required
 @staff_member_required
 def edit_produit_order(request, order_id, produit_id):
+    admin_mode = get_admin_mode(request.user)
     if request.user.is_staff:
         title = "PRODUIT"
         produit = Produit.objects.get(id=produit_id)
@@ -2039,7 +2040,7 @@ def edit_produit_order(request, order_id, produit_id):
             if form.is_valid():
                 qte = form.cleaned_data['qte']
                 produit = form.cleaned_data['produit']
-                if produit.stock_bis >= qte:
+                if produit.stock_bis >= qte or admin_mode:
                     obj = form.save(commit=False)
                     obj.commande = commande
                     obj.save()
@@ -2057,7 +2058,7 @@ def edit_produit_order(request, order_id, produit_id):
 
                     message = "Produit de la commande édité avec succès !"
                     messages.success(request, message)
-                elif previous_qte > qte and qte <= total_qte_inventaire_progress(produit):
+                elif previous_qte > qte and qte <= total_qte_inventaire_progress(produit) or admin_mode:
                     obj = form.save(commit=False)
                     obj.commande = commande
                     obj.save()

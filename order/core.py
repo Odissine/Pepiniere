@@ -50,3 +50,11 @@ def total_qte_inventaire_progress(produit):
         total_qte = 0
 
     return total_qte
+
+
+def get_admin_mode(user):
+    try:
+        admin_mode = AccessMode.objects.get(user=user).admin
+    except:
+        admin_mode = False
+    return admin_mode

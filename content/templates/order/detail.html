@@ -139,8 +139,9 @@
     <div class="col-1"></div>
 </div>
 <!-- FRAIS ------------------------------------------------------------------------------------------>
-{% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée" and commande.statut.nom == "En attente" and commande.montant_frais > 0 %}
-<form class="" method="post" name="fraisForm" id="fraisForm" action="{% url 'order:order-update-frais' commande.id %}">
+{% if commande.statut.nom != "Annulée" and commande.statut.nom != "Terminée" and commande.statut.nom != "En attente" and commande.montant_frais > 0 %}
+
+    <form class="" method="post" name="fraisForm" id="fraisForm" action="{% url 'order:order-update-frais' commande.id %}">
 <div class="row align-items-center py-2 g-0">
     <div class="col-7 align-middle text-start ps-3">
         {% if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée" or commande.statut.nom == "En attente" or user|is_staff == False %}
