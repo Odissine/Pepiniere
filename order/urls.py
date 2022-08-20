@@ -23,7 +23,7 @@ urlpatterns = [
     path('search/order/', views.order_search_order, name='order-search-order'),
     path('print/<id>', views.order_print, name='order-print'),
     path('etiquettes/', views.order_etiquettes, name='order-etiquettes'),
-    path('etiquettes/print', views.print_etiquettes, name='print-etiquettes'),
+    path('etiquettes/print/', views.print_etiquettes, name='print-etiquettes'),
 
     # ADMIN
     path("administration/", views.order_administration, name="order-administration"),

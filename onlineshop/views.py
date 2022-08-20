@@ -117,6 +117,8 @@ def produit_list(request):
                 queryset = queryset.filter(stock_bis__gt=0)
             if gaf is True:
                 queryset = queryset.filter(gaf=True)
+    else:
+        queryset = queryset.filter(stock_bis__gt=0)
 
     if request.user.is_staff is False:
         stock = True
@@ -259,6 +261,9 @@ def manage_produit(request):
             'header': header,
             'javascript': javascript,
         }
+
+        GET_params = request.GET.copy()
+
         context = {
             'produits': produits,
             'produits_list': queryset,
@@ -269,6 +274,7 @@ def manage_produit(request):
             'formAction': formAction,
             'form': form,
             'query_string': get_data.urlencode(),
+            'GET_params': GET_params,
         }
 
         return render(request, 'onlineshop/manage_produit.html', context)
@@ -471,7 +477,6 @@ def manage_greffons(request):
             request.session['page_g'] = page
         elif 'page_g' in request.session:
             page = request.session['page_g']
-
         try:
             greffons = paginator.page(page)
         except PageNotAnInteger:
@@ -485,6 +490,9 @@ def manage_greffons(request):
             'header': header,
             'javascript': javascript,
         }
+
+        GET_params = request.GET.copy()
+
         context = {
             'greffons': greffons,
             'greffons_list': queryset,
@@ -497,6 +505,7 @@ def manage_greffons(request):
             'query_string': get_data.urlencode(),
             'couleurs': couleurs,
             'inventaires': inventaires,
+            'GET_params': GET_params,
         }
 
         return render(request, 'onlineshop/manage_greffons.html', context)
@@ -1732,7 +1741,7 @@ def reset_stock(request):
         # produit.stock_future = 0
         produit.save()
 
-    message = format_html("Les stocks (initiaux, virtuels et futurs) ont bien été réinitalisés !")
+    message = format_html("Les stocks (initiaux, virtuels) ont bien été réinitalisés !")
     messages.success(request, message)
 
     return redirect('onlineshop:onlineshop-administration')

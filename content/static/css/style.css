@@ -1380,7 +1380,7 @@ input[type="checkbox"].switch_1 {
   width: 100% !important;
 }
 body .select2-container {
-    z-index: 10 !important;
+    z-index: 10000 !important;
 }
 
 .input-group .select2 {
@@ -1481,4 +1481,8 @@ input[required]+label:after {
 label.require::after {
   content: " *";
   color: #e32;
+}
+
+select.addproduct_modal.select2-container {
+    z-index:10000 !important;
 }

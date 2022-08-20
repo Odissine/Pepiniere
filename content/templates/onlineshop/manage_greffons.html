@@ -189,22 +189,38 @@ select option[value="{{ couleur.nom }}"] {
     <nav aria-label="...">
         <ul class="pagination justify-content-center">
         {% if greffons.has_previous %}
-            <li class="page-item"><a href="?page={{ greffons.previous_page_number }}" class="page-link"><<</a></li>
+            {% if GET_params %}
+                <li class="page-item"><a href="?{{GET_params.urlencode}}&amp;page={{ greffons.previous_page_number }}" class="page-link"><<</a></li>
+            {% else %}
+                <li class="page-item"><a href="?page={{ greffons.previous_page_number }}" class="page-link"><<</a></li>
+            {% endif %}
         {% else %}
             <li class="page-item disabled"><a class="page-link" href="#"><<</a></li>
         {% endif %}
         {% if greffons.number|add:'-4' > 1 %}
-            <li class="page-item"><a class="page-link" href="?page={{ greffons.number|add:'-5' }}{{ getvars }}">...</a></li>
+            {% if GET_params %}
+                <li class="page-item"><a class="page-link" href="?{{GET_params.urlencode}}&amp;page={{ greffons.number|add:'-5' }}{{ getvars }}">...</a></li>
+            {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ greffons.number|add:'-5' }}{{ getvars }}">...</a></li>
+            {% endif %}
         {% endif %}
         {% for i in greffons.paginator.page_range %}
             {% if greffons.number == i %}
                 <li class="page-item active"><span class="page-link" href="#">{{ i }}</span></li>
             {% elif i > greffons.number|add:'-5' and i < greffons.number|add:'10' %}
-                <li class="page-item"><a href="?page={{ i }}" class="page-link">{{ i }}</a></li>
+                {% if GET_params %}
+                    <li class="page-item"><a href="?{{GET_params.urlencode}}&amp;page={{ i }}" class="page-link">{{ i }}</a></li>
+                {% else %}
+                    <li class="page-item"><a href="?page={{ i }}" class="page-link">{{ i }}</a></li>
+                {% endif %}
             {% endif %}
         {% endfor %}
         {% if greffons.has_next %}
-            <li class="page-item"><a href="?page={{ greffons.next_page_number }}" class="page-link">>></a></li>
+            {% if GET_params %}
+                <li class="page-item"><a href="?{{GET_params.urlencode}}&amp;page={{ greffons.next_page_number }}" class="page-link">>></a></li>
+            {% else %}
+                <li class="page-item"><a href="?page={{ greffons.next_page_number }}" class="page-link">>></a></li>
+            {% endif %}
         {% else %}
             <li class="page-item disabled"><a class="page-link" href="#">>></a></li>
         {% endif %}

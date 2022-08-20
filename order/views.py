@@ -49,7 +49,7 @@ def order_list(request):
         elif order_value == 'qte':
             orders = orders.annotate(qte_order=Count('Cartdbs')).order_by('-qte_order')
         else:
-            orders = orders.order_by(order_value)
+            orders = orders.order_by('-'+str(order_value))
 
         request.session['o'] = request.GET['o']
     elif 'o' in request.session:
@@ -59,7 +59,7 @@ def order_list(request):
         elif order_value == 'qte':
             orders = orders.annotate(qte_order=Count('Cartdbs')).order_by('-qte_order')
         else:
-            orders = orders.order_by(order_value)
+            orders = orders.order_by('-'+str(order_value))
     else:
         orders = orders.order_by('-date', 'statut')
 
@@ -2053,8 +2053,9 @@ def edit_produit_order(request, order_id, produit_id):
                     # SI COMMANDE AUTRE QUE ANNULEE ON MET A JOUR LE STOCK VIRTUEL SINON RIEN
                     if commande.statut.nom != "Annulée":
                         qte_to_modify = produit.stock_bis + previous_qte - qte
-                        produit.stock_bis = qte_to_modify
-                        produit.save()
+                        if qte_to_modify <= produit.stock:
+                            produit.stock_bis = qte_to_modify
+                            produit.save()
 
                     message = "Produit de la commande édité avec succès !"
                     messages.success(request, message)
@@ -2071,8 +2072,9 @@ def edit_produit_order(request, order_id, produit_id):
                     # SI COMMANDE AUTRE QUE ANNULEE ON MET A JOUR LE STOCK VIRTUEL SINON RIEN
                     if commande.statut.nom != "Annulée":
                         qte_to_modify = produit.stock_bis + previous_qte - qte
-                        produit.stock_bis = qte_to_modify
-                        produit.save()
+                        if qte_to_modify <= produit.stock:
+                            produit.stock_bis = qte_to_modify
+                            produit.save()
                 else:
                     message = "Stock insuffisant !"
                     messages.error(request, message)
@@ -2152,6 +2154,7 @@ def recycle_produit_order(request, order_id, produit_id):
 @staff_member_required
 def get_produit_stock(request, produit_id):
     produit = get_object_or_404(Produit, id=produit_id)
+    print("Check :", produit.stock_bis)
     return JsonResponse({"total": produit.stock_bis})
 
 
@@ -2844,9 +2847,15 @@ def warning_order(request):
     if request.user.is_staff:
         produits_commande = {}
         form = SearchOrderForm()
-        queryset = Commande.objects.filter(inventaire=inventaire, statut__in=[statut_valide, statut_encours]).exclude(statut__in=[statut_attente, statut_annulee, statut_terminee, statut_future]).distinct()
+        queryset = Commande.objects\
+            .filter(inventaire=inventaire, statut__in=[statut_valide, statut_encours])\
+            .exclude(statut__in=[statut_attente, statut_annulee, statut_terminee, statut_future])\
+            .order_by('-id')
+            # .distinct()
+        print(queryset.query)
         # queryset = list(set(queryset))
         orders_warning = []
+        orders = queryset
         produits_warning = []
         if len(queryset) > 0:
             for commande in queryset:

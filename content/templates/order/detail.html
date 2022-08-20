@@ -85,9 +85,9 @@
     <div class="py-2 col-3 align-middle text-end pe-3">{{ commande.id|total_order }} €</div>
     <div class="col-1"></div>
 </div>
-{% if commande.remise > 0 and user|is_staff == False %}
+{% if commande.remise > 0 and user|is_staff == True %}
 <!-- REMISE  -------------------------------------------------------------------------------------->
-{% if commande.statut.nom != "Annulée" or commande.statut.nom != "Terminée" and commande.montant_frais > 0 or commande.statut.nom == "En attente" %}
+{% if commande.statut.nom != "Annulée" or commande.statut.nom != "Terminée" and commande.remise > 0 or commande.statut.nom == "En attente" %}
 <form class="" method="post" name="remiseForm" id="remiseForm" action="{% url 'order:order-update-remise' commande.id %}">
 <div class="row align-items-center g-0 bg-opacity-10 bg-success ">
     <div class="col-6 align-middle text-start py-3 ps-3">Remise</div>
@@ -165,7 +165,7 @@
                 <input type="submit" hidden />
             </div>
         {% else %}
-            {{ commande.montant_frais }} €
+                {{ commande.montant_frais }} €
         {% endif %}
     </div>
     <div class="col-1 text-center">
@@ -248,7 +248,7 @@
 
 <!-- POUR IMPRIMER LE BON DE COMMANDE -->
         {% if request.user|is_staff and commande.statut.nom == "Validée" or commande.statut.nom == "En cours" %}
-            <div class="col-md-auto bx-pull-right"><a target="_blank" href="{% url 'order:order-print' commande.id %}?download=1" class="btn btn-warning"><i class="bi bi-clipboard-check"></i> Bon de commande</a></div>
+            <div class="col-md-auto bx-pull-right"><a target="_blank" href="{% url 'order:order-print' commande.id %}?download=1&mode=2" class="btn btn-warning"><i class="bi bi-clipboard-check"></i> Bon de commande</a></div>
         {% endif %}
 <!-- POUR IMPRIMER LA FACTURE -->
         {% if commande.statut.nom == "Terminée" or commande.statut.nom == "Validée" %}

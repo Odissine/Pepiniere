@@ -55,13 +55,13 @@
 </div>
 <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
 <script>
-    // $(document).ready(function() {
-    //     $('#id_produit').select2().on("select2:select", function (e) {
-    //         var selected_element = $(e.currentTarget);
-    //         var select_val = selected_element.val();
-    //         getStockFromProduit(select_val);
-    //     });
-    // });
+    $(document).ready(function() {
+        $('#id_produit').select2().on("select2:select", function (e) {
+            var selected_element = $(e.currentTarget);
+            var select_val = selected_element.val();
+            getStockFromProduit(select_val);
+        });
+    });
 
     function getStockFromProduit(arg) {
         let formData = new FormData();
@@ -76,6 +76,7 @@
         fetch(request)
             .then(response => response.json())
                 .then(result => {
+                    console.log(result['total']);
                     document.querySelector('#qteMax').innerHTML = "Max : " + result['total'];
         })
     }

@@ -502,7 +502,7 @@ class FormAddProduit(forms.ModelForm):
             required=False,
             queryset=Produit.objects.all(),
             help_text='Choisir un produit',
-            widget=Select2Widget(attrs={'placeholder': 'Choisir un produit', 'class': 'form-control js-example-basic-single'})
+            widget=Select2Widget(attrs={'placeholder': 'Choisir un produit', 'class': 'form-control js-example-basic-single addproduct_modal'})
         )
 
         self.fields['prix'] = forms.DecimalField(
