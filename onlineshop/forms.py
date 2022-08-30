@@ -46,15 +46,16 @@ class SearchProduitForm(forms.Form):
         self.fields['stock'] = forms.BooleanField(
             label='En stock',
             required=False,
+            initial=True,
             help_text='Produits en stock uniquement ?',
-            widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'default': True})
+            widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
         )
 
         self.fields['gaf'] = forms.BooleanField(
             label='Greffe à façon',
             required=False,
             help_text='Produits greffés à la demande !',
-            widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'default': False})
+            widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'checked': False})
         )
 
     class Meta:

@@ -69,13 +69,6 @@ def create_tab_dict(items, menu):
 
 
 def produit_list(request):
-    espece = None
-    variete = None
-    portegreffe = None
-    spec = None
-    stock = True
-    gaf = False
-
     formAction = 'onlineshop:produit-list'
 
     form = SearchProduitForm(request.GET or None)
@@ -117,12 +110,12 @@ def produit_list(request):
                 queryset = queryset.filter(stock_bis__gt=0)
             if gaf is True:
                 queryset = queryset.filter(gaf=True)
+        else:
+            queryset = queryset.filter(stock_bis__gt=0)
     else:
         queryset = queryset.filter(stock_bis__gt=0)
 
     if request.user.is_staff is False:
-        stock = True
-        gaf = False
         admin_mode = False
         queryset = queryset.filter(gaf=False, stock_bis__gt=0)
     else:
@@ -231,7 +224,8 @@ def manage_produit(request):
                     queryset = queryset.filter(stock_bis__gt=0)
                 if gaf is True:
                     queryset = queryset.filter(gaf=True)
-
+            else:
+                queryset = queryset.filter(stock_bis__gt=0)
         title = "Produits"
         header = "Ajouter un Produit"
         javascript = "Cela va supprimer le produit"

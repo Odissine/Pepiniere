@@ -1,3 +1,5 @@
+import urllib.parse
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -31,6 +33,8 @@ from onlineshop.core import *
 from cart.forms import CartAddProduitForm, CartUpdateForm, RemiseUpdateForm
 
 locale.setlocale(locale.LC_ALL, 'fr_FR')
+
+import socket
 
 
 @login_required
@@ -1643,6 +1647,11 @@ def manage_order(request):
 @login_required
 @staff_member_required
 def edit_order(request, order_id):
+    if request.GET.get('ano') == "1":
+        request.session['ano'] = "1"
+    else:
+        request.session['ano'] = "0"
+
     if request.user.is_staff:
         title = "COMMANDES"
         order = Commande.objects.get(id=order_id)
@@ -1820,18 +1829,19 @@ def in_progress_order(request, order_id):
         if order.statut.nom == "Pré-commande":
             message_produit = ""
             message = message + format_html("<br>Stock future remis à jour pour l'ensemble des produits de la commande.")
-            for item in items:
-                if item.produit.stock_bis - item.qte < 0:
-                    nb_produit += 1
-                    message_produit = message_produit + "<li>" + item.produit.nom + "</li>"
+            # for item in items:
+            #     if item.produit.stock_bis - item.qte < 0:
+            #         nb_produit += 1
+            #         message_produit = message_produit + "<li>" + item.produit.nom + "</li>"
 
-            if nb_produit > 0:
-                message = format_html("Impossible de passer la commande en \"En cours\" <br>Stock insuffisant sur les produits suivants : <ul>" + message_produit + "</ul>")
-                messages.error(request, message)
-                return redirect('order:manage-order')
+            # if nb_produit > 0:
+            #     message = format_html("Impossible de passer la commande en \"En cours\" <br>Stock insuffisant sur les produits suivants : <ul>" + message_produit + "</ul>")
+            #     messages.error(request, message)
+            #     return redirect('order:manage-order')
 
             for item in items:
-                item.produit.stock_bis -= item.qte
+                # Desactivation de la mise à jours des stocks virtuels lors du passage d'une pré-commande vers une commande en cours
+                # item.produit.stock_bis -= item.qte
                 item.produit.stock_future -= item.qte
                 item.produit.save()
             order.date = datetime.now()
@@ -2024,6 +2034,13 @@ def add_produit_order(request, order_id, manage):
 @login_required
 @staff_member_required
 def edit_produit_order(request, order_id, produit_id):
+    try:
+        anomalie = request.session['ano']
+    except:
+        request.session['ano'] = "0"
+        anomalie = "0"
+    print(anomalie)
+
     admin_mode = get_admin_mode(request.user)
     if request.user.is_staff:
         title = "PRODUIT"
@@ -2040,7 +2057,7 @@ def edit_produit_order(request, order_id, produit_id):
             if form.is_valid():
                 qte = form.cleaned_data['qte']
                 produit = form.cleaned_data['produit']
-                if produit.stock_bis >= qte or admin_mode:
+                if produit.stock_bis >= qte or admin_mode or anomalie == "1":
                     obj = form.save(commit=False)
                     obj.commande = commande
                     obj.save()
@@ -2051,13 +2068,15 @@ def edit_produit_order(request, order_id, produit_id):
                         produit.stock = qte_to_modify_final
 
                     # SI COMMANDE AUTRE QUE ANNULEE ON MET A JOUR LE STOCK VIRTUEL SINON RIEN
-                    if commande.statut.nom != "Annulée":
+                    if commande.statut.nom != "Annulée" and anomalie != "1":
                         qte_to_modify = produit.stock_bis + previous_qte - qte
                         if qte_to_modify <= produit.stock:
                             produit.stock_bis = qte_to_modify
                             produit.save()
 
                     message = "Produit de la commande édité avec succès !"
+                    if anomalie == "1":
+                        message = message + " (Stock non mis à jour car commande en anomalie)"
                     messages.success(request, message)
                 elif previous_qte > qte and qte <= total_qte_inventaire_progress(produit) or admin_mode:
                     obj = form.save(commit=False)
@@ -2081,12 +2100,14 @@ def edit_produit_order(request, order_id, produit_id):
             else:
                 message = "Une erreur s'est produite"
                 messages.error(request, message)
-            return redirect('order:edit-order', order_id)
+            # return redirect('order:edit-order', order_id)
+            return custom_redirect('order:edit-order', order_id, ano=anomalie)
 
         context_header = {
         }
 
         context = {
+            'anomalie': anomalie,
             'form': form,
             'order_id': order_id,
             'produit_id': produit_id,
@@ -2852,7 +2873,7 @@ def warning_order(request):
             .exclude(statut__in=[statut_attente, statut_annulee, statut_terminee, statut_future])\
             .order_by('-id')
             # .distinct()
-        print(queryset.query)
+        # print(queryset.query)
         # queryset = list(set(queryset))
         orders_warning = []
         orders = queryset
@@ -2869,6 +2890,8 @@ def warning_order(request):
                 produits_commande[commande.id] = list_produit
 
             orders_warning = list(set(orders_warning))
+            orders_warning.sort(key=lambda x: -x.id)
+
         title = "Commandes"
         header = "Ajouter un Produit"
         javascript = "Cela va supprimer la commande"

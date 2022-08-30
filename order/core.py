@@ -1,6 +1,8 @@
 from datetime import datetime
 from order.models import *
 from django.db.models import Sum, F
+from django.urls import reverse
+from django.shortcuts import HttpResponseRedirect
 
 
 def get_frais_from_id(id):
@@ -58,3 +60,10 @@ def get_admin_mode(user):
     except:
         admin_mode = False
     return admin_mode
+
+
+def custom_redirect(url_name, *args, **kwargs):
+    import urllib.parse
+    url = reverse(url_name, args = args)
+    params = urllib.parse.urlencode(kwargs)
+    return HttpResponseRedirect(url + "?%s" % params)

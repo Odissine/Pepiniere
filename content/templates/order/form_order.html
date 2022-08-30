@@ -112,7 +112,7 @@
             <div class="col-2 text-end">
                 {% if order.statut.nom != "Annulée" and order.statut.nom != "Terminée" %}
                 <button onclick="delete_this_produit('{{ order.id }}', '{{ produit.produit.id }}', '{{ produit.produit.nom }}')" class="btn btn-danger btn-sm" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Supprimer le produit de la commande en modidiant les stocks"><i class="bi bi-trash"></i></button>
-                <a href="{% url 'order:edit-produit-order' order.id produit.produit.id %}"><button class="btn btn-warning btn-sm" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Modifier le produit de la commande"><i class="bi bi-pencil"></i></button></a>
+                <a href="{% url 'order:edit-produit-order' order.id produit.produit.id %}{% if anomalie == 'True' %}?ano=True{% endif %}"><button class="btn btn-warning btn-sm" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Modifier le produit de la commande"><i class="bi bi-pencil"></i></button></a>
                 {% endif %}
                 <button onclick="recycle_this_produit('{{ order.id }}', '{{ produit.produit.id }}', '{{ produit.produit.nom }}')" class="btn btn-outline-danger btn-sm" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Supprimer le produit de la commande SANS modifier les stocks"><i class="bi bi-bag-x"></i></button>
             </div>

@@ -51,6 +51,7 @@
                             {{ commande.id|total_order|format_space }} €
                         </div>
                         <div class="col-3 text-end">
+                            <a href="{% url 'order:order-detail' commande.id %}"><button class="btn btn-light btn-sm btn-outline-dark" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Visualiser la commande {{ commande.id }}"><i class="bi bi-eye"></i></button></a>
                             {% if commande.statut.nom == "En attente" %}
                             <a href="{% url 'order:order-accept' commande.id %}"><button class="btn btn-warning btn-sm btn-outline-dark" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Accepter la commande {{ commande.id }}"><i class="bi bi-cart-check"></i></button></a>
                             {% endif %}
