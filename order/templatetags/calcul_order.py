@@ -148,7 +148,7 @@ def frais_tva(order_id):
         frais_tva = 0
     else:
         frais_ht = montant_frais / (1 + commande.frais.tva.tva / 100)
-        frais_tva = frais_ht - (frais_ht * (1 + commande.frais.tva.tva / 100))
+        frais_tva = (frais_ht * (1 + commande.frais.tva.tva / 100)) - frais_ht
     return frais_tva
 
 
