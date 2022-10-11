@@ -179,10 +179,12 @@ register.filter('total_global_ttc', total_global_ttc)
 
 
 def total_global_ht(order_id):
-    total_ttc = total_global_ttc(order_id)
     commande = Commande.objects.get(id=order_id)
-    print(commande.tva.tva)
-    total_global_ht = total_ttc / (1 + commande.tva.tva / 100)
+    total_global_ht = 0
+    if commande.frais is not None:
+        total_global_ht += frais_ht(order_id)
+    total_global_ht += total_ht(order_id)
+
     return total_global_ht
 
 
