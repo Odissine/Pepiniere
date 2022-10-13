@@ -3,6 +3,7 @@ from order.models import *
 from django.db.models import Sum, F
 from django.urls import reverse
 from django.shortcuts import HttpResponseRedirect
+from onlineshop.models import *
 
 
 def get_frais_from_id(id):
@@ -67,3 +68,25 @@ def custom_redirect(url_name, *args, **kwargs):
     url = reverse(url_name, args = args)
     params = urllib.parse.urlencode(kwargs)
     return HttpResponseRedirect(url + "?%s" % params)
+
+
+def get_orders_items_max(max_val=5):
+    produits = Produit.objects.all()
+    statut_encours = Statut.objects.get(nom="En cours")
+    commandes_list = []
+    all_commandes = Commande.objects.filter(statut=statut_encours)
+    for produit in produits:
+        commandes = Cartdb.objects.filter(produit=produit, commande__statut=statut_encours)
+        if len(commandes) > max_val:
+            commandes = [x.commande for x in commandes]
+            commandes_list.extend(list(commandes))
+    # new_commandes_list = set(commandes_list)
+    seen = set()
+    unique = []
+    for obj in commandes_list:
+        if obj.id not in seen:
+            unique.append(obj)
+            seen.add(obj.id)
+
+    unique.sort(key=lambda x: x.id)
+    return unique

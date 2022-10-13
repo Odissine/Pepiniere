@@ -20,13 +20,17 @@
                     {% else %}
                 <div class="row border-bottom border-primary align-items-center py-2 fw-bolder">
                     {% if query_string %}
-                    <a href="?{{ query_string }}&mo=date" class="col-3">DATE</a>
-                    <a href="?{{ query_string }}&mo=statut" class="col-2">STATUT</a>
+                    <div class="col-1"></div>
+                    <a href="?{{ query_string }}&mo=date" class="col-2">DATE</a>
+                    <a href="?{{ query_string }}&mo=id" class="col-1">ID</a>
+                    <a href="?{{ query_string }}&mo=statut" class="col-1">STATUT</a>
                     <a href="?{{ query_string }}&mo=client__nom" class="col-3">CLIENT (Prénom NOM)</a>
                     <a href="?{{ query_string }}&mo=total" class="col-1">TOTAL</a>
                     {% else %}
-                    <a href="?mo=date" class="col-3">DATE</a>
-                    <a href="?mo=statut" class="col-2">STATUT</a>
+                    <div class="col-1"></div>
+                    <a href="?mo=date" class="col-2">DATE</a>
+                    <a href="?mo=id" class="col-1">ID</a>
+                    <a href="?mo=statut" class="col-1">STATUT</a>
                     <a href="?mo=client__nom" class="col-3">CLIENT (Prénom NOM)</a>
                     <a href="?mo=total" class="col-1">TOTAL</a>
                     {% endif %}
@@ -41,7 +45,10 @@
                         <div class="col-2">
                             {{ commande.date|date:"l d F Y" }}
                         </div>
-                        <div class="col-2">
+                        <div class="col-1">
+                            {{ commande.id }}
+                        </div>
+                        <div class="col-1">
                             {{ commande.statut }}
                         </div>
                         <div class="col-3">

@@ -1582,7 +1582,13 @@ def manage_order(request):
                 else:
                     inventaire = Inventaire.objects.get(actif=True)
                     queryset = queryset.filter(inventaire=inventaire)
+        if 'max_val' in request.GET:
+            try:
+                max_value = int(request.GET['max_val'])
+            except:
+                max_value = 5
 
+            queryset = get_orders_items_max(max_value)
         for commande in queryset:
             produits = Cartdb.objects.filter(commande=commande)
 
@@ -1943,7 +1949,7 @@ def add_produit_order(request, order_id, manage):
                 qte = form.cleaned_data['qte']
                 prix = form.cleaned_data['prix']
                 produit_commande = Cartdb.objects.filter(commande=commande, produit=produit)
-
+                print(produit.stock, produit.stock_bis)
                 if not commande.statut.nom == "Pré-commande":
                     if produit_commande.exists():
                         produit = Produit.objects.get(pk=produit.id)
@@ -1976,6 +1982,7 @@ def add_produit_order(request, order_id, manage):
                     else:
                         message = "Stock insuffisant !"
                         messages.error(request, message)
+                    print(produit.stock, produit.stock_bis)
                 else:
                     if produit_commande.exists():
                         produit = Produit.objects.get(pk=produit.id)
