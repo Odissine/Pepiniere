@@ -381,7 +381,7 @@ def order_update_qte_prix(request, id):
             print(produit_commande.commande.statut.nom)
             print(admin_mode)
 
-            if admin_mode is True and produit_commande.commande.statut.nom == "Pré-commande":
+            if produit_commande.commande.statut.nom == "Pré-commande":
                 # ON MET A JOUR LE PRODUIT DE LA COMMANDE AVEC LA NOUVELLE QUANTITE ET LE NOUVEAU PRIX
                 new_stock = produit.stock_future - produit_commande.qte + qte
 
@@ -519,19 +519,17 @@ def order_product_remove(request, id):
     item = get_object_or_404(Cartdb, id=id)
 
     commande = get_object_or_404(Commande, pk=item.commande.id)
-    if AccessMode.objects.get(user=request.user).admin is False:
+    if commande.statut.nom == "En cours" or commande.statut.nom == "Validée":
         stock = item.produit.stock_bis + item.qte
         Produit.objects.filter(pk=item.produit.id).update(stock_bis=stock)
-    else:
+    if commande.statut.nom == "Pré-commande":
         stock = item.produit.stock_future - item.qte
         Produit.objects.filter(pk=item.produit.id).update(stock_future=stock)
     item.delete()
-
     message = "Suppression du produit effectuée avec succès !"
     messages.success(request, message)
 
     return redirect('order:order-detail', item.commande.id)
-
 
 # ANNULATION D'UNE COMMANDE AVEC MISE A JOUR DE LA DATE ET DU STATUT
 @login_required
@@ -1587,8 +1585,8 @@ def manage_order(request):
                 max_value = int(request.GET['max_val'])
             except:
                 max_value = 5
-
             queryset = get_orders_items_max(max_value)
+
         for commande in queryset:
             produits = Cartdb.objects.filter(commande=commande)
 
@@ -2046,7 +2044,6 @@ def edit_produit_order(request, order_id, produit_id):
     except:
         request.session['ano'] = "0"
         anomalie = "0"
-    print(anomalie)
 
     admin_mode = get_admin_mode(request.user)
     if request.user.is_staff:
@@ -2075,11 +2072,16 @@ def edit_produit_order(request, order_id, produit_id):
                         produit.stock = qte_to_modify_final
 
                     # SI COMMANDE AUTRE QUE ANNULEE ON MET A JOUR LE STOCK VIRTUEL SINON RIEN
-                    if commande.statut.nom != "Annulée" and anomalie != "1":
+                    if commande.statut.nom != "Annulée" and commande.statut.nom !="Pré-commande" and anomalie != "1":
                         qte_to_modify = produit.stock_bis + previous_qte - qte
                         if qte_to_modify <= produit.stock:
                             produit.stock_bis = qte_to_modify
                             produit.save()
+
+                    if commande.statut.nom == "Pré-commande":
+                        qte_to_modify = produit.stock_future - previous_qte + qte
+                        produit.stock_future = qte_to_modify
+                        produit.save()
 
                     message = "Produit de la commande édité avec succès !"
                     if anomalie == "1":
@@ -2101,6 +2103,17 @@ def edit_produit_order(request, order_id, produit_id):
                         if qte_to_modify <= produit.stock:
                             produit.stock_bis = qte_to_modify
                             produit.save()
+
+                elif commande.statut.nom == "Pré-commande":
+                    obj = form.save(commit=False)
+                    obj.commande = commande
+                    obj.save()
+                    qte_to_modify = produit.stock_future - previous_qte + qte
+                    produit.stock_future = qte_to_modify
+                    produit.save()
+                    message = "Produit de la pré-commande édité avec succès !"
+                    messages.success(request, message)
+
                 else:
                     message = "Stock insuffisant !"
                     messages.error(request, message)
@@ -2143,11 +2156,13 @@ def delete_produit_order(request, order_id, produit_id):
         if commande.statut.nom == "Terminée":
             produit.stock += produit_commande.qte
 
-        # SI COMMANDE AUTRE QUE ANNULEE ON MET A JOUR LE STOCK VIRTUEL SINON RIEN
-        if commande.statut.nom != "Annulée":
-            produit.stock_bis += produit_commande.qte
-            produit.save()
+        if commande.statut.nom == "Pré-commande":
+            produit.stock_future -= produit_commande.qte
 
+        # SI COMMANDE AUTRE QUE ANNULEE ON MET A JOUR LE STOCK VIRTUEL SINON RIEN
+        if commande.statut.nom == "En cours" or commande.statut.nom == "Validée":
+            produit.stock_bis += produit_commande.qte
+        produit.save()
         produit_commande.delete()
 
         message = "Produit supprimé de la commande avec succès et stock remis à jour !"

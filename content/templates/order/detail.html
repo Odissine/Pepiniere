@@ -46,7 +46,7 @@
         <div class="py-2">{{ produit.qte }}</div>
         {% else %}
         <div class="">
-            <input type="number" name="qte" value="{{ produit.qte }}" min="1" max="{% if request.user|mode_admin %}}9999{% else %}{{ produit.produit.stock_bis }}{% endif %}" required id="id-qte-{{ produit.id }}" class="form-control" width="95" style="width:95px;" />
+            <input type="number" name="qte" value="{{ produit.qte }}" min="1" max='{% if request.user|mode_admin or commande.statut.nom == "Pré-commande" %}}9999{% else %}{{ produit.produit.stock_bis }}{% endif %}' required id="id-qte-{{ produit.id }}" class="form-control" width="95" style="width:95px;" />
         </div>
         {% csrf_token %}
         <input type="number" hidden name="qte_old" value="{{ produit.qte }}" id="id-qte-old-{{ produit.id }}"/>
