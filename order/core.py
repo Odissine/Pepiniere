@@ -48,6 +48,8 @@ def total_qte_inventaire_progress(produit):
     statut_encours = Statut.objects.get(nom="En cours")
     inventaire = Inventaire.objects.get(actif=True)
     total_qte = Commande.objects.filter(Cartdbs__produit=produit, inventaire=inventaire, statut__in=[statut_valide, statut_encours]).aggregate(sum=Sum('Cartdbs__qte'))['sum']
+    print(produit)
+    print(total_qte)
 
     if total_qte is None:
         total_qte = 0
@@ -74,19 +76,25 @@ def get_orders_items_max(max_val=5):
     produits = Produit.objects.all()
     statut_encours = Statut.objects.get(nom="En cours")
     commandes_list = []
-    all_commandes = Commande.objects.filter(statut=statut_encours)
-    for produit in produits:
-        commandes = Cartdb.objects.filter(produit=produit, commande__statut=statut_encours)
-        if len(commandes) > max_val:
-            commandes = [x.commande for x in commandes]
-            commandes_list.extend(list(commandes))
-    # new_commandes_list = set(commandes_list)
-    seen = set()
-    unique = []
-    for obj in commandes_list:
-        if obj.id not in seen:
-            unique.append(obj)
-            seen.add(obj.id)
+    commandes_query = Cartdb.objects.filter(qte__gte=max_val, commande__statut=statut_encours).order_by('commande__pk')
+    commandes = list(set([x.commande for x in commandes_query]))
 
-    unique.sort(key=lambda x: x.id)
-    return unique
+    # all_commandes = Commande.objects.filter(statut=statut_encours, Cartdbs__qte_lte=max_val)
+    # print(len(all_commandes))
+    # val = len(all_commandes)
+    # for produit in produits:
+    #     commandes = Cartdb.objects.filter(produit=produit, commande__statut=statut_encours)
+    #     if len(commandes) > max_val:
+    #         commandes = [x.commande for x in commandes]
+    #         commandes_list.extend(list(commandes))
+    # # new_commandes_list = set(commandes_list)
+    # seen = set()
+    # unique = []
+    # for obj in commandes_list:
+    #     if obj.id not in seen:
+    #         unique.append(obj)
+    #         seen.add(obj.id)
+    #
+    # unique.sort(key=lambda x: x.id)
+    commandes_list = sorted(commandes, key=lambda x: x.id)
+    return commandes_list

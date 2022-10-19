@@ -1600,7 +1600,7 @@ def manage_order(request):
                 dic_produit['produit'] = produit.produit
                 dic_produit['prix'] = produit.prix
                 list_produit.append(dic_produit)
-            produits_commande[commande.id] = list_produit
+            produits_commande[commande] = list_produit
 
         title = "Commandes"
         header = "Ajouter un Produit"
@@ -2064,7 +2064,7 @@ def edit_produit_order(request, order_id, produit_id):
             if form.is_valid():
                 qte = form.cleaned_data['qte']
                 produit = form.cleaned_data['produit']
-                if produit.stock_bis >= qte or admin_mode or anomalie == "1":
+                if (produit.stock_bis + previous_qte) >= qte or admin_mode or anomalie == "1":
                     obj = form.save(commit=False)
                     obj.commande = commande
                     obj.save()

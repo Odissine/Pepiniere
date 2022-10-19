@@ -1772,3 +1772,47 @@ def edit_stock_produit(request):
         produit.save()
         messages.success(request, "Quantité mise à jour pour le produit ;)")
     return redirect('onlineshop:manage-produit')
+
+
+@login_required
+@staff_member_required
+def warning_produit(request):
+    pass
+    form = SearchProduitForm
+
+    if request.user.is_staff:
+        inventaire = Inventaire.objects.filter(actif=True).first()
+        produits_warning = get_list_produits_anomalie(inventaire)
+        print("Produit en anomalie :", len(produits_warning))
+        title = "Produits"
+        header = "Liste des produits en anomalie"
+        javascript = ""
+        formAction = "onlineshop:manage-produit"
+        previous_page = reverse('onlineshop:onlineshop-administration')
+
+        paginator = Paginator(produits_warning, 50)
+        page = request.GET.get('page', 1)
+        try:
+            produits_warning = paginator.page(page)
+        except PageNotAnInteger:
+            produits_warning = paginator.page(1)
+        except EmptyPage:
+            produits_warning = paginator.page(paginator.num_pages)
+
+        context_header = {
+            'header': header,
+            'javascript': javascript,
+        }
+        context = {
+            'previous_page': previous_page,
+            'title': title,
+            'context_header': context_header,
+            'formAction': formAction,
+            'form': form,
+            'produits_warning': produits_warning,
+        }
+        return render(request, "onlineshop/manage_warning_produit.html", context)
+
+    else:
+        messages.error(request, "Vous n'avez pas les droits !")
+    return redirect('onlineshop:produit-list')

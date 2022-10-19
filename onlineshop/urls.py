@@ -23,6 +23,7 @@ urlpatterns = [
 
     # PRODUITS
     path('produits/manage', manage_produit, name='manage-produit'),
+    path("produits/warning", warning_produit, name="warning-produit"),
     path('produits/add', add_produit, name='add-produit'),
     path('produits/edit/<produit_id>', edit_produit, name='edit-produit'),
     path('produits/delete/<produit_id>', delete_produit, name='delete-produit'),

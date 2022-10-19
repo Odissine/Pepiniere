@@ -500,7 +500,8 @@ class FormAddProduit(forms.ModelForm):
         self.fields['produit'] = forms.ModelChoiceField(
             label="Produit",
             required=False,
-            queryset=Produit.objects.all(),
+            # queryset=Produit.objects.all(),
+            queryset=Produit.objects.filter(stock_bis__gt=0),
             help_text='Choisir un produit',
             widget=Select2Widget(attrs={'placeholder': 'Choisir un produit', 'class': 'form-control js-example-basic-single addproduct_modal'})
         )
