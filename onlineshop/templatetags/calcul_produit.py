@@ -20,6 +20,62 @@ def total_qte_inventaire(produit):
 register.filter('total_qte_inventaire', total_qte_inventaire)
 
 
+def total_qte_encours(produit):
+    statut_encours = Statut.objects.get(nom="En cours")
+    inventaire = Inventaire.objects.get(actif=True)
+    total_qte = Commande.objects.filter(Cartdbs__produit=produit, inventaire=inventaire, statut=statut_encours).aggregate(sum=Sum('Cartdbs__qte'))['sum']
+
+    if total_qte is None:
+        total_qte = 0
+
+    return total_qte
+
+
+register.filter('total_qte_encours', total_qte_encours)
+
+
+def total_qte_validee(produit):
+    statut_validee = Statut.objects.get(nom="Validée")
+    inventaire = Inventaire.objects.get(actif=True)
+    total_qte = Commande.objects.filter(Cartdbs__produit=produit, inventaire=inventaire, statut=statut_validee).aggregate(sum=Sum('Cartdbs__qte'))['sum']
+
+    if total_qte is None:
+        total_qte = 0
+
+    return total_qte
+
+
+register.filter('total_qte_validee', total_qte_validee)
+
+
+def total_qte_terminee(produit):
+    statut_terminee = Statut.objects.get(nom="Terminée")
+    inventaire = Inventaire.objects.get(actif=True)
+    total_qte = Commande.objects.filter(Cartdbs__produit=produit, inventaire=inventaire, statut=statut_terminee).aggregate(sum=Sum('Cartdbs__qte'))['sum']
+
+    if total_qte is None:
+        total_qte = 0
+
+    return total_qte
+
+
+register.filter('total_qte_terminee', total_qte_terminee)
+
+
+def total_qte_annulee(produit):
+    statut_annulee= Statut.objects.get(nom="Annulée")
+    inventaire = Inventaire.objects.get(actif=True)
+    total_qte = Commande.objects.filter(Cartdbs__produit=produit, inventaire=inventaire, statut=statut_annulee).aggregate(sum=Sum('Cartdbs__qte'))['sum']
+
+    if total_qte is None:
+        total_qte = 0
+
+    return total_qte
+
+
+register.filter('total_qte_annulee', total_qte_annulee)
+
+
 def total_qte_global(produit):
     statut_annulee = Statut.objects.get(nom="Annulée")
     total_qte = Commande.objects.filter(Cartdbs__produit=produit).exclude(statut=statut_annulee).aggregate(sum=Sum('Cartdbs__qte'))['sum']
