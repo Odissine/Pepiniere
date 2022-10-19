@@ -1,0 +1,125 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load l10n %}
+{% load mathfilters %}
+{% load calcul_produit %}
+{% block title %}Administration - Produits / Anomalie{% endblock %}
+{% block content %}
+{#% include 'onlineshop/search.html' %#}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header container-fluid align-middle">
+                <a type="button" class="btn btn-secondary fw-bolder bx-pull-left" style="font-size: .8rem;" href="{{ previous_page}}">Retour</a>
+                <span class="h3 ms-2">Gestion des produits en anomalie</span>
+            </div>
+            <div class="card-body">
+                {% if produits_warning|length == 0 %}
+                    <div class="row"><div class="col text-center h3 pt-3">Aucun produit en anomalie :)</div></div>
+                    {% else %}
+                <div class="row border-bottom border-primary align-items-center py-2 fw-bolder">
+                    <div class="col-1">ID</div>
+                    <div class="col-6">NOM</div>
+                    <div class="col-1">Stock Final</div>
+                    <div class="col-1">Stock En cours</div>
+                    <div class="col-1">Cmde en cours</div>
+                    <div class="col-1">Cmde terminée</div>
+                    <div class="col-1"></div>
+                </div>
+                <div id="accordionFlushExample" class="accordion accordion-flush">
+                    {% for produit in produits_warning %}
+                    {% with qte_commande=produit|qte_commande_produit:'c' %}
+
+                    <div class="{% if produit.stock_bis|add:qte_commande > produit.stock %}bg-danger{% else %}bg-primary{% endif %} bg-opacity-25 row align-items-center py-2">
+                        <div class="col-1">
+                            <!-- <button class="accordion-button collapsed" data-bs-toggle="collapse" aria-expanded="false" aria-controls="flush-collapse{{ produit.id }}" data-bs-target="#flush-collapse{{ produit.id }}">{{ produit.id }} </button> -->
+                            {{ produit.id }}
+                        </div>
+                        <div class="col-6">
+                            {{ produit.nom }}
+                        </div>
+                        <div class="col-1">
+                            {{ produit.stock }}
+                        </div>
+                        <div class="col-1">
+                            {{ produit.stock_bis }}
+                        </div>
+                        <div class="col-1">
+                            {{ produit|qte_commande_produit:'c' }}
+                        </div>
+                        <div class="col-1">
+                            {{ produit|qte_commande_produit:'f' }}
+                        </div>
+                        <div class="col-1 text-end">
+                            <a href="{% url 'onlineshop:edit-produit' produit.id %}?ano=1"><button class="btn btn-warning btn-sm" type="button" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Modifier le produit {{ produit.id }}"><i class="bi bi-pencil"></i></button></a>
+                        </div>
+                    </div>
+                    {% endwith %}
+                    <!--
+                    <div id="flush-collapse{{ commande.id }}" class="accordion-collapse collapse" aria-labelledby="flush-heading{{ commande.id }}" data-bs-parent="#accordionFlushExample">
+                        <div class="accordion-body">
+                            {% for k,v in produits_commande.items %}
+                                {% if k == commande.id %}
+                                <div class="row">
+                                    <div class="col-4 fw-bold bg-primary bg-opacity-10">Produit</div>
+                                    <div class="col-2 fw-bold bg-primary bg-opacity-10">Qte</div>
+                                    <div class="col-2 fw-bold bg-primary bg-opacity-10">Prix</div>
+                                    <div class="col-4 fw-bold bg-primary bg-opacity-10">Total</div>
+                                    {% for item in v %}
+                                        {% if item.produit in produits_warning %}
+                                            <a href="{% url 'onlineshop:edit-produit' produit_id=item.produit.id %}" class="col-4 bg-danger link-light">{{ item.produit }}</a>
+                                            <div class="col-2 bg-danger text-light">{{ item.qte }}</div>
+                                            <div class="col-2 bg-danger text-light">{{ item.prix }}</div>
+                                            <div class="col-4 bg-danger text-light">{{ item.qte|mul:item.prix }}</div>
+                                        {% else %}
+                                            <div class="col-4">{{ item.produit }}</div>
+                                            <div class="col-2">{{ item.qte }}</div>
+                                            <div class="col-2">{{ item.prix }}</div>
+                                            <div class="col-4">{{ item.qte|mul:item.prix }}</div>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <div class=""></div>
+                                    <div class=""></div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    -->
+                    <div class="{% if not forloop.last %} border-bottom {% endif %}"></div>
+                    {% endfor %}
+                    {% if produits_warning.has_other_pages %}
+                      <ul class="pagination justify-content-center">
+                        {% if produits_warning.has_previous %}
+                          <li class="page-item"><a class="page-link" href="?page={{ produits_warning.previous_page_number }}">&laquo;</a></li>
+                        {% else %}
+                          <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                        {% endif %}
+                        {% for i in produits_warning.paginator.page_range %}
+                          {% if users.number == i %}
+                            <li class="page-item active"><span>{{ i }} <span class="sr-only">(current)</span></span></li>
+                          {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                          {% endif %}
+                        {% endfor %}
+                        {% if produits_warning.has_next %}
+                          <li><a class="page-link" href="?page={{ produits_warning.next_page_number }}">&raquo;</a></li>
+                        {% else %}
+                          <li class="disabled"><span class="page-link">&raquo;</span></li>
+                        {% endif %}
+                      </ul>
+                {% endif %}
+                {% endif %}
+
+                    <div class="col-sm-12 d-grid gap-2 my-2">
+                        <a href="{{ previous_page }}" class="d-grid gap-2">
+                            <button type="button" class="btn btn-secondary">RETOUR</button>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
