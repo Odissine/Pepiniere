@@ -84,7 +84,7 @@
                     <div id="flush-collapse{{ commande.id }}" class="accordion-collapse collapse" aria-labelledby="flush-heading{{ commande.id }}" data-bs-parent="#accordionFlushExample">
                         <div class="accordion-body">
                             {% for k,items in produits_commande.items %}
-                                {% if k == commande.id %}
+                                {% if k == commande %}
                                 <div class="row">
                                     <div class="col-4 fw-bold bg-primary bg-opacity-10">Produit</div>
                                     <div class="col-2 fw-bold bg-primary bg-opacity-10">Qte</div>
