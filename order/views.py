@@ -1956,6 +1956,10 @@ def add_produit_order(request, order_id, manage):
                             produit_commande.qte = produit_commande.qte + qte
                             produit_commande.prix = prix
                             produit_commande.save()
+
+                            produit.stock_bis = produit.stock_bis - qte
+                            produit.save()
+
                             message = format_html("Produit déjà présent dans la commande.<br/>Quantité et Prix mis à jour !")
                             messages.success(request, message)
                         else:
