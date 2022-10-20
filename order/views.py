@@ -105,6 +105,13 @@ def order_list(request):
             if inventaire.exists():
                 orders = orders.filter(inventaire__in=inventaire)
 
+        if 'max_val' in request.GET:
+            try:
+                max_value = int(request.GET['max_val'])
+            except:
+                max_value = 5
+            orders = get_orders_items_max(max_value)
+
     paginator = Paginator(orders, 50)
     get_data = request.GET.copy()
     page = get_data.pop('page', None)
