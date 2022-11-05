@@ -64,6 +64,98 @@
                 </div>
             </div>
         </div>
+        <div class="card">
+            <div class="card-header bg-warning bg-opacity-75 text-dark">
+                <div class="row align-items-center">
+                    <h5 class="col-8 h4 mb-0">Graphiques</h5>
+                </div>
+            </div>
+            <div class="card-body py-2">
+                <div class="list-group">
+                    <a href="#"><button type="button" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#myGraph">Stock par produit</button></a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+<div class="modal fade" id="myGraph" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Evolution des stocks</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    Choisissez un produit :
+                    {{ form.nom }}
+                </form>
+                <canvas id="myChart"></canvas>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#id_nom').change(function() {
+            console.log($('#id_nom').val())
+            var url = "{% url 'logApp:show-line' 'XXX' %}"
+            var myChart;
+            url = url.replace("XXX", $('#id_nom').val())
+            var all_data;
+            $.getJSON(url, function (all_data) {
+                console.log(all_data.chart);
+                if (all_data.status == true) {
+                    const config = {
+                        type: 'line',
+                        data: all_data.chart,
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false
+                                },
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Log'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Stock'
+                                    },
+                                    ticks: {
+                                        stepSize: 1
+                                    }
+                                }
+                            }
+                        }
+                    };
+                    let chartStatus = Chart.getChart("myChart"); // <canvas> id
+                    if (chartStatus != undefined) {
+                      chartStatus.destroy();
+                    }
+                    myChart = new Chart(
+                        document.getElementById('myChart'),
+                        config
+                    );
+                }
+            });
+        });
+    });
+    // const data = $.getJSON("http://localhost:8000{% url 'logApp:show-line' produit=1228 %}");
+
+
+
+</script>
 {% endblock %}

@@ -1,9 +1,15 @@
+import logging
+import sys
 from datetime import datetime
 from order.models import *
 from django.db.models import Sum, F
 from django.urls import reverse
 from django.shortcuts import HttpResponseRedirect
 from onlineshop.models import *
+
+order_logger = logging.getLogger('order')
+produit_logger = logging.getLogger('produit')
+cart_logger = logging.getLogger('cart')
 
 
 def get_frais_from_id(id):
@@ -33,13 +39,13 @@ def set_inventaire_for_pre_order(order_id):
         print(last_inventaire)
         # start_date = datetime.datetime.strptime(last_inventaire.start_date, "%d/%m/%Y")
         start_date = last_inventaire.end_date + datetime.timedelta(days=1)
-        end_date = datetime(last_inventaire.end_date.year+1, last_inventaire.end_date.month, last_inventaire.end_date.day)
+        end_date = datetime(last_inventaire.end_date.year + 1, last_inventaire.end_date.month, last_inventaire.end_date.day)
         inventaire = Inventaire.objects.create(start_date=start_date, end_date=end_date)
         inventaire.save()
     order.inventaire = inventaire
     order.save()
 
-    return True
+    return inventaire
 
 
 # QUANTITE TOTALE COMMANDE SUR DES COMMANDES DE LA PERIODE STATUT EN COURS / VALIDEE
@@ -47,7 +53,9 @@ def total_qte_inventaire_progress(produit):
     statut_valide = Statut.objects.get(nom="Validée")
     statut_encours = Statut.objects.get(nom="En cours")
     inventaire = Inventaire.objects.get(actif=True)
-    total_qte = Commande.objects.filter(Cartdbs__produit=produit, inventaire=inventaire, statut__in=[statut_valide, statut_encours]).aggregate(sum=Sum('Cartdbs__qte'))['sum']
+    total_qte = \
+        Commande.objects.filter(Cartdbs__produit=produit, inventaire=inventaire, statut__in=[statut_valide, statut_encours]).aggregate(sum=Sum('Cartdbs__qte'))[
+            'sum']
     print(produit)
     print(total_qte)
 
@@ -67,7 +75,7 @@ def get_admin_mode(user):
 
 def custom_redirect(url_name, *args, **kwargs):
     import urllib.parse
-    url = reverse(url_name, args = args)
+    url = reverse(url_name, args=args)
     params = urllib.parse.urlencode(kwargs)
     return HttpResponseRedirect(url + "?%s" % params)
 
@@ -98,3 +106,21 @@ def get_orders_items_max(max_val=5):
     # unique.sort(key=lambda x: x.id)
     commandes_list = sorted(commandes, key=lambda x: x.id)
     return commandes_list
+
+
+def log_order(user, order, action, field, old_data, new_data):
+    message = {'user': user, 'order': order, 'action': action, 'field': field, 'old_data': old_data, 'new_data': new_data}
+    order_logger.info(message)
+    return True
+
+
+def log_produit(user, produit, order, action, field, old_data, new_data):
+    message = {'user': user, 'produit': produit, 'order': order, 'action': action, 'field': field, 'old_data': old_data, 'new_data': new_data}
+    produit_logger.info(message)
+    return True
+
+
+def log_cart(user, cart, order, produit, action, field, old_data, new_data):
+    message = {'user': user, 'cart': cart, 'order': order, 'produit': produit, 'action': action, 'field': field, 'old_data': old_data, 'new_data': new_data}
+    cart_logger.info(message)
+    return True

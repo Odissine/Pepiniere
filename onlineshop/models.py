@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.utils.text import slugify
 import django.utils.timezone
 from order.models import *
+from django.contrib.auth.models import User
 
 
 class Espece(models.Model):
@@ -168,3 +169,28 @@ class ProduitTest(models.Model):
 
     def __str__(self):
         return self.nom
+
+
+class LogCart(models.Model):
+    objects = models.Manager()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    cart = models.TextField()
+    order = models.TextField()
+    produit = models.TextField()
+    date = models.DateTimeField(auto_now=True)
+    action = models.TextField()
+    field = models.TextField()
+    old_value = models.TextField()
+    new_value = models.TextField()
+
+
+class LogProduit(models.Model):
+    objects = models.Manager()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    produit = models.TextField()
+    order = models.TextField()
+    date = models.DateTimeField(auto_now=True)
+    action = models.TextField()
+    field = models.TextField()
+    old_value = models.TextField()
+    new_value = models.TextField()

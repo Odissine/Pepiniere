@@ -13,6 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.utils.html import format_html
 from pepiniere.settings import DEBUG
+from order.core import *
 
 
 @require_POST
@@ -154,13 +155,27 @@ def cart_valid(request):
                     commande_create = Commande.objects.create(client=client, remise=remise_client, statut=statut_en_cours, tva=tva, inventaire=inventaire)
                     # commande_create.save()
 
+                    # LOG CREATION DE LA COMMANDE
+                    log_order(str(request.user), commande_create.pk, 'Create', 'client', '', str(client.nom) + ' ' + str(client.prenom))
+                    if remise_client:
+                        log_order(str(request.user), commande_create.pk, 'Create', 'remise', '', float(remise_client))
+                    log_order(str(request.user), commande_create.pk, 'Create', 'tva', '', float(tva.tva))
+                    log_order(str(request.user), commande_create.pk, 'Create', 'statut', '', statut_en_cours.nom)
+
                     for item in cart:
                         cart_commande = Cartdb.objects.create(produit=item['produit'], prix=item['prix'], qte=item['qte'], commande=commande_create)
                         cart_commande.save()
+
                         if statut == "En cours":
                             produit = Produit.objects.get(nom=item['produit'])
+                            old_qte = produit.stock_bis
                             new_qte = produit.stock_bis - item['qte']
                             Produit.objects.filter(nom=item['produit']).update(stock_bis=new_qte)
+
+                            # LOG CREATION DE LA COMMANDE (AJOUT PRODUIT)
+                            log_cart(str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'qte', '', item['qte'])
+                            log_cart(str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'prix', '', float(item['prix']))
+                            log_produit(str(request.user), produit.pk, commande_create.pk, 'Create', 'sb', old_qte, new_qte)
 
                     config = Config.objects.first()
                     if config.register is True:
@@ -170,21 +185,22 @@ def cart_valid(request):
                         else:
                             href = "https://stock.lapetitepepiniere.fr/order/detail/" + str(commande_create.id)
 
-                        # MAIL AU RESPONSABLE
-                        email_html = "<br/><br/>Bonjour,<br/><br/>"
-                        email_html += "Une nouvelle commande vient d'être passée."
-                        email_html += "Client : " + str(client) + "<br/><br/>"
-                        email_html += "<a href='" + href + "'>Accéder à la commande</a><br/><br/>"
-                        email_html += "La petite pepinière"
-                        # send_mail("Nouvelle Commande de " + str(client), email_html, '', '', config_mail['sender'], '')
+                        if not request.user.is_staff:
+                            # MAIL AU RESPONSABLE
+                            email_html = "<br/><br/>Bonjour,<br/><br/>"
+                            email_html += "Une nouvelle commande vient d'être passée."
+                            email_html += "Client : " + str(client) + "<br/><br/>"
+                            email_html += "<a href='" + href + "'>Accéder à la commande</a><br/><br/>"
+                            email_html += "La petite pepinière"
+                            # send_mail("Nouvelle Commande de " + str(client), email_html, '', '', config_mail['sender'], '')
 
-                        # MAIL AU CLIENT
-                        email_html = "<br/><br/>Bonjour " + str(client) + ",<br/><br/>"
-                        email_html += "Votre commande a bien été enregistrée.<br/>"
-                        email_html += "Elle sera étudiée prochainement et vous serez informé par mail dès lors qu'elle sera validée ou annulée.<br/><br/>"
-                        email_html += "<a href='" + href + "'>Accéder à la commande</a><br/><br/>"
-                        email_html += "La petite pepinière"
-                        # send_mail("La petite pépinère : Commande enregistrée", email_html, '', '', client.mail, '')
+                            # MAIL AU CLIENT
+                            email_html = "<br/><br/>Bonjour " + str(client) + ",<br/><br/>"
+                            email_html += "Votre commande a bien été enregistrée.<br/>"
+                            email_html += "Elle sera étudiée prochainement et vous serez informé par mail dès lors qu'elle sera validée ou annulée.<br/><br/>"
+                            email_html += "<a href='" + href + "'>Accéder à la commande</a><br/><br/>"
+                            email_html += "La petite pepinière"
+                            # send_mail("La petite pépinère : Commande enregistrée", email_html, '', '', client.mail, '')
 
                     message = "Commande créée avec succès !"
 
@@ -202,13 +218,26 @@ def cart_valid(request):
                     commande_create = Commande.objects.create(date=datetime.now(), client=client, remise=remise_client, statut=statut_en_cours, tva=tva,
                                                               inventaire=inventaire)
                     commande_create.save()
+                    # LOG CREATION DE LA COMMANDE
+                    log_order(str(request.user), commande_create.pk, 'Create', 'client', '', str(client.nom) + ' ' + str(client.prenom))
+                    if remise_client:
+                        log_order(str(request.user), commande_create.pk, 'Create', 'remise', '', float(remise_client))
+                    log_order(str(request.user), commande_create.pk, 'Create', 'tva', '', float(tva.tva))
+                    log_order(str(request.user), commande_create.pk, 'Create', 'statut', '', statut_en_cours.nom)
 
                     for item in cart:
                         cart_commande = Cartdb.objects.create(produit=item['produit'], prix=item['prix'], qte=item['qte'], commande=commande_create)
                         cart_commande.save()
+
                         produit = Produit.objects.get(nom=item['produit'])
+                        old_qte = produit.stock_future
                         new_qte = produit.stock_future + item['qte']
                         Produit.objects.filter(nom=item['produit']).update(stock_future=new_qte)
+
+                        # LOG CREATION DE LA COMMANDE (MAJ STOCK + CART)
+                        log_cart(str(request.user), cart_commande.pk, produit.pk, 'Create', 'qte', '', item['qte'])
+                        log_cart(str(request.user), cart_commande.pk, produit.pk, 'Create', 'prix', '', float(item['prix']))
+                        log_produit(str(request.user), produit.pk, commande_create.pk, 'Create', 'sp', old_qte, new_qte)
 
                     message = "Pré-commande créée avec succès !"
                 messages.success(request, message)
@@ -221,6 +250,7 @@ def cart_valid(request):
     return redirect('order:order-list')
 
 
+@login_required
 def cart_cancel(request):
     cart = Cart(request)
     cart.clear()

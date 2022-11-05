@@ -6,6 +6,11 @@
 {% load calcul_order %}
 {% block title %}Commande{% endblock %}
 {% block content %}
+<style>
+    body .select2-container {
+        z-index: 10000 !important;
+    }
+</style>
 {% with client=commande.client %}
 {% language 'fr' %}
 <div class="row">

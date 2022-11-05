@@ -1,5 +1,5 @@
 import urllib.parse
-
+import socket
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -34,9 +34,8 @@ from cart.forms import CartAddProduitForm, CartUpdateForm, RemiseUpdateForm
 
 locale.setlocale(locale.LC_ALL, 'fr_FR')
 
-import socket
 
-
+# AFFICHE LA LISTE DES COMMANDES ____________________________________________________________________________
 @login_required
 # @staff_member_required(login_url='account:error')
 def order_list(request):
@@ -140,6 +139,7 @@ def order_list(request):
     return render(request, 'order/list.html', context)
 
 
+# AFFICHE LE DETAIL D'UNE COMMANDE ____________________________________________________________________________
 @login_required
 def order_detail(request, id):
     commande = get_object_or_404(Commande, id=id)
@@ -166,7 +166,7 @@ def order_detail(request, id):
     return render(request, 'order/detail.html', context)
 
 
-# PASSAGE D'UNE PRE COMMANDE EN COMMANDE
+# PASSAGE D'UNE COMMANDE EN ATTENTE EN COMMANDE EN COURS _______________________________________________________________
 @login_required
 @staff_member_required
 def order_accept(request, id):
@@ -201,10 +201,19 @@ def order_accept(request, id):
 
     for item in items:
         produit = item.produit
+        old_stock = produit.stock_bis
+        new_stock = produit.stock_bis - item.qte
         produit.stock_bis = produit.stock_bis - item.qte
+
+        # LOG EDIT PRODUIT (STOCK)
+        log_produit(str(request.user), produit.pk, order.pk, 'Update', 'sb', old_stock, new_stock)
         produit.save()
 
+    old_statut = {order.statut.nom}
+    new_statut = statut.nom
     Commande.objects.filter(pk=id).update(statut=statut, date_update=datetime.now())
+    log_order(str(request.user), order.pk, 'Update', 'statut', old_statut, new_statut)
+
     message = "Commande en attente acceptée avec succès à partir de celle réalisée par %s" % order.client
     messages.success(request, message)
     if previous == "manage":
@@ -213,7 +222,7 @@ def order_accept(request, id):
         return redirect('order:order-detail', id)
 
 
-# STATUT VALIDEE D'UNE COMMANDE
+# STATUT VALIDEE D'UNE COMMANDE EN COURS ___________________________________________________________________________
 @login_required
 @staff_member_required
 def order_valid(request, id):
@@ -228,13 +237,17 @@ def order_valid(request, id):
         return redirect('order:order-detail', id)
 
     statut = Statut.objects.get(nom='Validée')
+    old_value = order.statut.nom
+    new_value = statut.nom
     Commande.objects.filter(pk=id).update(statut=statut, date_update=datetime.now())
+    log_order(str(request.user), order.pk, 'Update', 'statut', old_value, new_value)
+
     message = "Commande validée avec succès :)"
     messages.success(request, message)
     return redirect('order:order-detail', id)
 
 
-# PASSAGE D'UNE PRE COMMANDE EN COMMANDE
+# PASSAGE D'UNE PRE COMMANDE EN COMMANDE EN COURS _______________________________________________________________________________
 @login_required
 @staff_member_required
 def order_pre_valid(request, id):
@@ -265,23 +278,37 @@ def order_pre_valid(request, id):
 
     for item in items:
         produit = item.produit
+        old_bis = produit.stock_bis
+        old_future = produit.stock_future
+        new_bis = produit.stock_bis - item.qte
+        new_future = produit.stock_bis - item.qte
         produit.stock_bis = produit.stock_bis - item.qte
         produit.stock_future = produit.stock_future - item.qte
         produit.save()
-    inventaire = Inventaire.objects.get(start_date__lte=datetime.now(), end_date__gte=datetime.now())
 
-    Commande.objects.filter(pk=id).update(statut=statut, date_update=datetime.now(), date=datetime.now(), inventaire=inventaire)
+        # LOG EDIT PRODUIT (STOCK)
+        log_produit(str(request.user), produit.pk, order.pk, 'Update', 'sb', old_bis, new_bis)
+        log_produit(str(request.user), produit.pk, order.pk, 'Update', 'sp', old_future, new_future)
+
+    inventaire = Inventaire.objects.get(start_date__lte=datetime.now(), end_date__gte=datetime.now())
+    old_inventaire = order.inventaire
+    old_statut = order.statut
+    Commande.objects.filter(pk=id).update(statut=statut, date_update=datetime.now(), inventaire=inventaire)
+    # LOG EDIT ORDER
+    log_order(str(request.user), order.pk, 'Update', 'statut', old_statut, statut)
+    log_order(str(request.user), order.pk, 'Update', 'inventaire', old_inventaire, inventaire)
+
     message = "Commande créée avec succès à partir de la Pré-commande !"
     messages.success(request, message)
     return redirect('order:order-detail', id)
 
 
-# PASSAGE DE TOUTES LES PRE COMMANDES EN COMMANDES
+# PASSAGE DE TOUTES LES PRE-COMMANDES EN COMMANDES EN COURS ________________________________________________________________
 @login_required
 @staff_member_required
 def all_order_pre_valid(request, action=None):
     orders = Commande.objects.filter(statut__nom="Pré-commande")
-    print(action)
+
     if action == 'True':
         statut = Statut.objects.get(nom='En cours')
         nb_produit = 0
@@ -305,14 +332,25 @@ def all_order_pre_valid(request, action=None):
             items = Cartdb.objects.filter(commande=order)
             for item in items:
                 produit = item.produit
+                old_bis = produit.stock_bis
+                new_bis = produit.stock_bis - item.qte
+                old_future = produit.stock_future
+                new_future = produit.stock_future - item.qte
                 produit.stock_bis = produit.stock_bis - item.qte
                 produit.stock_future = produit.stock_future - item.qte
                 produit.save()
+                log_produit(str(request.user), produit.pk, order.pk, 'Update', 'sb', old_bis, new_bis)
+                log_produit(str(request.user), produit.pk, order.pk, 'Update', 'sp', old_future, new_future)
+
+            old_inventaire = order.inventaire.start_date.strftime('%Y') + '-' + order.inventaire.end_date.strftime('%Y')
+            old_statut = order.statut.nom
             order.statut = statut
             order.date_update = datetime.now()
-            order.date = datetime.now()
+            # order.date = datetime.now()
             order.inventaire = inventaire
             order.save()
+            log_order(str(request.user), order.pk, 'Update', 'inventaire', old_inventaire, inventaire.start_date.strftime('%Y') + '-' + inventaire.end_date.strftime('%Y'))
+            log_order(str(request.user), order.pk, 'Update', 'statut', old_statut, statut.nom)
 
         message = "Commandes créées avec succès à partir des Pré-commandes !"
         messages.success(request, message)
@@ -325,6 +363,7 @@ def all_order_pre_valid(request, action=None):
     return render(request, 'order/form_pre_order.html', context)
 
 
+# CREATION D'UNE PRE-COMMANDE _______________________________________________________________________________________________
 @login_required
 @staff_member_required
 def pre_order_create(request, id):
@@ -343,7 +382,16 @@ def pre_order_create(request, id):
     order.date = datetime.now()
     order.statut = statut
     order.save()
-    set_inventaire_for_pre_order(order.id)
+    inventaire = set_inventaire_for_pre_order(order.id)
+
+    # LOG CREATION DE LA PRE-COMMANDE
+    log_order(str(request.user), order.pk, 'Create', 'statut', '', statut.nom)
+    log_order(str(request.user), order.pk, 'Create', 'client', '', str(order.client.nom) + ' ' + str(order.client.prenom))
+    log_order(str(request.user), order.pk, 'Create', 'tva', 0, float(order.tva.tva))
+    log_order(str(request.user), order.pk, 'Create', 'inventaire', '', inventaire.start_date.strftime('%Y')+'-'+inventaire.end_date.strftime('%Y'),)
+    if order.frais:
+        log_order(str(request.user), order.pk, 'Create', 'frais', '', order.frais.nom)
+        log_order(str(request.user), order.pk, 'Create', 'montant_frais', 0, float(order.montant_frais))
 
     for item in items:
         produit = Produit.objects.get(id=item.produit.id)
@@ -351,8 +399,18 @@ def pre_order_create(request, id):
         item.pk = None
         item.commande = order
         item.save()
+        old_future = produit.stock_future
+        new_future = produit.stock_future + item.qte
         produit.stock_future += item.qte
         produit.save()
+
+        # LOG CREATION DE LA COMMANDE (AJOUT PRODUIT)
+        log_cart(str(request.user), item.pk, order.pk, produit.pk, 'Create', 'qte', 0, item.qte)
+        log_cart(str(request.user), item.pk, order.pk, produit.pk, 'Create', 'prix', '', float(item.prix))
+
+        # LOG CREATION DE LA COMMANDE (MAJ STOCK)
+        print(old_future, new_future)
+        log_produit(str(request.user), produit.pk, order.pk, 'Create', 'sp', old_future, new_future)
 
     message = "Pré-Commande créée avec succès à partir de la Commande selectionnée !"
     messages.success(request, message)
@@ -364,6 +422,7 @@ def pre_order_create(request, id):
         return redirect('order:order-detail', order.id)
 
 
+# MISE A JOUR D'UNE COMMANDE (QTE et PRIX) _______________________________________________________________________________________________
 @login_required
 @staff_member_required
 def order_update_qte_prix(request, id):
@@ -385,32 +444,46 @@ def order_update_qte_prix(request, id):
         if isinstance(prix, float) and isinstance(qte, int):
             # MISE A JOUR DES STOCK VIRTUELS
             produit = Produit.objects.get(id=produit_commande.produit.id)
-            print(produit_commande.commande.statut.nom)
-            print(admin_mode)
 
+            # LOG MODIFICATION COMMANDE (EDITION PRODUIT PRIX / QTE)
+            old_qte = produit_commande.qte
+            old_prix = produit_commande.prix
+
+            produit_commande.qte = qte
+            produit_commande.prix = prix
+            produit_commande.save()
+
+            if old_qte != qte:
+                log_cart(str(request.user), produit_commande.pk, produit_commande.commande.pk, produit_commande.produit.pk, 'Update', 'qte', old_qte, qte)
+            if old_prix != prix:
+                log_cart(str(request.user), produit_commande.pk, produit_commande.commande.pk, produit_commande.produit.pk, 'Update', 'prix', float(old_prix), float(prix))
+            # PRE-COMMANDE
             if produit_commande.commande.statut.nom == "Pré-commande":
                 # ON MET A JOUR LE PRODUIT DE LA COMMANDE AVEC LA NOUVELLE QUANTITE ET LE NOUVEAU PRIX
-                new_stock = produit.stock_future - produit_commande.qte + qte
-
-                produit_commande.qte = qte
-                produit_commande.prix = prix
-                produit_commande.save()
-
+                old_stock = produit.stock_future
+                new_stock = produit.stock_future - old_qte + qte
                 produit.stock_future = new_stock
                 produit.save()
+                # LOG STOCK UPDATE
+                if old_stock != new_stock:
+                    log_produit(str(request.user), produit_commande.produit.pk, produit_commande.commande.pk, 'Update', 'sp', old_stock, new_stock)
+
+                # ON MET A JOUR LA COMMANDE AVEC LE NOUVEAU TOTAL
+                Commande.objects.filter(pk=produit_commande.commande.id).update(date_update=datetime.now())
 
                 message = format_html("Mise à jour quantités / prix effectuée avec succès !")
                 messages.success(request, message)
+
+            # EN COURS / VALIDEE
             else:
-                new_stock = produit.stock_bis + produit_commande.qte - qte
+                old_stock = produit.stock_bis
+                new_stock = produit.stock_bis + old_qte - qte
+
                 if new_stock >= 0:
                     produit.stock_bis = new_stock
                     produit.save()
-
-                    # ON MET A JOUR LE PRODUIT DE LA COMMANDE AVEC LA NOUVELLE QUANTITE ET LE NOUVEAU PRIX
-                    produit_commande.qte = qte
-                    produit_commande.prix = prix
-                    produit_commande.save()
+                    if old_stock != new_stock:
+                        log_produit(str(request.user), produit.pk, produit_commande.commande.pk, 'Update', 'sb', old_stock, new_stock)
 
                     # ON MET A JOUR LA COMMANDE AVEC LE NOUVEAU TOTAL
                     Commande.objects.filter(pk=produit_commande.commande.id).update(date_update=datetime.now())
@@ -428,18 +501,21 @@ def order_update_qte_prix(request, id):
     return redirect('order:order-detail', produit_commande.commande.id)
 
 
-# MISE A JOUR DE LA REMISE SUR UNE COMMANDE
+# MISE A JOUR DE LA REMISE SUR UNE COMMANDE __________________________________________________________________
 @login_required
 @staff_member_required
 def order_update_remise(request, id):
     try:
         remise = locale.atof(request.POST['remise'])
+        order = Commande.objects.get(pk=id)
     except Exception as e:
         message = format_html("Une erreur s'est produite : <br>" + str(e))
         messages.error(request, message)
         return redirect('order:order-detail', id)
-
-    Commande.objects.filter(pk=id).update(remise=remise)
+    old_remise = order.remise
+    new_remise = remise
+    order.update(remise=remise)
+    log_order(str(request.user), order.pk, 'Edit', 'remise', float(old_remise), float(new_remise))
 
     message = "Remise modifiée avec succès !"
     messages.success(request, message)
@@ -475,9 +551,18 @@ def order_update_frais(request, id):
                 message = format_html("Une erreur s'est produite : <br>" + str(e))
                 messages.error(request, message)
                 return redirect('order:order-detail', id)
+        old_frais = ""
+        old_montant_frais = ""
+        if commande.frais:
+            old_frais = commande.frais.nom
+            old_montant_frais = commande.montant_frais
         commande.frais = frais_type
+        commande.date_update = datetime.now()
         commande.montant_frais = frais_montant
         commande.save()
+
+        log_order(str(request.user), commande.pk, 'Edit', 'frais', old_frais, frais_type.nom)
+        log_order(str(request.user), commande.pk, 'Edit', 'montant_frais', float(old_montant_frais), float(frais_montant))
 
         message = "Frais modifiés avec succès !"
         messages.success(request, message)
@@ -485,86 +570,73 @@ def order_update_frais(request, id):
     return redirect('order:order-detail', id)
 
 
-# AJOUT D'UN PRODUIT SUR UNE COMMANDE
-@login_required
-@staff_member_required
-def order_update_add_product(request):
-    if (request.POST.get("recipient-order")) != "" and (request.POST.get("produit-id")) != "":
-        order_id = request.POST.get("recipient-order")
-        produit_id = request.POST.get("produit-id")
-        order = get_object_or_404(Commande, pk=order_id)
-        produit = get_object_or_404(Produit, pk=produit_id)
-        items = Cartdb.objects.filter(commande=order)
-        list_produits = []
-        for item in items:
-            list_produits.append(item.produit)
-
-        if produit not in list_produits:
-            cart_commande = Cartdb.objects.create(produit=produit, prix=15.0, qte=1, commande=order, total_line=15.0)
-            cart_commande.save()
-
-            total = float(order.total) + 15.0
-            Commande.objects.filter(pk=order_id).update(total=total)
-
-            stock = produit.stock_bis - 1
-            Produit.objects.filter(pk=produit_id).update(stock_bis=stock)
-
-            message = "Ajout du produit effectué avec succès !"
-            messages.success(request, message)
-        else:
-            message = "Produit déjà présent dans la commande."
-            messages.warning(request, message)
-        return redirect('order:order-detail', order.id)
-    else:
-        return False
-
-
-# SUPPRESSION D'UN ITEM DE LA COMMANDE
+# SUPPRESSION D'UN PRODUIT DE LA COMMANDE ____________________________________________________________________________________
 @login_required
 @staff_member_required
 def order_product_remove(request, id):
     item = get_object_or_404(Cartdb, id=id)
 
     commande = get_object_or_404(Commande, pk=item.commande.id)
+    old_future = item.produit.stock_future
+    old_final = item.produit.stock
+    old_bis = item.produit.stock_bis
     if commande.statut.nom == "En cours" or commande.statut.nom == "Validée":
         stock = item.produit.stock_bis + item.qte
         Produit.objects.filter(pk=item.produit.id).update(stock_bis=stock)
+        log_produit(str(request.user), item.produit.pk, commande.pk, 'Update', 'sb', old_bis, stock)
+
     if commande.statut.nom == "Pré-commande":
         stock = item.produit.stock_future - item.qte
         Produit.objects.filter(pk=item.produit.id).update(stock_future=stock)
+        log_produit(str(request.user), item.produit.pk, commande.pk, 'Update', 'sp', old_future, stock)
+
+    old_value_cart = item.qte
+    new_value_cart = 0
+    log_cart(str(request.user), item.pk, commande.pk, item.produit.pk, 'Delete', 'qte', old_value_cart, new_value_cart)
     item.delete()
+
     message = "Suppression du produit effectuée avec succès !"
     messages.success(request, message)
 
     return redirect('order:order-detail', item.commande.id)
 
-# ANNULATION D'UNE COMMANDE AVEC MISE A JOUR DE LA DATE ET DU STATUT
+
+# ANNULATION D'UNE COMMANDE AVEC MISE A JOUR DE LA DATE ET DU STATUT ET DES STOCKS SI NECESSAIRE
 @login_required
 def order_cancel(request, id):
     order = get_object_or_404(Commande, pk=id)
     statut = Statut.objects.get(nom='Annulée')
     commande_statut = order.statut
+    old_value_order = order.statut.nom
+    new_value_order = statut.nom
+
     Commande.objects.filter(pk=id).update(statut=statut, date_update=datetime.now())
+    log_order(str(request.user), order.pk, 'Cancel', 'statut', old_value_order, new_value_order)
 
     items = Cartdb.objects.filter(commande=order)
     message = ""
     for item in items:
         produit = Produit.objects.get(pk=item.produit.id)
+        old_final = produit.stock
+        old_bis = produit.stock_bis
+        old_future = produit.stock_future
         if commande_statut.nom == "En attente":
             message = "Commande en attente annulée avec succès !"
         elif commande_statut.nom == "Pré-commande":
             old_qte = produit.stock_future - item.qte
             Produit.objects.filter(pk=item.produit.id).update(stock_future=old_qte)
             message = "Pré-commande annulée avec succès !"
+            log_produit(str(request.user), produit.pk, order.pk, 'Cancel', 'sp', old_future, old_qte)
         elif commande_statut.nom == "Validée" or commande_statut.nom == "En cours":
             old_qte = produit.stock_bis + item.qte
             Produit.objects.filter(pk=item.produit.id).update(stock_bis=old_qte)
             message = "Commande annulée avec succès !"
+            log_produit(str(request.user), produit.pk, order.pk, 'Cancel', 'sb', old_bis, old_qte)
         else:
             old_qte = produit.stock + item.qte
             Produit.objects.filter(pk=item.produit.id).update(stock=old_qte)
             message = "Commande annulée avec succès !"
-
+            log_produit(str(request.user), produit.pk, order.pk, 'Cancel', 'sf', old_final, old_qte)
     messages.success(request, message)
     return redirect('order:order-detail', id)
 
@@ -576,6 +648,11 @@ def order_end(request, id):
     order = get_object_or_404(Commande, pk=id)
     statut = Statut.objects.get(nom='Terminée')
 
+    if order.statut.nom != "Validée" and order.statut.nom != "En cours":
+        message = format_html("Impossible de passer la commande en statut \"Terminée\"<br>Elle doit d'abord passer par le statut validée ou en cours !")
+        messages.error(request, message)
+        return redirect('order:order-detail', id)
+
     items = Cartdb.objects.filter(commande=order)
     for item in items:
         produit = Produit.objects.get(pk=item.produit.id)
@@ -585,10 +662,17 @@ def order_end(request, id):
             messages.error(request, message)
             return redirect('order:order-detail', id)
 
+    old_value_order = order.statut.nom
+    new_value_order = statut.nom
+    log_order(str(request.user), order.pk, 'End', 'statut', old_value_order, new_value_order)
+
     Commande.objects.filter(pk=id).update(statut=statut, date_update=datetime.now())
     for item in items:
+        old_qte = item.produit.stock
         produit = Produit.objects.get(pk=item.produit.id)
         new_qte = produit.stock - item.qte
+        log_produit(str(request.user), produit.pk, order.pk, 'End', 'sf', old_qte, new_qte)
+
         Produit.objects.filter(pk=item.produit.id).update(stock=new_qte)
 
     message = "Commande terminée avec succès !"
@@ -1666,6 +1750,17 @@ def edit_order(request, order_id):
     if request.user.is_staff:
         title = "COMMANDES"
         order = Commande.objects.get(id=order_id)
+        old_client = str(order.client.nom) + ' ' + str(order.client.prenom)
+        old_remise = order.remise
+        old_tva = order.tva.tva
+        old_inventaire = order.inventaire.start_date.strftime('%Y') + '-' + order.inventaire.end_date.strftime('%Y')
+        old_frais = ""
+        old_montant_frais = ""
+        old_statut = order.statut.nom
+        if order.frais:
+            old_frais = order.frais.nom
+            old_montant_frais = order.montant_frais
+
         produits = Cartdb.objects.filter(commande=order)
         form = FormAddOrder(request.POST or None, instance=order)
 
@@ -1676,6 +1771,36 @@ def edit_order(request, order_id):
             if form.is_valid():
                 instance = form.instance
                 obj = instance.save()
+
+                new_client = str(instance.client.nom) + ' ' + str(instance.client.prenom)
+                new_remise = instance.remise
+                new_tva = instance.tva.tva
+                new_inventaire = instance.inventaire.start_date.strftime('%Y') + '-' + instance.inventaire.end_date.strftime('%Y')
+                new_frais = ""
+                new_montant_frais = ""
+
+                if instance.frais:
+                    new_frais = instance.frais.nom
+                    new_montant_frais = instance.montant_frais
+                new_statut = instance.statut.nom
+
+                if old_client != new_client:
+                    log_order(str(request.user), order.pk, 'Edit', 'client', old_client, new_client)
+                if old_remise != new_remise:
+                    log_order(str(request.user), order.pk, 'Edit', 'remise', float(old_remise), float(new_remise))
+                if old_tva != new_tva:
+                    log_order(str(request.user), order.pk, 'Edit', 'tva', float(old_tva), float(new_tva))
+                if old_inventaire != new_inventaire:
+                    log_order(str(request.user), order.pk, 'Edit', 'inventaire', old_inventaire, new_inventaire)
+                if old_frais != new_frais:
+                    log_order(str(request.user), order.pk, 'Edit', 'frais', old_frais, new_frais)
+                if old_montant_frais != new_montant_frais:
+                    log_order(str(request.user), order.pk, 'Edit', 'montant_frais', float(old_montant_frais), float(new_montant_frais))
+                if old_statut != new_statut:
+                    log_order(str(request.user), order.pk, 'Edit', 'statut', old_statut, new_statut)
+
+                order.date_update = datetime.now()
+                order.save()
 
                 message = "Commande modifiée avec succès !"
                 messages.success(request, message)
@@ -1703,10 +1828,29 @@ def delete_order(request, order_id):
         order = Commande.objects.get(id=order_id)
         items = Cartdb.objects.filter(commande=order)
 
-        # for item in items:
+        for item in items:
+            log_cart(str(request.user), item.pk, order.pk, item.produit.pk, 'Delete', 'qte', item.qte, 0)
+            log_cart(str(request.user), item.pk, order.pk, item.produit.pk, 'Delete', 'prix', float(item.prix), '')
         #     produit = Produit.objects.get(id=item.produit.id)
         #     produit.stock_bis += item.qte
         #     produit.save()
+
+        old_client = str(order.client.nom) + ' ' + str(order.client.prenom)
+        old_remise = order.remise
+        old_tva = order.tva.tva
+        old_inventaire = order.inventaire.start_date.strftime('%Y') + '-' + order.inventaire.end_date.strftime('%Y')
+        if order.frais:
+            old_frais = order.frais.nom
+            old_montant_frais = order.montant_frais
+            log_order(str(request.user), order.pk, "Delete", 'frais', old_frais, '')
+            log_order(str(request.user), order.pk, "Delete", 'montant_frais', float(old_montant_frais), '')
+        old_statut = order.statut.nom
+
+        log_order(str(request.user), order.pk, "Delete", 'client', old_client, '')
+        log_order(str(request.user), order.pk, "Delete", 'remise', float(old_remise), '')
+        log_order(str(request.user), order.pk, "Delete", 'tva', float(old_tva), '')
+        log_order(str(request.user), order.pk, "Delete", 'inventaire', old_inventaire, '')
+        log_order(str(request.user), order.pk, "Delete", 'statut', old_statut, '')
 
         order.delete()
         message = format_html("Commande supprimée avec succès !<br> <i class='bi bi-exclamation-triangle'></i> Stock NON remis à jour pour l'ensemble des produits de la commande")
@@ -1723,33 +1867,51 @@ def cancel_order(request, order_id):
     items = Cartdb.objects.filter(commande=order)
     statut = Statut.objects.get(nom="Annulée")
     message = format_html("Commande annulée avec succès !")
-
-    if order.statut.nom == "En attente":
-        order.statut = statut
-        order.save()
+    old_statut = order.statut.nom
 
     if request.user.is_staff:
         if order.statut.nom == "Terminée":
             message = message + format_html("<br>Stock final et virtuel remis à jour pour l'ensemble des produits de la commande")
             for item in items:
+                old_final = item.produit.stock
+                old_bis = item.produit.stock_bis
+
                 item.produit.stock += item.qte
                 item.produit.stock_bis += item.qte
+
+                new_final = item.produit.stock
+                new_bis = item.produit.stock_bis
+
                 item.produit.save()
+
+                log_produit(str(request.user), item.produit.pk, order.pk, "Cancel", "sf", old_final, new_final)
+                log_produit(str(request.user), item.produit.pk, order.pk, "Cancel", "sb", old_bis, new_bis)
 
         if order.statut.nom == "Validée" or order.statut.nom == "En cours":
             message = message + format_html("<br>Stock virtuel remis à jour pour l'ensemble des produits de la commande")
             for item in items:
+                old_bis = item.produit.stock_bis
                 item.produit.stock_bis += item.qte
+                new_bis = item.produit.stock_bis
                 item.produit.save()
+                log_produit(str(request.user), item.produit.pk, order.pk, "Cancel", "sb", old_bis, new_bis)
 
         if order.statut.nom == "Pré-commande":
             message = message + format_html("<br>Stock futur remis à jour pour l'ensemble des produits de la commande")
             for item in items:
+                old_future = item.produit.stock_future
                 item.produit.stock_future -= item.qte
                 item.produit.save()
+                new_future = item.produit.stock_future
+                log_produit(str(request.user), item.produit.pk, order.pk, "Cancel", "sp", old_future, new_future)
 
         order.statut = statut
+        order.date_update = datetime.now()
         order.save()
+
+    new_statut = statut.nom
+    log_order(str(request.user), order.pk, "Cancel", "statut", old_statut, new_statut)
+    
     messages.success(request, message)
     return redirect('order:manage-order')
 
@@ -1765,13 +1927,18 @@ def validate_order(request, order_id):
         nb_produit = 0
         message = format_html("Commande validée avec succès !")
 
+        old_statut = order.statut.nom
+        
         # TERMINEE ___________________________________________________________________________________________________________
         if order.statut.nom == "Terminée":
             message = message + format_html("<br>Stock final remis à jour pour l'ensemble des produits de la commande.")
             for item in items:
+                old_final = item.produit.stock
                 item.produit.stock += item.qte
+                new_final = item.produit.stock + item.qte
                 item.produit.save()
-
+                log_produit(str(request.user), item.produit.pk, order.pk, "Valid", "sf", old_final, new_final)
+                
         # ANNULEE OU EN ATTENTE ______________________________________________________________________________________________
         if order.statut.nom == "Annulée" or order.statut.nom == "En attente":
             message_produit = ""
@@ -1788,8 +1955,13 @@ def validate_order(request, order_id):
                 return redirect('order:manage-order')
 
             for item in items:
+                old_bis = item.produit.stock_bis
+                new_bis = item.produit.stock_bis - item.qte
+
                 item.produit.stock_bis -= item.qte
                 item.produit.save()
+
+                log_produit(str(request.user), item.produit.pk, order.pk, "Valid", "sb", old_bis, new_bis)
 
         # PRE COMMANDE ______________________________________________________________________________________________________
         if order.statut.nom == "Pré-commande":
@@ -1807,12 +1979,25 @@ def validate_order(request, order_id):
                 return redirect('order:manage-order')
 
             for item in items:
+                old_bis = item.produit.stock_bis
+                old_future = item.produit.stock_future
+                new_bis = item.produit.stock_bis - item.qte
+                new_future = item.produit.stock_future - item.qte
+
                 item.produit.stock_bis -= item.qte
                 item.produit.stock_future -= item.qte
                 item.produit.save()
 
+                log_produit(str(request.user), item.produit.pk, order.pk, "Valid", "sb", old_bis, new_bis)
+                log_produit(str(request.user), item.produit.pk, order.pk, "Valid", "sp", old_future, new_future)
+
         order.statut = statut
+        order.date_update = datetime.now()
         order.save()
+
+        new_statut = statut.nom
+        log_order(str(request.user), order.pk, "Valid", "statut", old_statut, new_statut)
+        
         messages.success(request, message)
         return redirect('order:manage-order')
     else:
@@ -1826,6 +2011,7 @@ def in_progress_order(request, order_id):
     if request.user.is_staff:
         title = "COMMANDES"
         order = Commande.objects.get(id=order_id)
+        old_statut = order.statut.nom
         items = Cartdb.objects.filter(commande=order)
         statut = Statut.objects.get(nom="En cours")
         nb_produit = 0
@@ -1834,27 +2020,40 @@ def in_progress_order(request, order_id):
         if order.statut.nom == "Terminée":
             message = message + format_html("<br>Stock final remis à jour pour l'ensemble des produits de la commande.")
             for item in items:
+                old_final = item.produit.stock
+                new_final = item.produit.stock + item.qte
+
                 item.produit.stock += item.qte
                 item.produit.save()
+
+                log_produit(str(request.user), item.produit.pk, order.pk, "Encours", "sf", old_final, new_final)
 
         if order.statut.nom == "Pré-commande":
             message_produit = ""
             message = message + format_html("<br>Stock future remis à jour pour l'ensemble des produits de la commande.")
-            # for item in items:
-            #     if item.produit.stock_bis - item.qte < 0:
-            #         nb_produit += 1
-            #         message_produit = message_produit + "<li>" + item.produit.nom + "</li>"
+            for item in items:
+                if item.produit.stock_bis - item.qte < 0:
+                    nb_produit += 1
+                    message_produit = message_produit + "<li>" + item.produit.nom + "</li>"
 
-            # if nb_produit > 0:
-            #     message = format_html("Impossible de passer la commande en \"En cours\" <br>Stock insuffisant sur les produits suivants : <ul>" + message_produit + "</ul>")
-            #     messages.error(request, message)
-            #     return redirect('order:manage-order')
+            if nb_produit > 0:
+                message = format_html("Impossible de passer la commande en \"En cours\" <br>Stock insuffisant sur les produits suivants : <ul>" + message_produit + "</ul>")
+                messages.error(request, message)
+                return redirect('order:manage-order')
 
             for item in items:
                 # Desactivation de la mise à jours des stocks virtuels lors du passage d'une pré-commande vers une commande en cours
-                # item.produit.stock_bis -= item.qte
+                old_bis = item.produit.stock_bis
+                new_bis = item.produit.stock_bis - item.qte
+                old_future = item.produit.stock_future
+                new_future = item.produit.stock_future - item.qte
+
+                item.produit.stock_bis -= item.qte
                 item.produit.stock_future -= item.qte
                 item.produit.save()
+
+                log_produit(str(request.user), item.produit.pk, order.pk, "Encours", "sb", old_bis, new_bis)
+                log_produit(str(request.user), item.produit.pk, order.pk, "Encours", "sp", old_future, new_future)
             order.date = datetime.now()
 
         if order.statut.nom == "Annulée":
@@ -1871,12 +2070,21 @@ def in_progress_order(request, order_id):
                 return redirect('order:manage-order')
 
             for item in items:
+                old_bis = item.produit.stock_bis
+                new_bis = item.produit.stock_bis - item.qte
+
                 item.produit.stock_bis -= item.qte
                 item.produit.save()
+
+                log_produit(str(request.user), item.produit.pk, order.pk, "Encours", "sb", old_bis, new_bis)
 
         order.date_update = datetime.now()
         order.statut = statut
         order.save()
+
+        new_statut = statut.nom
+        log_order(str(request.user), order.pk, "Encours", "statut", old_statut, new_statut)
+
         messages.success(request, message)
         return redirect('order:manage-order')
     else:
@@ -1889,6 +2097,7 @@ def in_progress_order(request, order_id):
 def finish_order(request, order_id):
     if request.user.is_staff:
         order = Commande.objects.get(id=order_id)
+        old_statut = order.statut.nom
         items = Cartdb.objects.filter(commande=order)
         statut = Statut.objects.get(nom="Terminée")
         nb_produit = 0
@@ -1906,8 +2115,13 @@ def finish_order(request, order_id):
                 return redirect('order:manage-order')
 
             for item in items:
+                old_final = item.produit.stock
+                new_final = item.produit.stock - item.qte
+
                 item.produit.stock -= item.qte
                 item.produit.save()
+
+                log_produit(str(request.user), item.produit.pk, order.pk, "End", "sf", old_final, new_final)
 
         if order.statut.nom == "Annulée" or order.statut.nom == "En attente":
             message_produit = ""
@@ -1922,13 +2136,27 @@ def finish_order(request, order_id):
                 return redirect('order:manage-order')
 
             for item in items:
+                old_bis = item.produit.stock_bis
+                old_final = item.produit.stock
+                new_bis = item.produit.stock_bis - item.qte
+                new_final = item.produit.stock - item.qte
+
                 item.produit.stock -= item.qte
                 item.produit.stock_bis -= item.qte
                 item.produit.save()
+
+                log_produit(str(request.user), item.produit.pk, order.pk, "End", "sb", old_bis, new_bis)
+                log_produit(str(request.user), item.produit.pk, order.pk, "End", "sf", old_final, new_final)
+
             message = message + format_html("<br> Stock final et virtuel mis à jour pour l'ensemble des produits de la commande")
 
         order.statut = statut
+        order.date_update = datetime.now()
         order.save()
+
+        new_statut = statut.nom
+        log_order(str(request.user), order.pk, "End", "statut", old_statut, new_statut)
+
         messages.success(request, message)
         return redirect('order:manage-order')
     else:
@@ -1954,18 +2182,43 @@ def add_produit_order(request, order_id, manage):
                 qte = form.cleaned_data['qte']
                 prix = form.cleaned_data['prix']
                 produit_commande = Cartdb.objects.filter(commande=commande, produit=produit)
-                print(produit.stock, produit.stock_bis)
+
+                # IMPOSSIBLE DE MODIFIER UNE COMMANDE ANNULEE OU TERMINEE (AJOUT DE PRODUIT)
+                if commande.statut.nom == "Annulée" or commande.statut.nom == "Terminée":
+                    message = format_html("Impossible de modifier les produits sur cette commande (problème de statut) !")
+                    messages.error(request, message)
+                    if manage == "1":
+                        return redirect('order:edit-order', order_id)
+                    else:
+                        return redirect('order:order-detail', order_id)
+
+                # COMMANDE EN COURS OU VALIDEE
                 if not commande.statut.nom == "Pré-commande":
                     if produit_commande.exists():
                         produit = Produit.objects.get(pk=produit.id)
                         produit_commande = produit_commande.first()
                         if produit.stock_bis - qte >= 0:
+                            old_cart_qte = produit_commande.qte
+                            old_cart_prix = produit_commande.prix
+
                             produit_commande.qte = produit_commande.qte + qte
                             produit_commande.prix = prix
                             produit_commande.save()
 
+                            new_cart_qte = produit_commande.qte + qte
+                            new_cart_prix = prix
+
+                            if old_cart_prix != new_cart_prix:
+                                log_cart(str(request.user), produit_commande.pk, commande.pk, produit.pk, "Edit", "prix", float(old_cart_prix), float(new_cart_prix))
+                            log_cart(str(request.user), produit_commande.pk, commande.pk, produit.pk, "Edit", "qte", old_cart_qte, new_cart_qte)
+
+                            old_bis = produit.stock_bis
+                            new_bis = produit.stock_bis - qte
+
                             produit.stock_bis = produit.stock_bis - qte
                             produit.save()
+
+                            log_produit(str(request.user), produit.pk, commande.pk, "Update", "sb", old_bis, new_bis)
 
                             message = format_html("Produit déjà présent dans la commande.<br/>Quantité et Prix mis à jour !")
                             messages.success(request, message)
@@ -1977,31 +2230,57 @@ def add_produit_order(request, order_id, manage):
                             return redirect('order:edit-order', order_id)
                         else:
                             return redirect('order:order-detail', order_id)
-
-                    if produit.stock_bis >= qte:
-                        obj = form.save(commit=False)
-                        obj.commande = commande
-                        obj.save()
-
-                        produit.stock_bis -= qte
-                        produit.save()
-
-                        message = "Produit ajouté à la commande avec succès !"
-                        messages.success(request, message)
                     else:
-                        message = "Stock insuffisant !"
-                        messages.error(request, message)
-                    print(produit.stock, produit.stock_bis)
+                        if produit.stock_bis >= qte:
+                            obj = form.save(commit=False)
+
+                            new_qte = form.cleaned_data['qte']
+                            new_prix = form.cleaned_data['prix']
+
+                            obj.commande = commande
+                            obj.save()
+
+                            log_cart(str(request.user), obj.pk, commande.pk, produit.pk, "Add", "qte", 0, new_qte)
+                            log_cart(str(request.user), obj.pk, commande.pk, produit.pk, "Add", "prix", '', float(new_prix))
+
+                            old_bis = produit.stock_bis
+                            new_bis = produit.stock_bis - qte
+
+                            produit.stock_bis -= qte
+                            produit.save()
+
+                            log_produit(str(request.user), produit.pk, commande.pk, "Add", "sb", old_bis, new_bis)
+
+                            message = "Produit ajouté à la commande avec succès !"
+                            messages.success(request, message)
+                        else:
+                            message = "Stock insuffisant !"
+                            messages.error(request, message)
+                # PRE-COMMANDE
                 else:
                     if produit_commande.exists():
                         produit = Produit.objects.get(pk=produit.id)
                         produit_commande = produit_commande.first()
+
+                        old_cart_qte = produit_commande.qte
+                        old_cart_prix = produit_commande.prix
+                        new_cart_qte = produit_commande.qte + qte
+                        new_cart_prix = prix
                         produit_commande.qte = produit_commande.qte + qte
                         produit_commande.prix = prix
                         produit_commande.save()
 
-                        produit.stock_future += produit_commande.qte
+                        if old_cart_prix != new_cart_prix:
+                            log_cart(str(request.user), produit_commande.pk, commande.pk, produit.pk, "Edit", "prix", float(old_cart_prix), float(new_cart_prix))
+                        log_cart(str(request.user), produit_commande.pk, commande.pk, produit.pk, "Edit", "qte", old_cart_qte, new_cart_qte)
+
+                        old_future = produit.stock_future
+                        new_future = produit.stock_future + qte
+
+                        produit.stock_future += qte
                         produit.save()
+
+                        log_produit(str(request.user), produit.pk, commande.pk, "Update", "sp", old_future, new_future)
 
                         message = format_html("Produit déjà présent dans la pré-commande.<br/>Quantité et Prix mis à jour !")
                         messages.success(request, message)
@@ -2010,16 +2289,29 @@ def add_produit_order(request, order_id, manage):
                             return redirect('order:edit-order', order_id)
                         else:
                             return redirect('order:order-detail', order_id)
+                    else:
+                        obj = form.save(commit=False)
+                        obj.commande = commande
+                        obj.save()
 
-                    obj = form.save(commit=False)
-                    obj.commande = commande
-                    obj.save()
+                        new_cart_qte = qte
+                        new_cart_prix = prix
+                        log_cart(str(request.user), produit_commande.pk, commande.pk, produit.pk, "Add", "prix", '', float(new_cart_prix))
+                        log_cart(str(request.user), produit_commande.pk, commande.pk, produit.pk, "Add", "qte", 0, new_cart_qte)
 
-                    produit.stock_future += qte
-                    produit.save()
+                        old_future = produit.stock_future
+                        new_future = produit.stock_future + qte
+                        produit.stock_future += qte
+                        produit.save()
+
+                        log_produit(str(request.user), produit.pk, commande.pk, "Update", "sp", old_future, new_future)
 
                     message = "Produit ajouté à la pré-commande avec succès !"
                     messages.success(request, message)
+
+                commande.date_update = datetime.now()
+                commande.save()
+
             else:
                 message = "Une erreur s'est produite"
                 messages.error(request, message)
@@ -2068,36 +2360,65 @@ def edit_produit_order(request, order_id, produit_id):
         formAction = 'order:edit-produit-order'
         previous_qte = produit_commande.qte
 
+        old_bis = produit.stock_bis
+        old_final = produit.stock
+        old_future = produit.stock_future
+        old_qte = produit_commande.qte
+        old_prix = produit_commande.prix
+
         if request.method == 'POST':
             if form.is_valid():
                 qte = form.cleaned_data['qte']
+                prix = form.cleaned_data['prix']
                 produit = form.cleaned_data['produit']
+
                 if (produit.stock_bis + previous_qte) >= qte or admin_mode or anomalie == "1":
                     obj = form.save(commit=False)
                     obj.commande = commande
                     obj.save()
 
+                    log_cart(str(request.user), produit_commande.pk, commande.pk, produit.pk, "Update", "qte", old_qte, qte)
+                    if prix != old_prix:
+                        log_cart(str(request.user), produit_commande.pk, commande.pk, produit.pk, "Update", "prix", float(old_prix), float(prix))
+
                     # SI COMMANDE TERMINEE ON MET A JOUR LE STOCK FINAL EN PLUS DU STOCK VIRTUEL
                     if commande.statut.nom == "Terminée":
+                        old_final = produit.stock
                         qte_to_modify_final = produit.stock + previous_qte - qte
                         produit.stock = qte_to_modify_final
+                        log_produit(str(request.user), produit.pk, commande.pk, "Update", "sf", old_final, qte_to_modify_final)
+
+                        commande.date_update = datetime.now()
+                        commande.save()
 
                     # SI COMMANDE AUTRE QUE ANNULEE ON MET A JOUR LE STOCK VIRTUEL SINON RIEN
                     if commande.statut.nom != "Annulée" and commande.statut.nom !="Pré-commande" and anomalie != "1":
                         qte_to_modify = produit.stock_bis + previous_qte - qte
                         if qte_to_modify <= produit.stock:
+                            old_bis = produit.stock_bis
                             produit.stock_bis = qte_to_modify
                             produit.save()
+                            new_stock = qte_to_modify
+                            log_produit(str(request.user), produit.pk, commande.pk, "Update", "sb", old_bis, qte_to_modify)
+
+                            commande.date_update = datetime.now()
+                            commande.save()
 
                     if commande.statut.nom == "Pré-commande":
+                        old_future = produit.stock_future
                         qte_to_modify = produit.stock_future - previous_qte + qte
                         produit.stock_future = qte_to_modify
                         produit.save()
+                        log_produit(str(request.user), produit.pk, commande.pk, "Update", "sp", old_future, qte_to_modify)
+
+                        commande.date_update = datetime.now()
+                        commande.save()
 
                     message = "Produit de la commande édité avec succès !"
                     if anomalie == "1":
                         message = message + " (Stock non mis à jour car commande en anomalie)"
                     messages.success(request, message)
+
                 elif previous_qte > qte and qte <= total_qte_inventaire_progress(produit) or admin_mode:
                     obj = form.save(commit=False)
                     obj.commande = commande
@@ -2105,26 +2426,50 @@ def edit_produit_order(request, order_id, produit_id):
 
                     # SI COMMANDE TERMINEE ON MET A JOUR LE STOCK FINAL EN PLUS DU STOCK VIRTUEL
                     if commande.statut.nom == "Terminée":
+                        old_final = produit.stock
                         qte_to_modify_final = produit.stock + previous_qte - qte
                         produit.stock = qte_to_modify_final
+                        produit.save()
+                        log_produit(str(request.user), produit.pk, commande.pk, "Update", "sf", old_final, qte_to_modify_final)
+
+                        commande.date_update = datetime.now()
+                        commande.save()
 
                     # SI COMMANDE AUTRE QUE ANNULEE ON MET A JOUR LE STOCK VIRTUEL SINON RIEN
-                    if commande.statut.nom != "Annulée":
+                    if commande.statut.nom not in ["Annulée", "Terminée", "En attente"]:
+                        old_bis = produit.stock_bis
                         qte_to_modify = produit.stock_bis + previous_qte - qte
                         if qte_to_modify <= produit.stock:
                             produit.stock_bis = qte_to_modify
                             produit.save()
+                            log_produit(str(request.user), produit.pk, commande.pk, "Update", "sb", old_bis, qte_to_modify)
+
+                            commande.date_update = datetime.now()
+                            commande.save()
+
+                    log_cart(str(request.user), produit_commande.pk, commande.pk, produit.ok, "Update", "qte", old_qte, qte)
+                    if prix != old_prix:
+                        log_cart(str(request.user), produit_commande.pk, commande.pk, produit.ok, "Update", "prix", float(old_prix), float(prix))
 
                 elif commande.statut.nom == "Pré-commande":
                     obj = form.save(commit=False)
                     obj.commande = commande
                     obj.save()
+                    old_future = produit.stock_future
                     qte_to_modify = produit.stock_future - previous_qte + qte
                     produit.stock_future = qte_to_modify
                     produit.save()
+                    log_produit(str(request.user), produit.pk, commande.pk, "Update", "sp", old_future, qte_to_modify)
+
+                    commande.date_update = datetime.now()
+                    commande.save()
+
                     message = "Produit de la pré-commande édité avec succès !"
                     messages.success(request, message)
 
+                    log_cart(str(request.user), produit_commande.pk, commande.pk, produit.ok, "Update", "qte", old_qte, qte)
+                    if prix != old_prix:
+                        log_cart(str(request.user), produit_commande.pk, commande.pk, produit.ok, "Update", "prix", float(old_prix), float(prix))
                 else:
                     message = "Stock insuffisant !"
                     messages.error(request, message)
@@ -2158,24 +2503,42 @@ def edit_produit_order(request, order_id, produit_id):
 @staff_member_required
 def delete_produit_order(request, order_id, produit_id):
     if request.user.is_staff:
-
         commande = Commande.objects.get(id=order_id)
         produit = Produit.objects.get(id=produit_id)
-        produit_commande = Cartdb.objects.get(commande=commande, produit=produit)
+        old_final = produit.stock
+        old_bis = produit.stock_bis
+        old_future = produit.stock_future
 
+        produit_commande = Cartdb.objects.get(commande=commande, produit=produit)
         # SI COMMANDE TERMINEE ON MET A JOUR LE STOCK FINAL EN PLUS DU STOCK VIRTUEL
         if commande.statut.nom == "Terminée":
             produit.stock += produit_commande.qte
+            new_final = produit.stock + produit_commande.qte
+            log_produit(str(request.user), produit.pk, commande.pk, "Update", "sf", old_final, new_final)
 
         if commande.statut.nom == "Pré-commande":
             produit.stock_future -= produit_commande.qte
+            new_future = produit.stock_future - produit_commande.qte
+            log_produit(str(request.user), produit.pk, commande.pk, "Update", "sp", old_future, new_future)
 
         # SI COMMANDE AUTRE QUE ANNULEE ON MET A JOUR LE STOCK VIRTUEL SINON RIEN
         if commande.statut.nom == "En cours" or commande.statut.nom == "Validée":
             produit.stock_bis += produit_commande.qte
+            new_bis = produit.stock_bis
+            log_produit(str(request.user), produit.pk, commande.pk, "Update", "sb", old_bis, new_bis)
         produit.save()
+        old_cart_qte = produit_commande.qte
+        old_cart_prix = produit_commande.prix
+
+        log_cart(str(request.user), produit_commande.pk, commande.pk, produit.pk, "Delete", "qte", old_cart_qte, 0)
+        log_cart(str(request.user), produit_commande.pk, commande.pk, produit.pk, "Delete", "prix", float(old_cart_prix), '')
+
         produit_commande.delete()
 
+
+
+        commande.date_update = datetime.now()
+        commande.save()
         message = "Produit supprimé de la commande avec succès et stock remis à jour !"
         messages.success(request, message)
         return redirect('order:edit-order', order_id)
@@ -2192,13 +2555,21 @@ def recycle_produit_order(request, order_id, produit_id):
         commande = Commande.objects.get(id=order_id)
         produit = Produit.objects.get(id=produit_id)
         produit_commande = Cartdb.objects.get(commande=commande, produit=produit)
+        old_cart_qte = produit_commande.qte
+        old_cart_prix = produit_commande.prix
 
         # ATTENTION : ON NE MET PAS A JOUR LES STOCKS
         produit_commande.delete()
+        log_cart(str(request.user), produit_commande.pk, commande.pk, produit.pk, "Delete", "qte", old_cart_qte, 0)
+        log_cart(str(request.user), produit_commande.pk, commande.pk, produit.pk, "Delete", "prix", float(old_cart_prix), '')
+
+        commande.date_update = datetime.now()
+        commande.save()
 
         message = format_html("Produit supprimé de la commande avec succès !<br><i class='bi bi-exclamation-triangle'></i> Stock non mis à jour ! <i class='bi bi-exclamation-triangle'></i>")
         messages.success(request, message)
         return redirect('order:edit-order', order_id)
+
     else:
         messages.error(request, "Vous n'avez pas les droits !")
         return redirect('produit-list')
@@ -2846,14 +3217,19 @@ def reset_order(request):
             produit_list = ""
             if mode == "FULL":
                 for commande in commandes:
+                    old_statut = commande.statut.nom
                     if commande.statut.nom == "En cours" or commande.statut.nom == "Validée":
                         commande.statut = done_statut
                     else:
                         commande.statut = cancel_statut
+                    commande.date_update = datetime.now()
                     commande.save()
+                    log_order(str(request.user), commande.pk, "End", "statut", old_statut, commande.statut.nom)
+
                 message = format_html("Les commandes ont bien toutes étés [<u>Terminées</u>] pour la période selectionnée !")
                 messages.success(request, message)
-            if mode == "CHECK":
+
+            elif mode == "CHECK":
                 for commande in commandes:
                     items = Cartdb.objects.filter(commande=commande)
                     for item in items:
@@ -2861,21 +3237,33 @@ def reset_order(request):
                             nb_produit += 1
                             produit_list += "<li>" + str(item.produit.nom) + " (Manque : " + str(item.qte - item.produit.stock) + ")</li>"
 
-            if nb_produit > 0:
-                message = format_html("Impossible de terminer toutes les commandes.<br><strong>" + str(nb_produit) + "</strong> produits ne disposent pas d'un stock final suffisant !<ul>"+produit_list+"</ul>")
-                messages.error(request, message)
             else:
-                for commande in commandes:
-                    commande.statut = done_statut
-                    commande.save()
-                    items = Cartdb.objects.filter(commande=commande)
-                    for item in items:
-                        if commande.statut.nom == "En cours" or commande.statut.nom == "Validée":
-                            item.produit.stock -= item.qte
-                            item.produit.save()
+                if nb_produit > 0:
+                    message = format_html("Impossible de terminer toutes les commandes.<br><strong>" + str(nb_produit) + "</strong> produits ne disposent pas d'un stock final suffisant !<ul>"+produit_list+"</ul>")
+                    messages.error(request, message)
+                else:
+                    for commande in commandes:
+                        old_statut = commande.statut.nom
+                        if commande.statut == wait_statut:
+                            commande.statut = cancel_statut
+                        else:
+                            commande.statut = done_statut
+                        commande.save()
+                        log_order(str(request.user), commande.pk, "End", "statut", old_statut, commande.statut.nom)
 
-                message = format_html("Les commandes ont bien toutes étés [<u>Terminées</u>] pour la période selectionnée !<br>Ne sont concernées que les commandes [<u>Validées</u>] ou [<u>En cours</u>] !<br>Les commandes [<u>En attente</u>] sont annulées.")
-                messages.success(request, message)
+                        if commande.statut.nom == "En cours" or commande.statut.nom == "Validée":
+                            items = Cartdb.objects.filter(commande=commande)
+                            for item in items:
+                                old_final = item.produit.stock
+                                new_final = item.produit.stock - item.qte
+
+                                item.produit.stock -= item.qte
+                                item.produit.save()
+
+                                log_produit(str(request.user), item.produit.pk, commande.pk, "Update", "sf", old_final, new_final)
+
+                    message = format_html("Les commandes ont bien toutes étés [<u>Terminées</u>] pour la période selectionnée !<br>Ne sont concernées que les commandes [<u>Validées</u>] ou [<u>En cours</u>] !<br>Les commandes [<u>En attente</u>] sont annulées.")
+                    messages.success(request, message)
 
             return redirect('order:order-administration')
 

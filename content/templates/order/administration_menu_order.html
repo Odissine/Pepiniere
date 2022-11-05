@@ -44,7 +44,7 @@
     </div>
     <div class="col-6">
         <div class="card">
-            <div class="card-header bg-secondary bg-opacity-25 text-black">
+            <div class="card-header bg-warning bg-opacity-25 text-black">
                 <div class="row align-items-center">
                     <h5 class="col-12 h4 mb-0">Import / Export</h5>
                 </div>
@@ -63,7 +63,7 @@
             </div>
         </div>
         <div class="card">
-            <div class="card-header bg-secondary bg-opacity-25 text-black">
+            <div class="card-header bg-danger bg-opacity-25 text-black">
                 <div class="row align-items-center">
                     <h5 class="col-12 h4 mb-0">Gestion des anomalies<i class="bi bi-info-circle bx-pull-right" style="cursor: pointer;" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-original-title="Affiche la liste des commandes dont la somme des produits de chacune dépasse le stock"></i></h5>
                 </div>
@@ -71,6 +71,18 @@
             <div class="card-body py-2">
                 <div class="list-group">
                     <a href="{% url 'order:warning-order' %}"><button type="button" class="list-group-item list-group-item-action">Gestion des commandes en anomalie</button></a>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header bg-success bg-opacity-25 text-black">
+                <div class="row align-items-center">
+                    <h5 class="col-12 h4 mb-0">Gestion des Logs<i class="bi bi-info-circle bx-pull-right" style="cursor: pointer;" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-original-title="Affiche la liste des commandes dont la somme des produits de chacune dépasse le stock"></i></h5>
+                </div>
+            </div>
+            <div class="card-body py-2">
+                <div class="list-group">
+                    <a href="{% url 'logApp:data-to-csv' %}"><button type="button" class="list-group-item list-group-item-action">Exporter les LOGS (Excel)</button></a>
                 </div>
             </div>
         </div>

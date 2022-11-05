@@ -26,6 +26,7 @@ from onlineshop.core import *
 from cart.forms import CartAddProduitForm
 from pepiniere import settings
 from order.models import *
+from order.core import *
 from .forms import *
 from order.forms import *
 import xlsxwriter
@@ -171,7 +172,9 @@ def produit_detail(request, id):
 @login_required
 @staff_member_required
 def onlineshop_administration(request):
-    context = {}
+    produits = Produit.objects.all()
+    form = FormProduitList(request.POST or None)
+    context = {'produits':produits, 'form': form}
     if request.user.is_staff:
         return render(request, 'onlineshop/administration_menu_onlineshop.html', context)
     else:
@@ -294,6 +297,7 @@ def add_produit(request):
                 stock = instance.stock
                 stock_bis = instance.stock_bis
                 stock_future = instance.stock_future
+
                 if stock is None or stock < 0 or not str(stock).isnumeric():
                     instance.stock = 0
                 if stock_bis is None or stock_bis < 0 or not str(stock_bis).isnumeric():
@@ -314,6 +318,15 @@ def add_produit(request):
                     return redirect('onlineshop:manage-produit')
 
                 instance.save()
+
+                log_produit(str(request.user), instance.pk, None, 'New', 'produit', '', instance.nom)
+                log_produit(str(request.user), instance.pk, None, 'New', 'sf', '', instance.stock)
+                log_produit(str(request.user), instance.pk, None, 'New', 'sb', '', instance.stock_bis)
+                log_produit(str(request.user), instance.pk, None, 'New', 'sp', '', instance.stock_future)
+                log_produit(str(request.user), instance.pk, None, 'New', 'prix', 0, float(instance.prix))
+                log_produit(str(request.user), instance.pk, None, 'New', 'description', '', instance.description)
+                log_produit(str(request.user), instance.pk, None, 'New', 'available', '', instance.available)
+                log_produit(str(request.user), instance.pk, None, 'New', 'gaf', '', instance.gaf)
                 messages.success(request, message)
                 return redirect('onlineshop:manage-produit')
         context_header = {
@@ -337,6 +350,16 @@ def edit_produit(request, produit_id):
     if request.user.is_staff:
         title = "Produits"
         produit = Produit.objects.get(id=produit_id)
+
+        old_nom = produit.nom
+        old_prix = produit.prix
+        old_final = produit.stock
+        old_bis = produit.stock_bis
+        old_future = produit.stock_future
+        old_description = produit.description
+        old_available = produit.available
+        old_gaf = produit.gaf
+
         form = FormProduit(request.POST or None, instance=produit)
         message = "Produit modifié avec succès !"
 
@@ -365,6 +388,31 @@ def edit_produit(request, produit_id):
                     instance.nom = espece + "-" + variete + "-" + portegreffe
 
                 obj = instance.save()
+
+                new_nom = instance.nom
+                new_prix = instance.prix
+                new_final = instance.stock
+                new_bis = instance.stock_bis
+                new_future = instance.stock_future
+                new_description = instance.description
+                new_available = instance.available
+                new_gaf = instance.gaf
+                if old_nom != new_nom:
+                    log_produit(str(request.user), instance.pk, None, 'Edit', 'produit', old_nom, new_nom)
+                if old_prix != new_prix:
+                    log_produit(str(request.user), instance.pk, None, 'Edit', 'prix', old_prix, new_prix)
+                if old_final != new_final:
+                    log_produit(str(request.user), instance.pk, None, 'Edit', 'sf', old_final, new_final)
+                if old_bis != new_bis:
+                    log_produit(str(request.user), instance.pk, None, 'Edit', 'sb', old_bis, new_bis)
+                if old_future != new_future:
+                    log_produit(str(request.user), instance.pk, None, 'Edit', 'sp', old_future, new_future)
+                if old_description != new_description:
+                    log_produit(str(request.user), instance.pk, None, 'Edit', 'description', old_description, new_description)
+                if old_available != new_available:
+                    log_produit(str(request.user), instance.pk, None, 'Edit', 'available', old_available, new_available)
+                if old_gaf != new_gaf:
+                    log_produit(str(request.user), instance.pk, None, 'Edit', 'gaf', old_gaf, new_gaf)
                 messages.success(request, message)
                 return redirect('onlineshop:manage-produit')
         context = {
@@ -388,6 +436,15 @@ def delete_produit(request, produit_id):
         title = "Produits"
         produit = Produit.objects.get(id=produit_id)
 
+        old_nom = produit.nom
+        old_prix = produit.prix
+        old_final = produit.stock
+        old_bis = produit.stock_bis
+        old_future = produit.stock_future
+        old_description = produit.description
+        old_available = produit.available
+        old_gaf = produit.gaf
+
         in_order = Cartdb.objects.filter(produit=produit)
         if len(in_order) > 0:
             message = "Impossible de supprimer ce produit ... présent dans une ou plusieurs commande !"
@@ -395,6 +452,15 @@ def delete_produit(request, produit_id):
             return redirect('onlineshop:manage-produit')
 
         produit.delete()
+        log_produit(str(request.user), produit.pk, None, 'Delete', 'produit', old_nom, '')
+        log_produit(str(request.user), produit.pk, None, 'Delete', 'prix', old_prix, '')
+        log_produit(str(request.user), produit.pk, None, 'Delete', 'sf', old_final, '')
+        log_produit(str(request.user), produit.pk, None, 'Delete', 'sb', old_bis, '')
+        log_produit(str(request.user), produit.pk, None, 'Delete', 'sp', old_future, '')
+        log_produit(str(request.user), produit.pk, None, 'Delete', 'description', old_description, '')
+        log_produit(str(request.user), produit.pk, None, 'Delete', 'available', old_available, '')
+        log_produit(str(request.user), produit.pk, None, 'Delete', 'gaf', old_gaf, '')
+
         message = "Produit supprimé avec succès !"
         messages.success(request, message)
         return redirect('onlineshop:manage-produit')
@@ -1730,10 +1796,20 @@ def reset_stock(request):
 
     produits = Produit.objects.all()
     for produit in produits:
+
+        old_final = produit.stock
+        old_bis = produit.stock_bis
+        old_future = produit.stock_future
+
         produit.stock = 0
         produit.stock_bis = 0
         # produit.stock_future = 0
         produit.save()
+
+        if old_final > 0:
+            log_produit(str(request.user), produit.pk, None, 'Edit', 'sf', old_final, 0)
+        if old_bis != 0:
+            log_produit(str(request.user), produit.pk, None, 'Edit', 'sb', old_bis, 0)
 
     message = format_html("Les stocks (initiaux, virtuels) ont bien été réinitalisés !")
     messages.success(request, message)
@@ -1761,15 +1837,29 @@ def edit_stock_produit(request):
             print(e)
             messages.error(request, "Le produit n'existe pas !")
             return redirect('onlineshop:manage-produit')
+
+        old_final = produit.stock
+        old_bis = produit.stock_bis
+        old_future = produit.stock_future
+
         if check_stock_value(stock) is not None:
             produit.stock = int(stock)
+            if old_final != int(stock):
+                log_produit(str(request.user), produit.pk, None, 'Edit', 'sf', old_final, int(stock))
         if check_stock_value(stock_bis) is not None:
             produit.stock_bis = int(stock_bis)
+            if old_bis != int(stock_bis):
+                log_produit(str(request.user), produit.pk, None, 'Edit', 'sb', old_bis, int(stock_bis))
         if check_stock_value(stock_future) is not None:
             produit.stock_future = int(stock_future)
+            if old_future != int(stock_future):
+                log_produit(str(request.user), produit.pk, None, 'Edit', 'sp', old_future, int(stock_future))
         if int(stock_bis) > int(stock):
             produit.stock = stock_bis
+            if old_final != int(stock_bis):
+                log_produit(str(request.user), produit.pk, None, 'Edit', 'sf', old_final, int(stock_bis))
         produit.save()
+
         messages.success(request, "Quantité mise à jour pour le produit ;)")
     return redirect('onlineshop:manage-produit')
 

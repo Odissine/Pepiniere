@@ -11,6 +11,8 @@ from .models import *
 from order.forms import FormAddClient
 from order.models import Client
 from pepiniere.settings import DEBUG
+import logging
+login_logger = logging.getLogger('connexion')
 
 
 def home(request):
@@ -38,6 +40,7 @@ def login_view(request):
         print(user)
         if user is not None:
             login(request, user)
+            login_logger.info(user.username)
             return redirect("onlineshop:produit-list")
         else:
             messages.error(request, "Erreur d'authentification ! Merci de réessayer.")

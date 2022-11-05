@@ -114,3 +114,14 @@ class AccessMode(models.Model):
     objects = models.Manager()
     user = models.ForeignKey(User, related_name='AccessModes', on_delete=models.CASCADE)
     admin = models.BooleanField(default=False)
+
+
+class LogOrder(models.Model):
+    objects = models.Manager()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    order = models.TextField()
+    date = models.DateTimeField(auto_now=True)
+    action = models.TextField()
+    field = models.TextField()
+    old_value = models.TextField()
+    new_value = models.TextField()

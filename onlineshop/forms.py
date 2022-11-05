@@ -2,6 +2,7 @@ from django.forms import ModelForm
 from .models import *
 from django import forms
 from django_select2.forms import Select2Widget, Select2MultipleWidget
+from logApp.views import *
 
 
 # FORMULAIRE DEDIE AU MOTEUR DE RECHERCHE DE PRODUITS ------------------------------------------------------------------------
@@ -479,3 +480,25 @@ class FormCouleur(forms.ModelForm):
     class Meta:
         model = Couleur
         fields = ['nom', 'couleur']
+
+
+class FormProduitList(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(FormProduitList, self).__init__(*args, **kwargs)
+
+        dic = read_log(mode="produit")
+        produit_id_list = []
+        for p in dic['produit']:
+            if p not in produit_id_list:
+                produit_id_list.append(p)
+
+        self.fields['nom'] = forms.ModelChoiceField(
+            label="Produits",
+            queryset=Produit.objects.filter(pk__in=produit_id_list),
+            required=True,
+            help_text='Choisir un produit')
+
+    class Meta:
+        model = Produit
+        fields = ['nom']

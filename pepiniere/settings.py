@@ -98,8 +98,8 @@ WSGI_APPLICATION = 'pepiniere.wsgi.application'
 DATABASES = {
 
     # 'default': settings_private.DEFAULT, # SQLLITE
-    # 'default': settings_private.MYSQL_DEV,  # MYSQL DEV
-    'default': settings_private.MYSQL_PROD,  # MYSQL PROD
+    'default': settings_private.MYSQL_DEV,  # MYSQL DEV
+    # 'default': settings_private.MYSQL_PROD,  # MYSQL PROD
 }
 
 
@@ -174,21 +174,89 @@ LOG_ERROR = os.path.join(LOG_DIR, 'error.log')
 open(LOG_ERROR, 'a').close()
 LOG_ACCESS_REFUSED = os.path.join(LOG_DIR, 'access_refused.log')
 open(LOG_ACCESS_REFUSED, 'a').close()
+LOG_ORDER_FILE = os.path.join(LOG_DIR, 'order_file.log')
+open(LOG_ORDER_FILE, 'a').close()
+LOG_PRODUIT_FILE = os.path.join(LOG_DIR, 'produit_file.log')
+open(LOG_PRODUIT_FILE, 'a').close()
+LOG_CART_FILE = os.path.join(LOG_DIR, 'cart_file.log')
+open(LOG_CART_FILE, 'a').close()
+LOG_CONNEXION_FILE = os.path.join(LOG_DIR, 'connexion_file.log')
+open(LOG_CONNEXION_FILE, 'a').close()
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {message}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S'
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'error_file' : {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
             'filename': LOG_ERROR,
         },
+        # 'order_model': {
+        #     'level': 'INFO',
+        #     'class': 'pepiniere.LogHandler.PepiniereModelHandler',
+        #     'formatter': 'verbose',
+        # },
+        'order_file': {
+            'level': 'INFO',
+            'class': 'pepiniere.LogHandler.PepiniereFileHandler',
+            'filename': LOG_ORDER_FILE,
+            'formatter': 'verbose',
+        },
+        'produit_file': {
+            'level': 'INFO',
+            'class': 'pepiniere.LogHandler.PepiniereFileHandler',
+            'filename': LOG_PRODUIT_FILE,
+            'formatter': 'verbose',
+        },
+        'cart_file': {
+            'level': 'INFO',
+            'class': 'pepiniere.LogHandler.PepiniereFileHandler',
+            'filename': LOG_CART_FILE,
+            'formatter': 'verbose',
+        },
+        'connexion_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': LOG_CONNEXION_FILE,
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'django': {
             'handlers': ['error_file'],
             'level': 'ERROR',
+            'propagate': True,
+        },
+        'connexion': {
+            'handlers': ['connexion_file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'order': {
+            'handlers': ['order_file'], #, 'order_model'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'produit': {
+            'handlers': ['produit_file'], #, 'order_model'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'cart': {
+            'handlers': ['cart_file'], #, 'order_model'],
+            'level': 'INFO',
             'propagate': True,
         },
     },

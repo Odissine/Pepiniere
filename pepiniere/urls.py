@@ -29,6 +29,7 @@ urlpatterns = [
     path('cart/', include('cart.urls', namespace='cart')),
     path('account/', include('account.urls', namespace='account')),
     path('order/', include('order.urls', namespace='order')),
+    path('logs/', include('logApp.urls', namespace='logApp')),
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
 ]
