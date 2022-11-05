@@ -186,7 +186,7 @@ class LogCart(models.Model):
 
 class LogProduit(models.Model):
     objects = models.Manager()
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.TextField()
     produit = models.TextField()
     order = models.TextField()
     date = models.DateTimeField(auto_now=True)

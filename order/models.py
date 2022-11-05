@@ -118,7 +118,7 @@ class AccessMode(models.Model):
 
 class LogOrder(models.Model):
     objects = models.Manager()
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.TextField()
     order = models.TextField()
     date = models.DateTimeField(auto_now=True)
     action = models.TextField()
