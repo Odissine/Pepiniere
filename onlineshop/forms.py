@@ -489,9 +489,11 @@ class FormProduitList(forms.ModelForm):
 
         dic = read_log(mode="produit")
         produit_id_list = []
+        i = 0
         for p in dic['produit']:
-            if p not in produit_id_list:
+            if p not in produit_id_list and dic['order'][i] is not None:
                 produit_id_list.append(p)
+            i += 1
 
         self.fields['nom'] = forms.ModelChoiceField(
             label="Produits",

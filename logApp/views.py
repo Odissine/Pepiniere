@@ -125,11 +125,24 @@ def show_line(request, produit):
 
     for p in dic['produit']:
         if str(p) == str(produit) and dic['order'][i] is not None:
+
+            # STOCK PRECOMMANDE
+            if dic['field'][i] == "sp":
+                if first_sp:
+                    stock['sp'].append(dic['old_data'][i])
+                    first_sp = False
+                stock['sp'].append(dic['new_data'][i])
+            else:
+                if 0 < len(stock['sp']) < len(labels):
+                    stock['sp'].append(stock['sp'][len(stock['sp']) - 1])
+                else:
+                    stock['sp'].append(0)
+
             # STOCK FINAL
             if dic['field'][i] == "sf":
                 if first_sf:
                     stock['sf'].append(dic['old_data'][i])
-                    while len(stock['sf']) <= len(stock['sp']):
+                    while len(stock['sf']) < len(stock['sp']):
                         stock['sf'].append(dic['old_data'][i])
                     first_sf = False
                 stock['sf'].append(dic['new_data'][i])
@@ -141,25 +154,13 @@ def show_line(request, produit):
             if dic['field'][i] == "sb":
                 if first_sb:
                     stock['sb'].append(dic['old_data'][i])
-                    while len(stock['sb']) <= len(stock['sp']):
+                    while len(stock['sb']) < len(stock['sp']) and len(stock['sb']) < len(labels):
                         stock['sb'].append(dic['old_data'][i])
                     first_sb = False
                 stock['sb'].append(dic['new_data'][i])
             else:
                 if len(stock['sb']) > 0:
                     stock['sb'].append(stock['sb'][len(stock['sb']) - 1])
-
-            # STOCK PRECOMMANDE
-            if dic['field'][i] == "sp":
-                if first_sp:
-                    stock['sp'].append(dic['old_data'][i])
-                    first_sp = False
-                stock['sp'].append(dic['new_data'][i])
-            else:
-                if len(stock['sp']) > 0:
-                    stock['sp'].append(stock['sp'][len(stock['sp'])-1])
-                else:
-                    stock['sp'].append(0)
 
             # stock[dic['field'][i]].append(dic['new_data'][i])
             labels.append(dic['day'][i]+"-"+dic['month'][i]+" @ "+dic['hours'][i]+":"+dic['minutes'][i])
@@ -172,6 +173,7 @@ def show_line(request, produit):
     # fig = px.line(df, x='year', y='produit', color='action', symbol="new_data")
     # fig.show()
     # df = px.data.gapminder().query("continent == 'Oceania'")
+    print(stock['sb'])
     data['chart'] = {
         'labels': labels,
         'datasets': [
