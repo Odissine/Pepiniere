@@ -148,8 +148,9 @@ def cart_valid(request):
                     else:
                         statut_en_cours = Statut.objects.get(nom="En attente")
                         statut = "En attente"
-
-                    remise_client = client.remise
+                    remise_client = 0
+                    if client.remise:
+                        remise_client = client.remise
                     tva = Tva.objects.get(default=True)
 
                     commande_create = Commande.objects.create(client=client, remise=remise_client, statut=statut_en_cours, tva=tva, inventaire=inventaire)
@@ -212,7 +213,9 @@ def cart_valid(request):
                     # ###############################################
                     inventaire = Inventaire.objects.get(actif=True)
                     statut_en_cours = Statut.objects.get(nom="Pré-commande")
-                    remise_client = client.remise
+                    remise_client = 0
+                    if client.remise:
+                        remise_client = client.remise
                     tva = Tva.objects.get(default=True)
 
                     commande_create = Commande.objects.create(date=datetime.now(), client=client, remise=remise_client, statut=statut_en_cours, tva=tva,

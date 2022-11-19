@@ -3,6 +3,7 @@ from onlineshop.models import *
 from .models import *
 from django_select2.forms import Select2Widget, Select2MultipleWidget
 from bootstrap_datepicker_plus.widgets import DatePickerInput
+from decimal import Decimal
 
 
 CLIENT_CHOICE = (
@@ -394,6 +395,7 @@ class FormAddClient(forms.ModelForm):
         self.fields['remise'] = forms.DecimalField(
             label="Remise",
             required=False,
+            initial=Decimal('0.00'),
             help_text='Saisir un taux de remise',
             widget=forms.NumberInput(attrs={'placeholder': 'Saisir un taux de remise', 'class': 'form-control'}, )
         )
