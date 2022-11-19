@@ -235,8 +235,8 @@ def cart_valid(request):
                         Produit.objects.filter(nom=item['produit']).update(stock_future=new_qte)
 
                         # LOG CREATION DE LA COMMANDE (MAJ STOCK + CART)
-                        log_cart(str(request.user), cart_commande.pk, produit.pk, 'Create', 'qte', '', item['qte'])
-                        log_cart(str(request.user), cart_commande.pk, produit.pk, 'Create', 'prix', '', float(item['prix']))
+                        log_cart(str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'qte', '', item['qte'])
+                        log_cart(str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'prix', '', float(item['prix']))
                         log_produit(str(request.user), produit.pk, commande_create.pk, 'Create', 'sp', old_qte, new_qte)
 
                     message = "Pré-commande créée avec succès !"
