@@ -153,7 +153,7 @@ def order_detail(request, id):
 
     frais = Frais.objects.all()
     tvas = Tva.objects.filter(active=True)
-    form = FormAddProduit(request.POST or None)
+    form = FormAddProduit(request.POST or None, order=commande)
 
     context = {
         'commande': commande,
