@@ -497,13 +497,18 @@ class FormAddProduit(forms.ModelForm):
         self.produit = kwargs.pop('produit', None)
         self.prix = kwargs.pop('prix', None)
         self.qte = kwargs.pop('qte', None)
+        self.order = kwargs.pop('order', None)
         super(FormAddProduit, self).__init__(*args, **kwargs)
+
+        if self.order.statut.nom == "Pré-commande":
+            queryset_produit = Produit.objects.all()
+        else:
+            queryset_produit = Produit.objects.filter(stock_bis__gt=0)
 
         self.fields['produit'] = forms.ModelChoiceField(
             label="Produit",
             required=False,
-            # queryset=Produit.objects.all(),
-            queryset=Produit.objects.filter(stock_bis__gt=0),
+            queryset=queryset_produit,
             help_text='Choisir un produit',
             widget=Select2Widget(attrs={'placeholder': 'Choisir un produit', 'class': 'form-control js-example-basic-single addproduct_modal'})
         )

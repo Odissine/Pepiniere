@@ -2170,11 +2170,11 @@ def add_produit_order(request, order_id, manage):
 
     if request.user.is_staff:
         title = "PRODUIT"
-
-        form = FormAddProduit(request.POST or None, initial={'commande': order_id})
+        commande = Commande.objects.get(id=order_id)
+        form = FormAddProduit(request.POST or None, initial={'commande': order_id}, order=commande)
         previous_page = reverse('order:edit-order', args=(order_id,))
         formAction = 'order:add-produit-order'
-        commande = Commande.objects.get(id=order_id)
+
 
         if request.method == 'POST':
             if form.is_valid():
@@ -2296,8 +2296,8 @@ def add_produit_order(request, order_id, manage):
 
                         new_cart_qte = qte
                         new_cart_prix = prix
-                        log_cart(str(request.user), produit_commande.pk, commande.pk, produit.pk, "Add", "prix", '', float(new_cart_prix))
-                        log_cart(str(request.user), produit_commande.pk, commande.pk, produit.pk, "Add", "qte", 0, new_cart_qte)
+                        log_cart(str(request.user), obj.pk, commande.pk, produit.pk, "Add", "prix", '', float(new_cart_prix))
+                        log_cart(str(request.user), obj.pk, commande.pk, produit.pk, "Add", "qte", 0, new_cart_qte)
 
                         old_future = produit.stock_future
                         new_future = produit.stock_future + qte
