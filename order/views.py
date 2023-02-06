@@ -1993,6 +1993,7 @@ def validate_order(request, order_id):
 
         order.statut = statut
         order.date_update = datetime.now()
+        order.date_valid = datetime.now()
         order.save()
 
         new_statut = statut.nom
