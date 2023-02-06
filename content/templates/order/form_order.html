@@ -47,6 +47,14 @@
                 </div>
                 {{ form.date }}
             </div>
+            {% if order.statut.nom == "Validée" or order.statut.nom == "Terminée" %}
+            <div class="col-6 mb-2 input-group">
+                <div class="input-group-prepend col-2">
+                    <span class="input-group-text">{{ form.date_valid.label }}</span>
+                </div>
+                {{ form.date_valid }}
+            </div>
+            {% endif %}
             <div class="col-6 mb-2 input-group">
                 <div class="input-group-prepend col-2">
                     <span class="input-group-text">{{ form.inventaire.label }}</span>

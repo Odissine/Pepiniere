@@ -719,9 +719,9 @@ def order_print(request, id, *args, **kwargs):
         download = request.GET.get("download")
         if download == 1:
             content = "attachment; filename=%s" % filename
-            response['Content-Disposition'] = content
-            return response
-        return result
+        response['Content-Disposition'] = content
+        return response
+        # return result
     return HttpResponse("Not found")
 
 

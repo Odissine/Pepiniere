@@ -478,6 +478,13 @@ class FormAddOrder(forms.ModelForm):
             help_text='Séléctionner une date pour la création de la commande',
         )
 
+        self.fields['date_valid'] = forms.DateTimeField(
+            label="Date de validation",
+            required=True,
+            widget=forms.DateInput(attrs={'placeholder': 'Date de validation', 'class': 'datepicker_input form-control'}),
+            help_text='Séléctionner une date qui servira à la validation de la commande',
+        )
+
         self.fields['inventaire'] = forms.ModelChoiceField(
             label="Période",
             required=True,
@@ -488,7 +495,7 @@ class FormAddOrder(forms.ModelForm):
 
     class Meta:
         model = Commande
-        fields = ['client', 'remise', 'statut', 'date', 'tva', 'frais', 'montant_frais', 'inventaire']
+        fields = ['client', 'remise', 'statut', 'date', 'date_valid', 'tva', 'frais', 'montant_frais', 'inventaire']
 
 
 class FormAddProduit(forms.ModelForm):

@@ -74,6 +74,7 @@ class Commande(models.Model):
     objects = models.Manager()
     date = models.DateTimeField(default=datetime.now)
     date_update = models.DateTimeField(default=datetime.now)
+    date_valid = models.DateTimeField(default=datetime.now)
     client = models.ForeignKey(Client, related_name='Commandes', on_delete=models.CASCADE)
     remise = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     statut = models.ForeignKey(Statut, related_name='Commandes', on_delete=models.CASCADE)
