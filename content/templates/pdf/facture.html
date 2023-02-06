@@ -75,10 +75,12 @@
             </tr>
         </table>
             {% language 'fr' %}
-                {% if type == "Facture" or type == "Commande" %}
-                <h1 style="font-size:2rem; font-weight:500; line-height:1.2; margin-top:.5rem;">Commande du {{ commande.date|date:'d F Y' }}</h1>
+                {% if type == "Facture" %}
+                <h1 style="font-size:2rem; font-weight:500; line-height:1.2; margin-top:.5rem;">Facture du : {{ commande.date|date:'d F Y' }}</h1>
+                {% elif type == "Commande" %}
+                <h1 style="font-size:2rem; font-weight:500; line-height:1.2; margin-top:.5rem;">Commande du : {{ commande.date|date:'d F Y' }}</h1>
                 {% else %}
-                <h1 style="font-size:2rem; font-weight:500; line-height:1.2; margin-top:.5rem;">Date du devis du {{ commande.date|date:'d F Y' }}</h1>
+                <h1 style="font-size:2rem; font-weight:500; line-height:1.2; margin-top:.5rem;">Devis du : {{ commande.date|date:'d F Y' }}</h1>
                 {% endif %}
             {% endlanguage %}
         <table style="border-color:#000000; color:#212529; width: 100%;">

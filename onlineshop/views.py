@@ -1361,10 +1361,10 @@ def import_produits_csv(request):
             produit_resource = GreffonResource()
 
         dataset = Dataset()
-        # new_datas = request.FILES['myfile']
-        # imported_data = dataset.load(new_datas.read().decode(), format='csv')
+        new_datas = request.FILES['myfile']
+        imported_data = dataset.load(new_datas.read().decode(), format='csv')
         if categorie == "GREFFONS":
-            result = produit_resource.import_data(dataset, dry_run=True, raise_errors=True)  # Test the data import
+            result = produit_resource.import_data(imported_data, dry_run=True, raise_errors=True)  # Test the data import
         else:
             result = produit_resource.import_data(dataset, dry_run=True)  # Test the data import
 

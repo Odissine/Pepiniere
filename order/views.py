@@ -708,7 +708,7 @@ def order_print(request, id, *args, **kwargs):
     }
     # return render(request, path_pdf, context)
 
-    pdf = render_to_pdf(path_pdf, context)
+    pdf = render_to_pdf(path_pdf, context_dict=context)
 
     if pdf:
         response = HttpResponse(content_type='application/pdf')

@@ -59,7 +59,7 @@ class GreffonResource(resources.ModelResource):
     )
     class Meta:
         model = Greffons
-        fields = ('id', 'produit', 'greffons', 'comm', 'objectif', 'realise', 'reussi', 'rang')
+        fields = ('id', 'produit', 'comm', 'greffons', 'objectif', 'realise', 'reussi', 'rang')
         export_order = ['id', 'produit', 'comm', 'greffons', 'objectif', 'realise', 'reussi', 'rang']
         import_id_fields = ('id',)
 
