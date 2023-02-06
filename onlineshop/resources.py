@@ -1,4 +1,4 @@
-from import_export import resources
+from import_export import resources, fields, widgets
 from onlineshop.models import *
 
 
@@ -28,8 +28,40 @@ class SpecResource(resources.ModelResource):
 
 
 class GreffonResource(resources.ModelResource):
+    comm = fields.Field(
+        column_name='Pré-Commandes',
+        attribute='comm',
+    )
+    greffons = fields.Field(
+        column_name='Greffons',
+        attribute='greffons',
+    )
+    objectif = fields.Field(
+        column_name='Objectifs',
+        attribute='objectif',
+    )
+    realise = fields.Field(
+        column_name='Réalisés',
+        attribute='realise',
+    )
+    reussi = fields.Field(
+        column_name='Réussis',
+        attribute='reussi',
+    )
+    produit = fields.Field(
+        column_name='Produits',
+        attribute='produit',
+        widget=widgets.ForeignKeyWidget(Produit, 'nom')
+    )
+    rang = fields.Field(
+        column_name='Rangs',
+        attribute='rang',
+    )
     class Meta:
         model = Greffons
+        fields = ('id', 'produit', 'greffons', 'comm', 'objectif', 'realise', 'reussi', 'rang')
+        export_order = ['id', 'produit', 'comm', 'greffons', 'objectif', 'realise', 'reussi', 'rang']
+        import_id_fields = ('id',)
 
 
 class CouleurResource(resources.ModelResource):

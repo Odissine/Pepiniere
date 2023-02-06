@@ -29,6 +29,7 @@ from order.models import *
 from order.core import *
 from .forms import *
 from order.forms import *
+from order.models import *
 import xlsxwriter
 import io
 import json
@@ -1284,11 +1285,13 @@ def export_produits_xls(request):
 def export_produits_csv(request):
     if request.method == 'POST':
         categorie = request.POST.get('categorie')
+        periode = request.POST.get('periode')
         if categorie is None:
             message = "Catégorie manquante ... Veuillez réessayer !"
             messages.error(request, message)
             return redirect('onlineshop:export-produits-xls')
 
+        produit_resource = ProduitResource()
         if categorie == "PRODUITS":
             produit_resource = ProduitResource()
             filename = "Produits.csv"
@@ -1308,16 +1311,23 @@ def export_produits_csv(request):
             produit_resource = CouleurResource()
             filename = "Couleurs.csv"
         if categorie == "GREFFONS":
+            periode = Inventaire.objects.get(pk=periode)
             produit_resource = GreffonResource()
-            filename = "Greffons.csv"
+            filename = "Greffons " + str(periode) + ".csv"
 
-        dataset = produit_resource.export()
+        if categorie == "GREFFONS":
+            dataset = produit_resource.export(queryset=Greffons.objects.filter(inventaire=periode))
+        else:
+            dataset = produit_resource.export()
+
         response = HttpResponse(dataset.csv, content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename='+filename
         return response
-
-    previous_page = reverse('onlineshop:onlineshop-administration')
-    return render(request, 'onlineshop/export_produit.html', {'previous_page': previous_page})
+    context = {
+        'previous_page': reverse('onlineshop:onlineshop-administration'),
+        'periodes': Inventaire.objects.all().order_by('-start_date'),
+    }
+    return render(request, 'onlineshop/export_produit.html', context)
 
 
 @login_required
@@ -1326,11 +1336,14 @@ def import_produits_csv(request):
     previous_page = reverse('onlineshop:onlineshop-administration')
     if request.method == 'POST':
         categorie = request.POST.get('categorie')
+        periode = request.POST.get('periode')
+
         if categorie is None:
             message = "Catégorie manquante ... Veuillez réessayer !"
             messages.error(request, message)
             return redirect('onlineshop:import-produits-xls')
 
+        produit_resource = ProduitResource()
         if categorie == "PRODUITS":
             produit_resource = ProduitResource()
         if categorie == "ESPECES":
@@ -1344,20 +1357,27 @@ def import_produits_csv(request):
         if categorie == "COULEURS":
             produit_resource = CouleurResource()
         if categorie == "GREFFONS":
+            periode = Inventaire.objects.get(pk=periode)
             produit_resource = GreffonResource()
 
         dataset = Dataset()
-        new_datas = request.FILES['myfile']
-        imported_data = dataset.load(new_datas.read().decode(), format='csv')
-        result = produit_resource.import_data(dataset, dry_run=True)  # Test the data import
+        # new_datas = request.FILES['myfile']
+        # imported_data = dataset.load(new_datas.read().decode(), format='csv')
+        if categorie == "GREFFONS":
+            result = produit_resource.import_data(dataset, dry_run=True, raise_errors=True)  # Test the data import
+        else:
+            result = produit_resource.import_data(dataset, dry_run=True)  # Test the data import
 
         if not result.has_errors():
             produit_resource.import_data(dataset, dry_run=False)  # Actually import now
             message = "Fichier importé avec succès !"
             messages.success(request, message)
             return redirect('onlineshop:onlineshop-administration')
-
-    return render(request, 'onlineshop/import_produit.html', {'previous_page': previous_page})
+    context = {
+        'previous_page': reverse('onlineshop:onlineshop-administration'),
+        'periodes': Inventaire.objects.all().order_by('-start_date'),
+    }
+    return render(request, 'onlineshop/import_produit.html', context)
 
 
 @login_required

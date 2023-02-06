@@ -1598,7 +1598,7 @@ def order_administration(request):
         return redirect('order:manage-inventaire')
 
     pre_orders = Commande.objects.filter(statut__nom="Pré-commande")
-    waiting_orders = Commande.objects.exclude(statut__nom__in=["Terminée", "Annulée"]).exclude(inventaire=inventaire_actif)
+    waiting_orders = Commande.objects.exclude(statut__nom__in=["Terminée", "Annulée", "Pré-commande"]).exclude(inventaire=inventaire_actif)
     context = {
         'pre_orders': pre_orders,
         'waiting_orders': waiting_orders,
@@ -3206,27 +3206,26 @@ def reset_order(request):
     formAction = 'order:reset-order'
     previous_page = 'order:order-administration'
     inventaires = Inventaire.objects.all()
-    commandes = Commande.objects.filter(statut__in=[inprogress_statut, valid_statut, wait_statut])
+    commandes = Commande.objects.filter(statut__in=[inprogress_statut, valid_statut])
 
     if request.POST:
         if form.is_valid():
             inventaire = form.cleaned_data['inventaire']
             mode = form.cleaned_data['mode']
-            commandes = commandes.filter(inventaire=inventaire)
+            commandes = commandes.filter(inventaire=inventaire, statut__in=[inprogress_statut, valid_statut])
             nb_produit = 0
             produit_list = ""
             if mode == "FULL":
                 for commande in commandes:
+                    # Modification du statut de la commande + changement de date (MAJ)
                     old_statut = commande.statut.nom
-                    if commande.statut.nom == "En cours" or commande.statut.nom == "Validée":
-                        commande.statut = done_statut
-                    else:
-                        commande.statut = cancel_statut
+                    commande.statut = done_statut
                     commande.date_update = datetime.now()
                     commande.save()
+
                     log_order(str(request.user), commande.pk, "End", "statut", old_statut, commande.statut.nom)
 
-                message = format_html("Les commandes ont bien toutes étés [<u>Terminées</u>] pour la période selectionnée !")
+                message = format_html("Les commandes en cours et validées ont bien toutes étés <b>Terminées</b> pour la période selectionnée !")
                 messages.success(request, message)
 
             elif mode == "CHECK":
@@ -3262,7 +3261,7 @@ def reset_order(request):
 
                                 log_produit(str(request.user), item.produit.pk, commande.pk, "Update", "sf", old_final, new_final)
 
-                    message = format_html("Les commandes ont bien toutes étés [<u>Terminées</u>] pour la période selectionnée !<br>Ne sont concernées que les commandes [<u>Validées</u>] ou [<u>En cours</u>] !<br>Les commandes [<u>En attente</u>] sont annulées.")
+                    message = format_html("Les commandes ont bien toutes étés <b>Terminées</b> pour la période selectionnée !<br>Ne sont concernées que les commandes [<b>Validées</b>] ou [<b>En cours</b>] !")
                     messages.success(request, message)
 
             return redirect('order:order-administration')

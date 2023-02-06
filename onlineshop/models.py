@@ -133,16 +133,16 @@ class Couleur(models.Model):
 
 class Greffons(models.Model):
     objects = models.Manager()
-    produit = models.ForeignKey(Produit, related_name='Greffons', on_delete=models.CASCADE)
-    greffons = models.IntegerField(default=0, null=True)
-    comm = models.IntegerField(null=True)
-    objectif = models.IntegerField(default=0, null=True)
-    realise = models.IntegerField(default=0, null=True)
-    date = models.DateTimeField(default=datetime.now, null=True)
+    produit = models.ForeignKey(Produit, related_name='Greffons', on_delete=models.CASCADE, verbose_name="Produits")
+    greffons = models.IntegerField(default=0, null=True, verbose_name="Greffons")
+    comm = models.IntegerField(null=True, verbose_name="Pré-Commande")
+    objectif = models.IntegerField(default=0, null=True, verbose_name="Objectifs")
+    realise = models.IntegerField(default=0, null=True, verbose_name="Réalisés")
+    date = models.DateTimeField(default=datetime.now, null=True, verbose_name="Date")
     couleur = models.ForeignKey(Couleur, related_name='Greffons', on_delete=models.SET_NULL, null=True)
-    rang = models.IntegerField(default=0, null=True)
-    reussi = models.IntegerField(default=0, null=True)
-    inventaire = models.ForeignKey(Inventaire, related_name='Greffons', on_delete=models.CASCADE, null=True)
+    rang = models.IntegerField(default=0, null=True, verbose_name="Rang")
+    reussi = models.IntegerField(default=0, null=True, verbose_name="Reussi")
+    inventaire = models.ForeignKey(Inventaire, related_name='Greffons', on_delete=models.CASCADE, null=True, verbose_name="Inventaire")
 
 
 class ProduitTest(models.Model):

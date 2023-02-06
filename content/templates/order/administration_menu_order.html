@@ -36,7 +36,7 @@
             </div>
             <div class="card-body py-2">
                 <div class="list-group">
-                    <a href="{% url 'order:reset-order' %}"><button type="button" class="list-group-item list-group-item-action">Valider toutes les Commandes de la précédente période <span class="bx-pull-right">Total : {{ waiting_orders|length }}</span></button></a>
+                    <a href="{% url 'order:reset-order' %}"><button type="button" class="list-group-item list-group-item-action" data-bs-toggle="tooltip" data-bs-placement="left" data-bs-original-title="Commandes en cours et validées uniquement !">Terminer toutes les Commandes de la période précédente <span class="bx-pull-right">Total : {{ waiting_orders|length }}</span></button></a>
                     <a href="{% url 'order:all-order-pre-valid' False %}"><button type="button" class="list-group-item list-group-item-action">Créer toutes les commandes a partir des pré-commandes en cours ! <span class="bx-pull-right">Total : {{ pre_orders|length }}</span></button></a>
                 </div>
             </div>

@@ -18,7 +18,7 @@
                         <div class="col d-grid gap-2 py-2">
                             <div class="input-group">
                                   <span class="input-group-text" id="basic-addon3">Catégorie</span>
-                                <select class="form-control js-example-basic-single" name="categorie">
+                                <select class="form-control js-example-basic-single" name="categorie" id="categorie" onchange="change_periode()">
                                     <option value="">Choisir une catégorie</option>
                                     <option value="PRODUITS">Produits</option>
                                     <option value="ESPECES">Espèces</option>
@@ -27,6 +27,18 @@
                                     <option value="SPECIALITES">Spécialités</option>
                                     <option value="COULEURS">Couleurs</option>
                                     <option value="GREFFONS">Greffons</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2" style="display:none" id="row_intentaire">
+                        <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                  <span class="input-group-text" id="select-periode">Période</span>
+                                <select class="form-control js-example-basic-single" name="periode">
+                                    {% for periode in periodes %}
+                                    <option value="{{ periode.pk }}">{{ periode }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                         </div>
@@ -83,7 +95,16 @@
         document.getElementById("loading").style.display = "block";
     };
 
-
+    function change_periode() {
+        var x = document.getElementById("categorie").value;
+        console.log(x);
+        if (x == "GREFFONS") {
+            document.getElementById("row_intentaire").style.display = "block";
+        } else {
+            document.getElementById("row_intentaire").style.display = "none";
+        }
+        // document.getElementById("demo").innerHTML = "You selected: " + x;
+    }
 
 </script>
 {% endblock %}
