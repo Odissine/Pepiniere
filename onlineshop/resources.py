@@ -48,21 +48,18 @@ class GreffonResource(resources.ModelResource):
         column_name='Réussis',
         attribute='reussi',
     )
-    # variete = fields.Field(
-    #     column_name='Variete',
-    #     attribute='produit__variete',
-    #     widget=widgets.ForeignKeyWidget(VarieteResource, 'nom')
-    # )
-    # espece = fields.Field(
-    #     column_name='Espece',
-    #     attribute='produit__espece',
-    #     widget=widgets.ForeignKeyWidget(EspeceResource, 'nom')
-    # )
-    # portegreffe = fields.Field(
-    #     column_name='Porte Greffe',
-    #     attribute='produit__portegreffe',
-    #     widget=widgets.ForeignKeyWidget(PorteGreffeResource, 'nom')
-    # )
+    variete = fields.Field(
+        column_name='Variete',
+        attribute='produit__variete__nom',
+    )
+    espece = fields.Field(
+        column_name='Espece',
+        attribute='produit__espece__nom',
+    )
+    portegreffe = fields.Field(
+        column_name='Porte Greffe',
+        attribute='produit__portegreffe__nom',
+    )
     produit = fields.Field(
         column_name='Produits',
         attribute='produit',
@@ -75,8 +72,8 @@ class GreffonResource(resources.ModelResource):
 
     class Meta:
         model = Greffons
-        fields = ('id', 'produit', 'comm', 'greffons', 'objectif', 'realise', 'reussi', 'rang')
-        export_order = ['id', 'produit', 'comm', 'greffons', 'objectif', 'realise', 'reussi', 'rang']
+        fields = ('id', 'produit', 'variete', 'espece', 'portegreffe', 'comm', 'greffons', 'objectif', 'realise', 'reussi', 'rang')
+        export_order = ['id', 'produit', 'variete', 'espece', 'portegreffe', 'comm', 'greffons', 'objectif', 'realise', 'reussi', 'rang']
         import_id_fields = ('id',)
 
 
