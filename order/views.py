@@ -326,8 +326,10 @@ def all_order_pre_valid(request, action=None):
             message = format_html("Stock insuffisant pour permettre la création de la commande pour les produits suivants : <ul>" + message + "</ul>")
             messages.error(request, message)
             return redirect('order:order-administration')
-
-        inventaire = Inventaire.objects.get(start_date__lte=datetime.now(), end_date__gte=datetime.now())
+        try:
+            inventaire = Inventaire.objects.get(actif=True)
+        except:
+            inventaire = Inventaire.objects.filter(start_date__lte=datetime.now(), end_date__gte=datetime.now()).last()
         for order in orders:
             items = Cartdb.objects.filter(commande=order)
             for item in items:
