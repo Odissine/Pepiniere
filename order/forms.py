@@ -480,7 +480,7 @@ class FormAddOrder(forms.ModelForm):
 
         self.fields['date_valid'] = forms.DateTimeField(
             label="Date de validation",
-            required=True,
+            required=False,
             widget=forms.DateInput(attrs={'placeholder': 'Date de validation', 'class': 'datepicker_input form-control'}),
             help_text='Séléctionner une date qui servira à la validation de la commande',
         )

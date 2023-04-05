@@ -1797,7 +1797,15 @@ def edit_order(request, order_id):
                 if old_frais != new_frais:
                     log_order(str(request.user), order.pk, 'Edit', 'frais', old_frais, new_frais)
                 if old_montant_frais != new_montant_frais:
-                    log_order(str(request.user), order.pk, 'Edit', 'montant_frais', float(old_montant_frais), float(new_montant_frais))
+                    if isinstance(old_montant_frais, float):
+                        old_montant_frais = float(old_montant_frais)
+                    else:
+                        old_montant_frais = 0
+                    if isinstance(new_montant_frais, float):
+                        new_montant_frais = float(new_montant_frais)
+                    else:
+                        new_montant_frais = 0
+                    log_order(str(request.user), order.pk, 'Edit', 'montant_frais', old_montant_frais, new_montant_frais)
                 if old_statut != new_statut:
                     log_order(str(request.user), order.pk, 'Edit', 'statut', old_statut, new_statut)
 
@@ -1807,6 +1815,8 @@ def edit_order(request, order_id):
                 message = "Commande modifiée avec succès !"
                 messages.success(request, message)
                 return redirect('order:manage-order')
+            else:
+                print(form.errors)
         context = {
             'order_id': order_id,
             'order': order,
