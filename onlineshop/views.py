@@ -320,14 +320,14 @@ def add_produit(request):
 
                 instance.save()
 
-                log_produit(str(request.user), instance.pk, None, 'New', 'produit', '', instance.nom)
-                log_produit(str(request.user), instance.pk, None, 'New', 'sf', '', instance.stock)
-                log_produit(str(request.user), instance.pk, None, 'New', 'sb', '', instance.stock_bis)
-                log_produit(str(request.user), instance.pk, None, 'New', 'sp', '', instance.stock_future)
-                log_produit(str(request.user), instance.pk, None, 'New', 'prix', 0, float(instance.prix))
-                log_produit(str(request.user), instance.pk, None, 'New', 'description', '', instance.description)
-                log_produit(str(request.user), instance.pk, None, 'New', 'available', '', instance.available)
-                log_produit(str(request.user), instance.pk, None, 'New', 'gaf', '', instance.gaf)
+                log_produit("Produit", str(request.user), instance.pk, None, 'New', 'produit', '', instance.nom)
+                log_produit("Produit", str(request.user), instance.pk, None, 'New', 'sf', '', instance.stock)
+                log_produit("Produit", str(request.user), instance.pk, None, 'New', 'sb', '', instance.stock_bis)
+                log_produit("Produit", str(request.user), instance.pk, None, 'New', 'sp', '', instance.stock_future)
+                log_produit("Produit", str(request.user), instance.pk, None, 'New', 'prix', 0, float(instance.prix))
+                log_produit("Produit", str(request.user), instance.pk, None, 'New', 'description', '', instance.description)
+                log_produit("Produit", str(request.user), instance.pk, None, 'New', 'available', '', instance.available)
+                log_produit("Produit", str(request.user), instance.pk, None, 'New', 'gaf', '', instance.gaf)
                 messages.success(request, message)
                 return redirect('onlineshop:manage-produit')
         context_header = {
@@ -399,24 +399,26 @@ def edit_produit(request, produit_id):
                 new_available = instance.available
                 new_gaf = instance.gaf
                 if old_nom != new_nom:
-                    log_produit(str(request.user), instance.pk, None, 'Edit', 'produit', old_nom, new_nom)
+                    log_produit("Produit", str(request.user), instance.pk, None, 'Edit', 'produit', old_nom, new_nom)
                 if old_prix != new_prix:
-                    log_produit(str(request.user), instance.pk, None, 'Edit', 'prix', old_prix, new_prix)
+                    log_produit("Produit", str(request.user), instance.pk, None, 'Edit', 'prix', old_prix, new_prix)
                 if old_final != new_final:
-                    log_produit(str(request.user), instance.pk, None, 'Edit', 'sf', old_final, new_final)
+                    log_produit("Produit", str(request.user), instance.pk, None, 'Edit', 'sf', old_final, new_final)
                 if old_bis != new_bis:
-                    log_produit(str(request.user), instance.pk, None, 'Edit', 'sb', old_bis, new_bis)
+                    log_produit("Produit", str(request.user), instance.pk, None, 'Edit', 'sb', old_bis, new_bis)
                 if old_future != new_future:
-                    log_produit(str(request.user), instance.pk, None, 'Edit', 'sp', old_future, new_future)
+                    log_produit("Produit", str(request.user), instance.pk, None, 'Edit', 'sp', old_future, new_future)
                 if old_description != new_description:
-                    log_produit(str(request.user), instance.pk, None, 'Edit', 'description', old_description, new_description)
+                    log_produit("Produit", str(request.user), instance.pk, None, 'Edit', 'description', old_description, new_description)
                 if old_available != new_available:
-                    log_produit(str(request.user), instance.pk, None, 'Edit', 'available', old_available, new_available)
+                    log_produit("Produit", str(request.user), instance.pk, None, 'Edit', 'available', old_available, new_available)
                 if old_gaf != new_gaf:
-                    log_produit(str(request.user), instance.pk, None, 'Edit', 'gaf', old_gaf, new_gaf)
+                    log_produit("Produit", str(request.user), instance.pk, None, 'Edit', 'gaf', old_gaf, new_gaf)
                 messages.success(request, message)
                 return redirect('onlineshop:manage-produit')
+        logs = LogProduit.objects.filter(produit=produit_id)
         context = {
+            'logs': logs,
             'produit_id': produit_id,
             'produit': produit,
             'formAction': formAction,
@@ -453,14 +455,14 @@ def delete_produit(request, produit_id):
             return redirect('onlineshop:manage-produit')
 
         produit.delete()
-        log_produit(str(request.user), produit.pk, None, 'Delete', 'produit', old_nom, '')
-        log_produit(str(request.user), produit.pk, None, 'Delete', 'prix', old_prix, '')
-        log_produit(str(request.user), produit.pk, None, 'Delete', 'sf', old_final, '')
-        log_produit(str(request.user), produit.pk, None, 'Delete', 'sb', old_bis, '')
-        log_produit(str(request.user), produit.pk, None, 'Delete', 'sp', old_future, '')
-        log_produit(str(request.user), produit.pk, None, 'Delete', 'description', old_description, '')
-        log_produit(str(request.user), produit.pk, None, 'Delete', 'available', old_available, '')
-        log_produit(str(request.user), produit.pk, None, 'Delete', 'gaf', old_gaf, '')
+        log_produit("Produit", str(request.user), produit.pk, None, 'Delete', 'produit', old_nom, '')
+        log_produit("Produit", str(request.user), produit.pk, None, 'Delete', 'prix', old_prix, '')
+        log_produit("Produit", str(request.user), produit.pk, None, 'Delete', 'sf', old_final, '')
+        log_produit("Produit", str(request.user), produit.pk, None, 'Delete', 'sb', old_bis, '')
+        log_produit("Produit", str(request.user), produit.pk, None, 'Delete', 'sp', old_future, '')
+        log_produit("Produit", str(request.user), produit.pk, None, 'Delete', 'description', old_description, '')
+        log_produit("Produit", str(request.user), produit.pk, None, 'Delete', 'available', old_available, '')
+        log_produit("Produit", str(request.user), produit.pk, None, 'Delete', 'gaf', old_gaf, '')
 
         message = "Produit supprimé avec succès !"
         messages.success(request, message)
@@ -1827,9 +1829,9 @@ def reset_stock(request):
         produit.save()
 
         if old_final > 0:
-            log_produit(str(request.user), produit.pk, None, 'Edit', 'sf', old_final, 0)
+            log_produit("Produit", str(request.user), produit.pk, None, 'Edit', 'sf', old_final, 0)
         if old_bis != 0:
-            log_produit(str(request.user), produit.pk, None, 'Edit', 'sb', old_bis, 0)
+            log_produit("Produit", str(request.user), produit.pk, None, 'Edit', 'sb', old_bis, 0)
 
     message = format_html("Les stocks (initiaux, virtuels) ont bien été réinitalisés !")
     messages.success(request, message)
@@ -1865,19 +1867,19 @@ def edit_stock_produit(request):
         if check_stock_value(stock) is not None:
             produit.stock = int(stock)
             if old_final != int(stock):
-                log_produit(str(request.user), produit.pk, None, 'Edit', 'sf', old_final, int(stock))
+                log_produit("Produit", str(request.user), produit.pk, None, 'Edit', 'sf', old_final, int(stock))
         if check_stock_value(stock_bis) is not None:
             produit.stock_bis = int(stock_bis)
             if old_bis != int(stock_bis):
-                log_produit(str(request.user), produit.pk, None, 'Edit', 'sb', old_bis, int(stock_bis))
+                log_produit("Produit", str(request.user), produit.pk, None, 'Edit', 'sb', old_bis, int(stock_bis))
         if check_stock_value(stock_future) is not None:
             produit.stock_future = int(stock_future)
             if old_future != int(stock_future):
-                log_produit(str(request.user), produit.pk, None, 'Edit', 'sp', old_future, int(stock_future))
+                log_produit("Produit", str(request.user), produit.pk, None, 'Edit', 'sp', old_future, int(stock_future))
         if int(stock_bis) > int(stock):
             produit.stock = stock_bis
             if old_final != int(stock_bis):
-                log_produit(str(request.user), produit.pk, None, 'Edit', 'sf', old_final, int(stock_bis))
+                log_produit("Produit", str(request.user), produit.pk, None, 'Edit', 'sf', old_final, int(stock_bis))
         produit.save()
 
         messages.success(request, "Quantité mise à jour pour le produit ;)")

@@ -98,8 +98,8 @@ WSGI_APPLICATION = 'pepiniere.wsgi.application'
 DATABASES = {
 
     # 'default': settings_private.DEFAULT, # SQLLITE
-    # 'default': settings_private.MYSQL_DEV,  # MYSQL DEV
-    'default': settings_private.MYSQL_PROD,  # MYSQL PROD
+    'default': settings_private.MYSQL_DEV,  # MYSQL DEV
+    # 'default': settings_private.MYSQL_PROD,  # MYSQL PROD
 }
 
 
@@ -203,11 +203,11 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': LOG_ERROR,
         },
-        # 'order_model': {
-        #     'level': 'INFO',
-        #     'class': 'pepiniere.LogHandler.PepiniereModelHandler',
-        #     'formatter': 'verbose',
-        # },
+        'order_model': {
+            'level': 'INFO',
+            'class': 'pepiniere.LogHandler.PepiniereModelHandler',
+            'formatter': 'verbose',
+        },
         'order_file': {
             'level': 'INFO',
             'class': 'pepiniere.LogHandler.PepiniereFileHandler',
@@ -250,7 +250,7 @@ LOGGING = {
             'propagate': True,
         },
         'produit': {
-            'handlers': ['produit_file'], #, 'order_model'],
+            'handlers': ['produit_file', 'order_model'],
             'level': 'INFO',
             'propagate': True,
         },

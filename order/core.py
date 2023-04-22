@@ -114,8 +114,8 @@ def log_order(user, order, action, field, old_data, new_data):
     return True
 
 
-def log_produit(user, produit, order, action, field, old_data, new_data):
-    message = {'user': user, 'produit': produit, 'order': order, 'action': action, 'field': field, 'old_data': old_data, 'new_data': new_data}
+def log_produit(model, user, produit, order, action, field, old_data, new_data):
+    message = {'model': model, 'user': user, 'produit': produit, 'order': order, 'action': action, 'field': field, 'old_data': old_data, 'new_data': new_data}
     produit_logger.info(message)
     return True
 
