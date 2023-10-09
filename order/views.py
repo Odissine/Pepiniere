@@ -819,7 +819,7 @@ def order_etiquettes(request):
 
         if 'max_val' in request.GET:
             max_val = request.GET['max_val']
-            orders.filter(Cartdbs__qte__lte=5)
+            orders = orders.filter(Cartdbs__qte__lte=5)
 
     context = {'formAction': formAction,
                'form': form,
