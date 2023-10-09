@@ -76,6 +76,7 @@ def read_log(mode="order"):
         my_dic['day'] = datetime.strftime(log_date, '%d')
         my_dic['hours'] = datetime.strftime(log_time, '%H')
         my_dic['minutes'] = datetime.strftime(log_time, '%M')
+        my_dic['model'] = ""
 
         for key in my_dic:
             try:
