@@ -26,7 +26,8 @@ def read_log(mode="order"):
             'month': [],
             'day': [],
             'hours': [],
-            'minutes': []
+            'minutes': [],
+            'model': []
         }
     if mode == "produit":
         LOG_FILE = os.path.join(LOG_DIR, 'produit_file.log')
@@ -42,7 +43,8 @@ def read_log(mode="order"):
             'month': [],
             'day': [],
             'hours': [],
-            'minutes': []
+            'minutes': [],
+            'model': []
         }
     if mode == "cart":
         LOG_FILE = os.path.join(LOG_DIR, 'cart_file.log')
@@ -59,7 +61,8 @@ def read_log(mode="order"):
             'month': [],
             'day': [],
             'hours': [],
-            'minutes': []
+            'minutes': [],
+            'model': []
         }
     data_file = open(LOG_FILE, "r")
     data = []
@@ -76,7 +79,7 @@ def read_log(mode="order"):
         my_dic['day'] = datetime.strftime(log_date, '%d')
         my_dic['hours'] = datetime.strftime(log_time, '%H')
         my_dic['minutes'] = datetime.strftime(log_time, '%M')
-        my_dic['model'] = ""
+        # my_dic['model'] = ""
 
         for key in my_dic:
             try:
