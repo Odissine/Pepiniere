@@ -245,17 +245,17 @@ LOGGING = {
             'propagate': True,
         },
         'order': {
-            'handlers': ['order_file'], #, 'order_model'],
+            'handlers': ['order_model'],
             'level': 'INFO',
             'propagate': True,
         },
         'produit': {
-            'handlers': ['produit_file', 'order_model'],
+            'handlers': ['order_model'],
             'level': 'INFO',
             'propagate': True,
         },
         'cart': {
-            'handlers': ['cart_file'], #, 'order_model'],
+            'handlers': ['order_model'],
             'level': 'INFO',
             'propagate': True,
         },
