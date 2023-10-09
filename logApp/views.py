@@ -78,7 +78,10 @@ def read_log(mode="order"):
         my_dic['minutes'] = datetime.strftime(log_time, '%M')
 
         for key in my_dic:
-            data_dic[key].append(my_dic[key])
+            try:
+                data_dic[key].append(my_dic[key])
+            except:
+                data_dic[key].append('')
     return data_dic
 
 
