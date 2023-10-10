@@ -766,8 +766,8 @@ def order_etiquettes(request):
     formAction = 'order:order-etiquettes'
     form = SearchOrderForm(request.GET or None)
 
-    inventaire = Inventaire.objects.get(actif=True)
-    orders = Commande.objects.filter(inventaire=inventaire)
+    default_inventaire = Inventaire.objects.get(actif=True)
+    orders = Commande.objects.filter(inventaire=default_inventaire)
 
     if 'o' in request.GET:
         order_value = request.GET['o']
@@ -794,6 +794,8 @@ def order_etiquettes(request):
         if form.is_valid():
             statut = form.cleaned_data['statut']
             inventaire = form.cleaned_data['inventaire']
+            if inventaire == "":
+                inventaire = default_inventaire
             clients = form.cleaned_data['clients']
             start_date = form.cleaned_data['start_date']
             end_date = form.cleaned_data['end_date']
