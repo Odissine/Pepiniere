@@ -16,6 +16,7 @@ def read_log(mode="order"):
     if mode == "order":
         LOG_FILE = os.path.join(LOG_DIR, 'order_file.log')
         data_dic = {
+            'model': [],
             'user': [],
             'order': [],
             'action': [],
@@ -31,6 +32,7 @@ def read_log(mode="order"):
     if mode == "produit":
         LOG_FILE = os.path.join(LOG_DIR, 'produit_file.log')
         data_dic = {
+            'model': [],
             'user': [],
             'produit': [],
             'order': [],
