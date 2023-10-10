@@ -766,14 +766,17 @@ def order_etiquettes(request):
     formAction = 'order:order-etiquettes'
     form = SearchOrderForm(request.GET or None)
 
+    inventaire = Inventaire.objects.get(actif=True)
+    orders = Commande.objects.filter(inventaire=inventaire)
+
     if 'o' in request.GET:
         order_value = request.GET['o']
         if order_value == 'total':
-            orders = Commande.objects.all().annotate(total_order=Sum(F('Cartdbs__qte') * F('Cartdbs__prix'))).order_by('-total_order')
+            orders = orders.annotate(total_order=Sum(F('Cartdbs__qte') * F('Cartdbs__prix'))).order_by('-total_order')
         elif order_value == 'qte':
-            orders = Commande.objects.all().annotate(qte_order=Count('Cartdbs')).order_by('-qte_order')
+            orders = orders.annotate(qte_order=Count('Cartdbs')).order_by('-qte_order')
         else:
-            orders = Commande.objects.all().order_by(order_value)
+            orders = orders.order_by(order_value)
 
         request.session['o'] = request.GET['o']
     elif 'o' in request.session:
@@ -790,6 +793,7 @@ def order_etiquettes(request):
     if request.method == "GET":
         if form.is_valid():
             statut = form.cleaned_data['statut']
+            inventaire = form.cleaned_data['periode']
             clients = form.cleaned_data['clients']
             start_date = form.cleaned_data['start_date']
             end_date = form.cleaned_data['end_date']
@@ -798,6 +802,8 @@ def order_etiquettes(request):
             varietes = form.cleaned_data['varietes']
             portegreffes = form.cleaned_data['portegreffes']
 
+            if inventaire.exists():
+                orders = orders.filter(inventaire__in=inventaire)
             if statut.exists():
                 orders = orders.filter(statut__in=statut)
             if clients.exists():
