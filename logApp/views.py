@@ -47,6 +47,7 @@ def read_log(mode="order"):
     if mode == "cart":
         LOG_FILE = os.path.join(LOG_DIR, 'cart_file.log')
         data_dic = {
+            'model': [],
             'user': [],
             'cart': [],
             'order': [],
@@ -71,6 +72,7 @@ def read_log(mode="order"):
 
         log_date = datetime.strptime(my_data[1], '%Y-%m-%d')
         log_time = datetime.strptime(my_data[2], '%H:%M:%S')
+        my_dic['model'] = ""
         my_dic['year'] = datetime.strftime(log_date, '%Y')
         my_dic['month'] = datetime.strftime(log_date, '%m')
         my_dic['day'] = datetime.strftime(log_date, '%d')
