@@ -794,8 +794,6 @@ def order_etiquettes(request):
         if form.is_valid():
             statut = form.cleaned_data['statut']
             inventaire = form.cleaned_data['inventaire']
-            if inventaire == "":
-                inventaire = default_inventaire
             clients = form.cleaned_data['clients']
             start_date = form.cleaned_data['start_date']
             end_date = form.cleaned_data['end_date']
@@ -806,6 +804,8 @@ def order_etiquettes(request):
 
             if inventaire.exists():
                 orders = orders.filter(inventaire__in=inventaire)
+            else:
+                orders = orders.filter(inventaire=default_inventaire)
             if statut.exists():
                 orders = orders.filter(statut__in=statut)
             if clients.exists():
