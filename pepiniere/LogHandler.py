@@ -37,15 +37,14 @@ class PepiniereModelHandler(Handler):
     def emit(self, record):
         model = ""
         dic_message = ast.literal_eval(record.getMessage())
-        message = dic_message
+        message = dic_message['message']
 
         user = message['user']
         order = message['order']
         action = message['action']
         field = message['field']
-        old_value = message['old_data']
-        new_value = message['new_data']
-        model = message['model']
+        old_value = message['old_value']
+        new_value = message['new_value']
 
         if model == "Commande":
             Model = apps.get_model('order', 'LogOrder')

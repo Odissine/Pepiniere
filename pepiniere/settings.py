@@ -208,6 +208,7 @@ LOGGING = {
             'class': 'pepiniere.LogHandler.PepiniereModelHandler',
             'formatter': 'verbose',
         },
+        # 'order_model': {
         'order_file': {
             'level': 'INFO',
             'class': 'pepiniere.LogHandler.PepiniereFileHandler',
