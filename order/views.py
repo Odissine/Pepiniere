@@ -793,7 +793,7 @@ def order_etiquettes(request):
     if request.method == "GET":
         if form.is_valid():
             statut = form.cleaned_data['statut']
-            inventaire = form.cleaned_data['periode']
+            inventaire = form.cleaned_data['inventaire']
             clients = form.cleaned_data['clients']
             start_date = form.cleaned_data['start_date']
             end_date = form.cleaned_data['end_date']
