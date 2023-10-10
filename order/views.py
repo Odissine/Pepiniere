@@ -817,6 +817,13 @@ def order_etiquettes(request):
         else:
             orders = orders.filter(date__year__gte=datetime.now().year - 1)
 
+    if 'max_val' in request.GET:
+        try:
+            max_value = int(request.GET['max_val'])
+        except:
+            max_value = 5
+        orders = get_orders_items_max(max_value)
+
     context = {'formAction': formAction,
                'form': form,
                'orders': orders,
