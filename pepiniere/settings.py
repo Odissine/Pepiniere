@@ -203,12 +203,11 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': LOG_ERROR,
         },
-        'order_model': {
-            'level': 'INFO',
-            'class': 'pepiniere.LogHandler.PepiniereModelHandler',
-            'formatter': 'verbose',
-        },
         # 'order_model': {
+        #     'level': 'INFO',
+        #     'class': 'pepiniere.LogHandler.PepiniereModelHandler',
+        #     'formatter': 'verbose',
+        # },
         'order_file': {
             'level': 'INFO',
             'class': 'pepiniere.LogHandler.PepiniereFileHandler',
