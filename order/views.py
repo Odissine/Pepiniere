@@ -766,17 +766,14 @@ def order_etiquettes(request):
     formAction = 'order:order-etiquettes'
     form = SearchOrderForm(request.GET or None)
 
-    default_inventaire = Inventaire.objects.get(actif=True)
-    orders = Commande.objects.filter(inventaire=default_inventaire)
-
     if 'o' in request.GET:
         order_value = request.GET['o']
         if order_value == 'total':
-            orders = orders.annotate(total_order=Sum(F('Cartdbs__qte') * F('Cartdbs__prix'))).order_by('-total_order')
+            orders = Commande.objects.all().annotate(total_order=Sum(F('Cartdbs__qte') * F('Cartdbs__prix'))).order_by('-total_order')
         elif order_value == 'qte':
-            orders = orders.annotate(qte_order=Count('Cartdbs')).order_by('-qte_order')
+            orders = Commande.objects.all().annotate(qte_order=Count('Cartdbs')).order_by('-qte_order')
         else:
-            orders = orders.order_by(order_value)
+            orders = Commande.objects.all().order_by(order_value)
 
         request.session['o'] = request.GET['o']
     elif 'o' in request.session:
@@ -793,7 +790,6 @@ def order_etiquettes(request):
     if request.method == "GET":
         if form.is_valid():
             statut = form.cleaned_data['statut']
-            inventaire = form.cleaned_data['inventaire']
             clients = form.cleaned_data['clients']
             start_date = form.cleaned_data['start_date']
             end_date = form.cleaned_data['end_date']
@@ -802,10 +798,6 @@ def order_etiquettes(request):
             varietes = form.cleaned_data['varietes']
             portegreffes = form.cleaned_data['portegreffes']
 
-            if inventaire.exists():
-                orders = orders.filter(inventaire__in=inventaire)
-            else:
-                orders = orders.filter(inventaire=default_inventaire)
             if statut.exists():
                 orders = orders.filter(statut__in=statut)
             if clients.exists():
@@ -825,12 +817,12 @@ def order_etiquettes(request):
         else:
             orders = orders.filter(date__year__gte=datetime.now().year - 1)
 
-        if 'max_val' in request.GET:
-            try:
-                max_value = int(request.GET['max_val'])
-            except:
-                max_value = 5
-            orders = orders.filter(Cartdbs__qte__lte=max_value).distinct()
+    if 'max_val' in request.GET:
+        try:
+            max_value = int(request.GET['max_val'])
+        except:
+            max_value = 5
+        orders = get_orders_items_max(max_value)
 
     context = {'formAction': formAction,
                'form': form,

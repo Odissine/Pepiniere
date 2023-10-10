@@ -21,7 +21,6 @@
         <th scope="col"><a href="?{{ query_string }}&p=-stock_future">STOCK FUTUR</a></th>
         {% else %}
         <th scope="col"><a href="?{{ query_string }}&p=-stock_bis">STOCK</a></th>
-        <th scope="col"><a href="?{{ query_string }}&p=prix">PRIX</a></th>
         {% endif %}
     {% else %}
         <th scope="col"><a href="?p=espece">ESPECE</a></th>
@@ -31,10 +30,8 @@
         <th scope="col"><a href="?p=-stock_bis">STOCK EN COURS</a></th>
         <th scope="col"><a href="?p=-stock">STOCK FINAL</a></th>
         <th scope="col"><a href="?p=-stock_future">STOCK FUTUR</a></th>
-        <th scope="col"><a href="?p=prix">PRIX UNITAIRE</a></th>
         {% else %}
         <th scope="col"><a href="?p=-stock_bis">STOCK</a></th>
-        <th scope="col"><a href="?p=prix">PRIX UNITAIRE</a></th>
         {% endif %}
     {% endif %}
         <th scope="col-3">&nbsp;</th>
@@ -46,15 +43,11 @@
             <td class="align-middle">{{ produit.variete }}</td>
             <td class="align-middle">{{ produit.portegreffe }}</td>
             <td class="align-middle">{{ produit.stock_bis }}</td>
-            {% if not request.user.is_authenticated %}
-            <td class="align-middle">{{ produit.prix }} €</td>
-            {% endif %}
             {% if request.user.is_authenticated %}
             {% if user|is_staff %}
             <td class="align-middle">{{ produit.stock }}</td>
             <td class="align-middle">{{ produit.stock_future }}</td>
             {% endif %}
-            <td class="align-middle">{{ produit.prix }} €</td>
             <td class="d-flex justify-content-end">
             {% csrf_token %}
             {% if produit.stock_bis > 0 or request.user|mode_admin %}
