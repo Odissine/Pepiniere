@@ -57,7 +57,7 @@ coverage.xml
 *.pot
 
 # Django stuff:
-# *.log
+*.log
 local_settings.py
 # Base de données a prendre en compte pour le projet (a retirer une fois en PROD)
 db.sqlite3

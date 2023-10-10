@@ -157,11 +157,11 @@ def cart_valid(request):
                     # commande_create.save()
 
                     # LOG CREATION DE LA COMMANDE
-                    log_order(str(request.user), commande_create.pk, 'Create', 'client', '', str(client.nom) + ' ' + str(client.prenom))
+                    log_order("Commande", str(request.user), commande_create.pk, 'Create', 'client', '', str(client.nom) + ' ' + str(client.prenom))
                     if remise_client:
-                        log_order(str(request.user), commande_create.pk, 'Create', 'remise', '', float(remise_client))
-                    log_order(str(request.user), commande_create.pk, 'Create', 'tva', '', float(tva.tva))
-                    log_order(str(request.user), commande_create.pk, 'Create', 'statut', '', statut_en_cours.nom)
+                        log_order("Commande", str(request.user), commande_create.pk, 'Create', 'remise', '', float(remise_client))
+                    log_order("Commande", str(request.user), commande_create.pk, 'Create', 'tva', '', float(tva.tva))
+                    log_order("Commande", str(request.user), commande_create.pk, 'Create', 'statut', '', statut_en_cours.nom)
 
                     for item in cart:
                         cart_commande = Cartdb.objects.create(produit=item['produit'], prix=item['prix'], qte=item['qte'], commande=commande_create)
@@ -174,9 +174,9 @@ def cart_valid(request):
                             Produit.objects.filter(nom=item['produit']).update(stock_bis=new_qte)
 
                             # LOG CREATION DE LA COMMANDE (AJOUT PRODUIT)
-                            log_cart(str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'qte', '', item['qte'])
-                            log_cart(str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'prix', '', float(item['prix']))
-                            log_produit(str(request.user), produit.pk, commande_create.pk, 'Create', 'sb', old_qte, new_qte)
+                            log_cart("Cart", str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'qte', '', item['qte'])
+                            log_cart("Cart", str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'prix', '', float(item['prix']))
+                            log_produit("Produit", str(request.user), produit.pk, commande_create.pk, 'Create', 'sb', old_qte, new_qte)
 
                     config = Config.objects.first()
                     if config.register is True:
@@ -222,11 +222,11 @@ def cart_valid(request):
                                                               inventaire=inventaire)
                     commande_create.save()
                     # LOG CREATION DE LA COMMANDE
-                    log_order(str(request.user), commande_create.pk, 'Create', 'client', '', str(client.nom) + ' ' + str(client.prenom))
+                    log_order("Commande", str(request.user), commande_create.pk, 'Create', 'client', '', str(client.nom) + ' ' + str(client.prenom))
                     if remise_client:
-                        log_order(str(request.user), commande_create.pk, 'Create', 'remise', '', float(remise_client))
-                    log_order(str(request.user), commande_create.pk, 'Create', 'tva', '', float(tva.tva))
-                    log_order(str(request.user), commande_create.pk, 'Create', 'statut', '', statut_en_cours.nom)
+                        log_order("Commande", str(request.user), commande_create.pk, 'Create', 'remise', '', float(remise_client))
+                    log_order("Commande", str(request.user), commande_create.pk, 'Create', 'tva', '', float(tva.tva))
+                    log_order("Commande", str(request.user), commande_create.pk, 'Create', 'statut', '', statut_en_cours.nom)
 
                     for item in cart:
                         cart_commande = Cartdb.objects.create(produit=item['produit'], prix=item['prix'], qte=item['qte'], commande=commande_create)
@@ -238,9 +238,9 @@ def cart_valid(request):
                         Produit.objects.filter(nom=item['produit']).update(stock_future=new_qte)
 
                         # LOG CREATION DE LA COMMANDE (MAJ STOCK + CART)
-                        log_cart(str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'qte', '', item['qte'])
-                        log_cart(str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'prix', '', float(item['prix']))
-                        log_produit(str(request.user), produit.pk, commande_create.pk, 'Create', 'sp', old_qte, new_qte)
+                        log_cart("Cart", str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'qte', '', item['qte'])
+                        log_cart("Cart", str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'prix', '', float(item['prix']))
+                        log_produit("Produit", str(request.user), produit.pk, commande_create.pk, 'Create', 'sp', old_qte, new_qte)
 
                     message = "Pré-commande créée avec succès !"
                 messages.success(request, message)

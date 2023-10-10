@@ -108,19 +108,19 @@ def get_orders_items_max(max_val=5):
     return commandes_list
 
 
-def log_order(model, user, order, action, field, old_data, new_data):
-    message = {'model': model, 'user': user, 'order': order, 'action': action, 'field': field, 'old_data': old_data, 'new_data': new_data}
+def log_order(user, order, action, field, old_data, new_data):
+    message = {'user': user, 'order': order, 'action': action, 'field': field, 'old_data': old_data, 'new_data': new_data}
     order_logger.info(message)
     return True
 
 
-def log_produit(user, produit, order, action, field, old_data, new_data):
-    message = {'user': user, 'produit': produit, 'order': order, 'action': action, 'field': field, 'old_data': old_data, 'new_data': new_data}
+def log_produit(model, user, produit, order, action, field, old_data, new_data):
+    message = {'model': model, 'user': user, 'produit': produit, 'order': order, 'action': action, 'field': field, 'old_data': old_data, 'new_data': new_data}
     produit_logger.info(message)
     return True
 
 
-def log_cart(model, user, cart, order, produit, action, field, old_data, new_data):
-    message = {'model': model, 'user': user, 'cart': cart, 'order': order, 'produit': produit, 'action': action, 'field': field, 'old_data': old_data, 'new_data': new_data}
+def log_cart(user, cart, order, produit, action, field, old_data, new_data):
+    message = {'user': user, 'cart': cart, 'order': order, 'produit': produit, 'action': action, 'field': field, 'old_data': old_data, 'new_data': new_data}
     cart_logger.info(message)
     return True
