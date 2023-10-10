@@ -830,7 +830,7 @@ def order_etiquettes(request):
                 max_value = int(request.GET['max_val'])
             except:
                 max_value = 5
-            orders = orders.filter(Cartdbs__qte__lte=max_value)
+            orders = orders.filter(Cartdbs__qte__lte=max_value).distinct()
 
     context = {'formAction': formAction,
                'form': form,
