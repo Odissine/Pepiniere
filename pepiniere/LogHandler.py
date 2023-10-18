@@ -58,4 +58,4 @@ class PepiniereModelHandler(Handler):
             Model = apps.get_model('onlineshop', 'LogCart')
             produit = message['produit']
             cart = message['cart']
-            obj = Model.objects.create(user=user, cart=cart, order=order, produit=produit, action=action, field=field, old_value=old_value, new_value=new_value)
+            obj = Model.objects.create(user_text=user, cart=cart, order=order, produit=produit, action=action, field=field, old_value=old_value, new_value=new_value)
