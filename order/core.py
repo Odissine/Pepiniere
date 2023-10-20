@@ -121,6 +121,6 @@ def log_produit(model, user, produit, order, action, field, old_data, new_data):
 
 
 def log_cart(model, user, user_text, cart, order, produit, action, field, old_data, new_data):
-    message = {'model':model, 'user_text': user_text, 'user': user, 'cart': cart, 'order': order, 'produit': produit, 'action': action, 'field': field, 'old_data': old_data, 'new_data': new_data}
-    cart_logger.info(message)
+    message = {'model':model, 'user': user, 'user_text': user_text, 'cart': cart, 'order': order, 'produit': produit, 'action': action, 'field': field, 'old_data': old_data, 'new_data': new_data}
+    # cart_logger.info(message)
     return True
