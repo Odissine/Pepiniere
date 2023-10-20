@@ -174,8 +174,8 @@ def cart_valid(request):
                             Produit.objects.filter(nom=item['produit']).update(stock_bis=new_qte)
 
                             # LOG CREATION DE LA COMMANDE (AJOUT PRODUIT)
-                            log_cart("Cart", str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'qte', '', item['qte'])
-                            log_cart("Cart", str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'prix', '', float(item['prix']))
+                            log_cart("Cart", request.user, str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'qte', '', item['qte'])
+                            log_cart("Cart", request.user, str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'prix', '', float(item['prix']))
                             log_produit("Produit", str(request.user), produit.pk, commande_create.pk, 'Create', 'sb', old_qte, new_qte)
 
                     config = Config.objects.first()
@@ -238,8 +238,8 @@ def cart_valid(request):
                         Produit.objects.filter(nom=item['produit']).update(stock_future=new_qte)
 
                         # LOG CREATION DE LA COMMANDE (MAJ STOCK + CART)
-                        log_cart("Cart", str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'qte', '', item['qte'])
-                        log_cart("Cart", str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'prix', '', float(item['prix']))
+                        log_cart("Cart", request.user, str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'qte', '', item['qte'])
+                        log_cart("Cart", request.user, str(request.user), cart_commande.pk, commande_create.pk, produit.pk, 'Create', 'prix', '', float(item['prix']))
                         log_produit("Produit", str(request.user), produit.pk, commande_create.pk, 'Create', 'sp', old_qte, new_qte)
 
                     message = "Pré-commande créée avec succès !"
