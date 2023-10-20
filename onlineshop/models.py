@@ -173,7 +173,7 @@ class ProduitTest(models.Model):
 
 class LogCart(models.Model):
     objects = models.Manager()
-    user = models.ForeignKey(User, on_delete=models.CASCADE, default=None)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     user_text = models.TextField(null=True, blank=True)
     cart = models.TextField()
     order = models.TextField(null=True, blank=True)

@@ -407,8 +407,8 @@ def pre_order_create(request, id):
         produit.save()
 
         # LOG CREATION DE LA COMMANDE (AJOUT PRODUIT)
-        log_cart("Cart", str(request.user), item.pk, order.pk, produit.pk, 'Create', 'qte', 0, item.qte)
-        log_cart("Cart", str(request.user), item.pk, order.pk, produit.pk, 'Create', 'prix', '', float(item.prix))
+        log_cart("Cart", request.user, str(request.user), item.pk, order.pk, produit.pk, 'Create', 'qte', 0, item.qte)
+        log_cart("Cart", request.user, str(request.user), item.pk, order.pk, produit.pk, 'Create', 'prix', '', float(item.prix))
 
         # LOG CREATION DE LA COMMANDE (MAJ STOCK)
         print(old_future, new_future)
@@ -456,9 +456,9 @@ def order_update_qte_prix(request, id):
             produit_commande.save()
 
             if old_qte != qte:
-                log_cart("Cart", str(request.user), produit_commande.pk, produit_commande.commande.pk, produit_commande.produit.pk, 'Update', 'qte', old_qte, qte)
+                log_cart("Cart", request.user, str(request.user), produit_commande.pk, produit_commande.commande.pk, produit_commande.produit.pk, 'Update', 'qte', old_qte, qte)
             if old_prix != prix:
-                log_cart("Cart", str(request.user), produit_commande.pk, produit_commande.commande.pk, produit_commande.produit.pk, 'Update', 'prix', float(old_prix), float(prix))
+                log_cart("Cart", request.user, str(request.user), produit_commande.pk, produit_commande.commande.pk, produit_commande.produit.pk, 'Update', 'prix', float(old_prix), float(prix))
             # PRE-COMMANDE
             if produit_commande.commande.statut.nom == "Pré-commande":
                 # ON MET A JOUR LE PRODUIT DE LA COMMANDE AVEC LA NOUVELLE QUANTITE ET LE NOUVEAU PRIX
@@ -594,7 +594,7 @@ def order_product_remove(request, id):
 
     old_value_cart = item.qte
     new_value_cart = 0
-    log_cart("Cart", str(request.user), item.pk, commande.pk, item.produit.pk, 'Delete', 'qte', old_value_cart, new_value_cart)
+    log_cart("Cart", request.user, str(request.user), item.pk, commande.pk, item.produit.pk, 'Delete', 'qte', old_value_cart, new_value_cart)
     item.delete()
 
     message = "Suppression du produit effectuée avec succès !"
@@ -1848,8 +1848,8 @@ def delete_order(request, order_id):
         items = Cartdb.objects.filter(commande=order)
 
         for item in items:
-            log_cart("Cart", str(request.user), item.pk, order.pk, item.produit.pk, 'Delete', 'qte', item.qte, 0)
-            log_cart("Cart", str(request.user), item.pk, order.pk, item.produit.pk, 'Delete', 'prix', float(item.prix), '')
+            log_cart("Cart", request.user, str(request.user), item.pk, order.pk, item.produit.pk, 'Delete', 'qte', item.qte, 0)
+            log_cart("Cart", request.user, str(request.user), item.pk, order.pk, item.produit.pk, 'Delete', 'prix', float(item.prix), '')
         #     produit = Produit.objects.get(id=item.produit.id)
         #     produit.stock_bis += item.qte
         #     produit.save()
@@ -2229,8 +2229,8 @@ def add_produit_order(request, order_id, manage):
                             new_cart_prix = prix
 
                             if old_cart_prix != new_cart_prix:
-                                log_cart("Cart", str(request.user), produit_commande.pk, commande.pk, produit.pk, "Edit", "prix", float(old_cart_prix), float(new_cart_prix))
-                            log_cart("Cart", str(request.user), produit_commande.pk, commande.pk, produit.pk, "Edit", "qte", old_cart_qte, new_cart_qte)
+                                log_cart("Cart", request.user, str(request.user), produit_commande.pk, commande.pk, produit.pk, "Edit", "prix", float(old_cart_prix), float(new_cart_prix))
+                            log_cart("Cart", request.user, str(request.user), produit_commande.pk, commande.pk, produit.pk, "Edit", "qte", old_cart_qte, new_cart_qte)
 
                             old_bis = produit.stock_bis
                             new_bis = produit.stock_bis - qte
@@ -2260,8 +2260,8 @@ def add_produit_order(request, order_id, manage):
                             obj.commande = commande
                             obj.save()
 
-                            log_cart("Cart", str(request.user), obj.pk, commande.pk, produit.pk, "Add", "qte", 0, new_qte)
-                            log_cart("Cart", str(request.user), obj.pk, commande.pk, produit.pk, "Add", "prix", '', float(new_prix))
+                            log_cart("Cart", request.user, str(request.user), obj.pk, commande.pk, produit.pk, "Add", "qte", 0, new_qte)
+                            log_cart("Cart", request.user, str(request.user), obj.pk, commande.pk, produit.pk, "Add", "prix", '', float(new_prix))
 
                             old_bis = produit.stock_bis
                             new_bis = produit.stock_bis - qte
@@ -2291,8 +2291,8 @@ def add_produit_order(request, order_id, manage):
                         produit_commande.save()
 
                         if old_cart_prix != new_cart_prix:
-                            log_cart("Cart", str(request.user), produit_commande.pk, commande.pk, produit.pk, "Edit", "prix", float(old_cart_prix), float(new_cart_prix))
-                        log_cart("Cart", str(request.user), produit_commande.pk, commande.pk, produit.pk, "Edit", "qte", old_cart_qte, new_cart_qte)
+                            log_cart("Cart", request.user, str(request.user), produit_commande.pk, commande.pk, produit.pk, "Edit", "prix", float(old_cart_prix), float(new_cart_prix))
+                        log_cart("Cart", request.user, str(request.user), produit_commande.pk, commande.pk, produit.pk, "Edit", "qte", old_cart_qte, new_cart_qte)
 
                         old_future = produit.stock_future
                         new_future = produit.stock_future + qte
@@ -2316,8 +2316,8 @@ def add_produit_order(request, order_id, manage):
 
                         new_cart_qte = qte
                         new_cart_prix = prix
-                        log_cart("Cart", str(request.user), obj.pk, commande.pk, produit.pk, "Add", "prix", '', float(new_cart_prix))
-                        log_cart("Cart", str(request.user), obj.pk, commande.pk, produit.pk, "Add", "qte", 0, new_cart_qte)
+                        log_cart("Cart", request.user, str(request.user), obj.pk, commande.pk, produit.pk, "Add", "prix", '', float(new_cart_prix))
+                        log_cart("Cart", request.user, str(request.user), obj.pk, commande.pk, produit.pk, "Add", "qte", 0, new_cart_qte)
 
                         old_future = produit.stock_future
                         new_future = produit.stock_future + qte
@@ -2397,9 +2397,9 @@ def edit_produit_order(request, order_id, produit_id):
                     obj.commande = commande
                     obj.save()
 
-                    log_cart("Cart", str(request.user), produit_commande.pk, commande.pk, produit.pk, "Update", "qte", old_qte, qte)
+                    log_cart("Cart", request.user, str(request.user), produit_commande.pk, commande.pk, produit.pk, "Update", "qte", old_qte, qte)
                     if prix != old_prix:
-                        log_cart("Cart", str(request.user), produit_commande.pk, commande.pk, produit.pk, "Update", "prix", float(old_prix), float(prix))
+                        log_cart("Cart", request.user, str(request.user), produit_commande.pk, commande.pk, produit.pk, "Update", "prix", float(old_prix), float(prix))
 
                     # SI COMMANDE TERMINEE ON MET A JOUR LE STOCK FINAL EN PLUS DU STOCK VIRTUEL
                     if commande.statut.nom == "Terminée":
@@ -2467,9 +2467,9 @@ def edit_produit_order(request, order_id, produit_id):
                             commande.date_update = datetime.now()
                             commande.save()
 
-                    log_cart("Cart", str(request.user), produit_commande.pk, commande.pk, produit.ok, "Update", "qte", old_qte, qte)
+                    log_cart("Cart", request.user, str(request.user), produit_commande.pk, commande.pk, produit.ok, "Update", "qte", old_qte, qte)
                     if prix != old_prix:
-                        log_cart("Cart", str(request.user), produit_commande.pk, commande.pk, produit.ok, "Update", "prix", float(old_prix), float(prix))
+                        log_cart("Cart", request.user, str(request.user), produit_commande.pk, commande.pk, produit.ok, "Update", "prix", float(old_prix), float(prix))
 
                 elif commande.statut.nom == "Pré-commande":
                     obj = form.save(commit=False)
@@ -2487,9 +2487,9 @@ def edit_produit_order(request, order_id, produit_id):
                     message = "Produit de la pré-commande édité avec succès !"
                     messages.success(request, message)
 
-                    log_cart("Cart", str(request.user), produit_commande.pk, commande.pk, produit.ok, "Update", "qte", old_qte, qte)
+                    log_cart("Cart", request.user, str(request.user), produit_commande.pk, commande.pk, produit.ok, "Update", "qte", old_qte, qte)
                     if prix != old_prix:
-                        log_cart("Cart", str(request.user), produit_commande.pk, commande.pk, produit.ok, "Update", "prix", float(old_prix), float(prix))
+                        log_cart("Cart", request.user, str(request.user), produit_commande.pk, commande.pk, produit.ok, "Update", "prix", float(old_prix), float(prix))
                 else:
                     message = "Stock insuffisant !"
                     messages.error(request, message)
@@ -2550,8 +2550,8 @@ def delete_produit_order(request, order_id, produit_id):
         old_cart_qte = produit_commande.qte
         old_cart_prix = produit_commande.prix
 
-        log_cart("Cart", str(request.user), produit_commande.pk, commande.pk, produit.pk, "Delete", "qte", old_cart_qte, 0)
-        log_cart("Cart", str(request.user), produit_commande.pk, commande.pk, produit.pk, "Delete", "prix", float(old_cart_prix), '')
+        log_cart("Cart", request.user, str(request.user), produit_commande.pk, commande.pk, produit.pk, "Delete", "qte", old_cart_qte, 0)
+        log_cart("Cart", request.user, str(request.user), produit_commande.pk, commande.pk, produit.pk, "Delete", "prix", float(old_cart_prix), '')
 
         produit_commande.delete()
 
@@ -2580,8 +2580,8 @@ def recycle_produit_order(request, order_id, produit_id):
 
         # ATTENTION : ON NE MET PAS A JOUR LES STOCKS
         produit_commande.delete()
-        log_cart("Cart", str(request.user), produit_commande.pk, commande.pk, produit.pk, "Delete", "qte", old_cart_qte, 0)
-        log_cart("Cart", str(request.user), produit_commande.pk, commande.pk, produit.pk, "Delete", "prix", float(old_cart_prix), '')
+        log_cart("Cart", request.user, str(request.user), produit_commande.pk, commande.pk, produit.pk, "Delete", "qte", old_cart_qte, 0)
+        log_cart("Cart", request.user, str(request.user), produit_commande.pk, commande.pk, produit.pk, "Delete", "prix", float(old_cart_prix), '')
 
         commande.date_update = datetime.now()
         commande.save()
