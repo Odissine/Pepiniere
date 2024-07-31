@@ -308,21 +308,25 @@ def order_pre_valid(request, id):
 @staff_member_required
 def all_order_pre_valid(request, action=None):
     orders = Commande.objects.filter(statut__nom="Pré-commande")
+    message = ""
+    try:
+        admin_mode = AccessMode.objects.get(user=request.user).admin
+    except:
+        admin_mode = False
 
     if action == 'True':
         statut = Statut.objects.get(nom='En cours')
         nb_produit = 0
-        message = ""
+
         for order in orders:
             items = Cartdb.objects.filter(commande=order)
-
             for item in items:
                 stock_virtuel = item.produit.stock_bis
                 if stock_virtuel - item.qte < 0:
                     nb_produit += 1
                     message += "<li>" + item.produit.nom + "</li>"
 
-        if nb_produit > 0:
+        if nb_produit > 0 and admin_mode is False:
             message = format_html("Stock insuffisant pour permettre la création de la commande pour les produits suivants : <ul>" + message + "</ul>")
             messages.error(request, message)
             return redirect('order:order-administration')
@@ -354,8 +358,7 @@ def all_order_pre_valid(request, action=None):
             log_order("Commande", str(request.user), order.pk, 'Update', 'inventaire', old_inventaire, inventaire.start_date.strftime('%Y') + '-' + inventaire.end_date.strftime('%Y'))
             log_order("Commande", str(request.user), order.pk, 'Update', 'statut', old_statut, statut.nom)
 
-        message = "Commandes créées avec succès à partir des Pré-commandes !"
-        messages.success(request, message)
+        messages.success(request, "Commandes créées avec succès à partir des Pré-commandes ! <ul>" + message + "</ul>")
         return redirect('order:order-administration')
 
     context = {
