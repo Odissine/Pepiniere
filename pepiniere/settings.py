@@ -15,8 +15,8 @@ import os
 from . import settings_private
 from os.path import dirname
 import warnings
-import pymysql
-pymysql.install_as_MySQLdb()
+# import pymysql
+# pymysql.install_as_MySQLdb()
 
 warnings.simplefilter('error', DeprecationWarning)
 
@@ -98,8 +98,8 @@ WSGI_APPLICATION = 'pepiniere.wsgi.application'
 DATABASES = {
 
     # 'default': settings_private.DEFAULT, # SQLLITE
-    # 'default': settings_private.MYSQL_DEV,  # MYSQL DEV
-    'default': settings_private.MYSQL_PROD,  # MYSQL PROD
+    'default': settings_private.MYSQL_DEV,  # MYSQL DEV
+    # 'default': settings_private.MYSQL_PROD,  # MYSQL PROD
 }
 
 
@@ -133,7 +133,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-# USE_TZ = True
+USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)

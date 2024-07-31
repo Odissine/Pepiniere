@@ -36,6 +36,7 @@ import json
 import pandas as pd
 
 from openpyxl import load_workbook
+from collections import defaultdict
 
 
 @login_required
@@ -1928,3 +1929,26 @@ def warning_produit(request):
     else:
         messages.error(request, "Vous n'avez pas les droits !")
     return redirect('onlineshop:produit-list')
+
+
+@login_required
+@staff_member_required
+def data_mapping(request):
+    mappings = DataMapping.objects.all()
+    mapping_dict = get_or_create_mappings(mappings)
+    # Grouper les champs par 'model' et 'name'
+    previous_page = reverse('onlineshop:onlineshop-administration')
+
+    context = {
+        'grouped_data' : mapping_dict,
+        'previous_page': previous_page
+    }
+    return render(request, "onlineshop/data_mapping.html", context)
+
+
+@login_required
+@staff_member_required
+def add_edit_mapping(request):
+    context = {
+    }
+    return render(request, "onlineshop/data_mapping.html", context)

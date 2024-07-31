@@ -195,3 +195,11 @@ class LogProduit(models.Model):
     field = models.TextField()
     old_value = models.TextField()
     new_value = models.TextField()
+
+
+class DataMapping(models.Model):
+    objects = models.Manager()
+    name = models.TextField()
+    field = models.TextField()
+    model = models.TextField()
+    order = models.TextField(null=True, blank=True, default=1)

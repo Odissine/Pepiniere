@@ -1,0 +1,112 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load i18n %}
+{% block title %}Administration - Gestion du Mapping Import / Export{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary bg-opacity-50 text-black">
+                <div class="row align-items-center">
+                    <h5 class="col-1 text-start mb-0">
+                        <a class="bx-pull-left" href="{{ previous_page }}">
+                            <button class="btn btn-light" type="button">Retour</button>
+                        </a>
+                    </h5>
+                    <h5 class="col-11 h3 mb-0">Data Mapping</h5>
+                </div>
+            </div>
+            <div class="card-body px-0 mt-2">
+                {% for model, names in grouped_data.items %}
+                <div data-bs-toggle="tooltip" data-bs-original-title="Lister les champs mappés pour : {{ model }}" >
+                    <h5 class="bg-secondary bg-opacity-50 p-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_{{ model|lower }}" aria-expanded="false" aria-controls="collapse_{{ model|lower }}">{{ model }}</h5>
+                </div>
+
+                <td class="collapse" id="collapse_{{ model|lower }}">
+                    {% for name, fields in names.items %}
+                    <table class="table px-3 my-1 table-secondary table-striped align-middle">
+                        <tr>
+                            <td class="col-5">{{ name }}</td>
+                            <td class="col-1 text-end"><a class="btn btn-sm" onclick="show-add-edit-mapping-modal({{ model }},{{ name }},'')" href="#" ><i class="bi bi-plus"></i></a></td>
+                            <td class="col-6">
+                                {% for field in fields %}
+                                <div class="py-2">
+                                    {{ field }}
+                                    <a class="float-end me-1 btn-sm btn-danger btn" href=""><i class="bi bi-trash"></i></a>
+                                    <a class="float-end me-1 btn-sm btn-warning btn" href=""><i class="bi bi-pencil"></i></a>
+                                </div>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    </table>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+                <div class="col-sm-12 d-grid gap-2 mt-2">
+                    <a href="{{ previous_page }}" class="d-grid gap-2">
+                        <button type="button" class="btn btn-secondary">RETOUR</button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- MODAL DE SUPPRESSION DE L'ESPECE ----------------------------------------------------------------------------------->
+<div class="modal modal-danger fade in" id="modal-delete-mapping" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-light">
+                <h4 class="modal-title">Supprimer ce Mapping ?</h4>
+                <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="delete-mapping-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="" id="button-delete-mapping">
+                    <button type="button" class="btn btn-danger">Supprimer</button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- MODAL D'AJOUT/EDITION D'UN NOM DE CHAMP ----------------------------------------------------------------------------------->
+<div class="modal modal-danger fade in" id="modal-add-edit-mapping" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{% url 'onlineshop:add-edit-mapping' %}" method="POST" name="add-edit-mapping">
+                {% csrf_token %}
+                <div class="modal-header bg-success text-light">
+                    <h4 class="modal-title">Ajouter/Modifier un mapping ?</h4>
+                    <button type="button" class="btn-close text-light" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body" id="add-edit-mapping-body">
+                    <div class="row py-2">
+                        <div class="col-12"> Saisissez/Modifier le nom du champ relatif aux informations ci-contre :</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            Catégorie :<br/>
+                            Champ : <br/>
+                            <input type="text" value="" name="field_name" />
+                            <input type="hidden" name="model_name" value="" />
+                            <input type="hidden" name="model_field_name" value="" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <a href="" id="button-valid-mapping">
+                        <button type="submit" class="btn btn-success">Ajouter/Modifier</button>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -20,6 +20,8 @@ urlpatterns = [
     path('import_greffons_xls/', import_greffons_xls, name='import-greffons-xls'),
     path('import_backup/', import_produits_csv_backup, name='import-produits-csv-backup'),
     path('reset/', reset_stock, name='reset-stock'),
+    path('data_mapping', data_mapping, name='data-mapping'),
+    path('data/add_edit_mapping', add_edit_mapping, name='add-edit-mapping'),
 
     # PRODUITS
     path('produits/manage', manage_produit, name='manage-produit'),

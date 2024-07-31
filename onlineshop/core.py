@@ -1,8 +1,9 @@
-from onlineshop.models import *
-from order.models import *
+from onlineshop.models import Greffons, Espece, Variete, PorteGreffe, Spec, Produit, Couleur, DataMapping
+from order.models import Client, Statut, Tva, Frais, Commande, Inventaire, Cartdb
 from django.contrib.auth.models import User
 from datetime import datetime
-from django.db.models import Sum, F
+from django.db.models import Sum, F, ForeignKey
+from django.apps import apps
 
 
 def get_object_from_id(id_object, model):
@@ -91,4 +92,35 @@ def get_list_produits_anomalie(inventaire):
                 anomalies.append(produit)
                 data.append((produit.pk, produit.stock, produit.stock_bis, qte, qte_encours, qte_termine))
     return anomalies
+
+
+def import_greffons(file):
+    fields = Greffons._meta.get_fields()
+
+    pass
+
+
+def get_or_create_mappings(mappings):
+    model_list = ['Greffons', 'Produit', 'Espece', 'Variete', 'PorteGreffe']
+    # Result needed : {'model':{'name':['field']}}
+    mapping_dict = {}
+    for model in model_list:
+        mapping_dict[model] = {}
+        ModelClass = apps.get_model('onlineshop', model)
+        fields = [field.name for field in ModelClass._meta.get_fields() if not field.one_to_many]
+
+        for field in fields:
+            mapping_dict[model][field] = []
+            mapping_items = mappings.filter(model=model, name=field)
+            if not mapping_items.exists():
+                DataMapping.objects.create(name=field, field=field, model=model)
+                mapping_dict[model][field].append(field)
+            else:
+                for mapping_item in mapping_items:
+                    mapping_dict[model][field].append(mapping_item.field)
+
+
+
+    return mapping_dict
+
 

@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 from django.db import models
 from django.contrib.auth.models import User
 
-import onlineshop.models
-from onlineshop.models import *
+# import onlineshop.models
+# from onlineshop.models import
 
 
 class Tva(models.Model):

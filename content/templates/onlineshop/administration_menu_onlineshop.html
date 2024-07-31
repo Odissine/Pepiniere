@@ -45,6 +45,8 @@
             </div>
             <div class="card-body py-2">
                 <div class="list-group">
+                    <span class="list-group-item bg-primary-light">DATA MAPPING</span>
+                    <a href="{% url 'onlineshop:data-mapping' %}"><button type="button" class="list-group-item list-group-item-action">Gérer le mapping pour l'import/export</button></a>
                     <span class="list-group-item bg-primary-light">EXPORTS</span>
                     <a href="{% url 'onlineshop:export-produits-xls' %}"><button type="button" class="list-group-item list-group-item-action">Exporter les Produits/Greffons/Especes/...</button></a>
                     <span class="list-group-item bg-primary-light">IMPORTS</span>

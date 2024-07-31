@@ -5365,3 +5365,504 @@ Traceback (most recent call last):
   File "/var/www/lapetitepepiniere.fr/pepienv/lib/python3.7/site-packages/pymysql/err.py", line 143, in raise_mysql_exception
     raise errorclass(errno, errval)
 django.db.utils.OperationalError: (1364, "Field 'user' doesn't have a default value")
+Internal Server Error: /produits/import_xls/
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 84, in _execute
+    return self.cursor.execute(sql, params)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/mysql/base.py", line 73, in execute
+    return self.cursor.execute(query, args)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/cursors.py", line 148, in execute
+    result = self._query(query)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/cursors.py", line 310, in _query
+    conn.query(q)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 548, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 775, in _read_query_result
+    result.read()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 1156, in read
+    first_packet = self.connection._read_packet()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 725, in _read_packet
+    packet.raise_for_error()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/protocol.py", line 221, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/err.py", line 143, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.IntegrityError: (1048, "Column 'produit_id' cannot be null")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/exception.py", line 47, in inner
+    response = get_response(request)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/base.py", line 181, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/contrib/auth/decorators.py", line 21, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/contrib/auth/decorators.py", line 21, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/views.py", line 1369, in import_produits_csv
+    result = produit_resource.import_data(imported_data, dry_run=True, raise_errors=True)  # Test the data import
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 771, in import_data
+    return self.import_data_inner(
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 823, in import_data_inner
+    raise row_result.errors[-1].error
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 695, in import_row
+    self.save_instance(instance, using_transactions, dry_run)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 469, in save_instance
+    instance.save()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/base.py", line 739, in save
+    self.save_base(using=using, force_insert=force_insert,
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/base.py", line 776, in save_base
+    updated = self._save_table(
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/base.py", line 881, in _save_table
+    results = self._do_insert(cls._base_manager, using, fields, returning_fields, raw)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/base.py", line 919, in _do_insert
+    return manager._insert(
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/manager.py", line 85, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/query.py", line 1270, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/sql/compiler.py", line 1416, in execute_sql
+    cursor.execute(sql, params)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 98, in execute
+    return super().execute(sql, params)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 66, in execute
+    return self._execute_with_wrappers(sql, params, many=False, executor=self._execute)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 75, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 84, in _execute
+    return self.cursor.execute(sql, params)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/utils.py", line 90, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 84, in _execute
+    return self.cursor.execute(sql, params)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/mysql/base.py", line 73, in execute
+    return self.cursor.execute(query, args)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/cursors.py", line 148, in execute
+    result = self._query(query)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/cursors.py", line 310, in _query
+    conn.query(q)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 548, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 775, in _read_query_result
+    result.read()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 1156, in read
+    first_packet = self.connection._read_packet()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 725, in _read_packet
+    packet.raise_for_error()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/protocol.py", line 221, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/err.py", line 143, in raise_mysql_exception
+    raise errorclass(errno, errval)
+django.db.utils.IntegrityError: (1048, "Column 'produit_id' cannot be null")
+"POST /produits/import_xls/ HTTP/1.1" 500 257322
+Internal Server Error: /produits/import_xls/
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 84, in _execute
+    return self.cursor.execute(sql, params)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/mysql/base.py", line 73, in execute
+    return self.cursor.execute(query, args)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/cursors.py", line 148, in execute
+    result = self._query(query)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/cursors.py", line 310, in _query
+    conn.query(q)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 548, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 775, in _read_query_result
+    result.read()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 1156, in read
+    first_packet = self.connection._read_packet()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 725, in _read_packet
+    packet.raise_for_error()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/protocol.py", line 221, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/err.py", line 143, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.IntegrityError: (1048, "Column 'produit_id' cannot be null")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/exception.py", line 47, in inner
+    response = get_response(request)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/base.py", line 181, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/contrib/auth/decorators.py", line 21, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/contrib/auth/decorators.py", line 21, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/views.py", line 1369, in import_produits_csv
+    result = produit_resource.import_data(imported_data, dry_run=True, raise_errors=True)  # Test the data import
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 771, in import_data
+    return self.import_data_inner(
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 823, in import_data_inner
+    raise row_result.errors[-1].error
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 695, in import_row
+    self.save_instance(instance, using_transactions, dry_run)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 469, in save_instance
+    instance.save()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/base.py", line 739, in save
+    self.save_base(using=using, force_insert=force_insert,
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/base.py", line 776, in save_base
+    updated = self._save_table(
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/base.py", line 881, in _save_table
+    results = self._do_insert(cls._base_manager, using, fields, returning_fields, raw)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/base.py", line 919, in _do_insert
+    return manager._insert(
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/manager.py", line 85, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/query.py", line 1270, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/sql/compiler.py", line 1416, in execute_sql
+    cursor.execute(sql, params)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 98, in execute
+    return super().execute(sql, params)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 66, in execute
+    return self._execute_with_wrappers(sql, params, many=False, executor=self._execute)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 75, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 84, in _execute
+    return self.cursor.execute(sql, params)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/utils.py", line 90, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 84, in _execute
+    return self.cursor.execute(sql, params)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/mysql/base.py", line 73, in execute
+    return self.cursor.execute(query, args)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/cursors.py", line 148, in execute
+    result = self._query(query)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/cursors.py", line 310, in _query
+    conn.query(q)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 548, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 775, in _read_query_result
+    result.read()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 1156, in read
+    first_packet = self.connection._read_packet()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 725, in _read_packet
+    packet.raise_for_error()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/protocol.py", line 221, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/err.py", line 143, in raise_mysql_exception
+    raise errorclass(errno, errval)
+django.db.utils.IntegrityError: (1048, "Column 'produit_id' cannot be null")
+"POST /produits/import_xls/ HTTP/1.1" 500 257322
+Internal Server Error: /produits/import_xls/
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 84, in _execute
+    return self.cursor.execute(sql, params)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/mysql/base.py", line 73, in execute
+    return self.cursor.execute(query, args)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/cursors.py", line 148, in execute
+    result = self._query(query)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/cursors.py", line 310, in _query
+    conn.query(q)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 548, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 775, in _read_query_result
+    result.read()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 1156, in read
+    first_packet = self.connection._read_packet()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 725, in _read_packet
+    packet.raise_for_error()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/protocol.py", line 221, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/err.py", line 143, in raise_mysql_exception
+    raise errorclass(errno, errval)
+pymysql.err.IntegrityError: (1048, "Column 'produit_id' cannot be null")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/exception.py", line 47, in inner
+    response = get_response(request)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/base.py", line 181, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/contrib/auth/decorators.py", line 21, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/contrib/auth/decorators.py", line 21, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/views.py", line 1369, in import_produits_csv
+    result = produit_resource.import_data(imported_data, dry_run=True, raise_errors=True)  # Test the data import
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 771, in import_data
+    return self.import_data_inner(
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 823, in import_data_inner
+    raise row_result.errors[-1].error
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 695, in import_row
+    self.save_instance(instance, using_transactions, dry_run)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 469, in save_instance
+    instance.save()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/base.py", line 739, in save
+    self.save_base(using=using, force_insert=force_insert,
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/base.py", line 776, in save_base
+    updated = self._save_table(
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/base.py", line 881, in _save_table
+    results = self._do_insert(cls._base_manager, using, fields, returning_fields, raw)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/base.py", line 919, in _do_insert
+    return manager._insert(
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/manager.py", line 85, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/query.py", line 1270, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/sql/compiler.py", line 1416, in execute_sql
+    cursor.execute(sql, params)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 98, in execute
+    return super().execute(sql, params)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 66, in execute
+    return self._execute_with_wrappers(sql, params, many=False, executor=self._execute)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 75, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 84, in _execute
+    return self.cursor.execute(sql, params)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/utils.py", line 90, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/utils.py", line 84, in _execute
+    return self.cursor.execute(sql, params)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/mysql/base.py", line 73, in execute
+    return self.cursor.execute(query, args)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/cursors.py", line 148, in execute
+    result = self._query(query)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/cursors.py", line 310, in _query
+    conn.query(q)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 548, in query
+    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 775, in _read_query_result
+    result.read()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 1156, in read
+    first_packet = self.connection._read_packet()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/connections.py", line 725, in _read_packet
+    packet.raise_for_error()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/protocol.py", line 221, in raise_for_error
+    err.raise_mysql_exception(self._data)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/pymysql/err.py", line 143, in raise_mysql_exception
+    raise errorclass(errno, errval)
+django.db.utils.IntegrityError: (1048, "Column 'produit_id' cannot be null")
+"POST /produits/import_xls/ HTTP/1.1" 500 257324
+Internal Server Error: /produits/import_xls/
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/fields/__init__.py", line 1823, in get_prep_value
+    return int(value)
+ValueError: invalid literal for int() with base 10: ''
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/exception.py", line 47, in inner
+    response = get_response(request)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/base.py", line 181, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/contrib/auth/decorators.py", line 21, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/contrib/auth/decorators.py", line 21, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/views.py", line 1369, in import_produits_csv
+    result = produit_resource.import_data(imported_data, dry_run=True, raise_errors=True)  # Test the data import
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 771, in import_data
+    return self.import_data_inner(
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 823, in import_data_inner
+    raise row_result.errors[-1].error
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 695, in import_row
+    self.save_instance(instance, using_transactions, dry_run)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 469, in save_instance
+    instance.save()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/base.py", line 739, in save
+    self.save_base(using=using, force_insert=force_insert,
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/base.py", line 776, in save_base
+    updated = self._save_table(
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/base.py", line 858, in _save_table
+    updated = self._do_update(base_qs, using, pk_val, values, update_fields,
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/base.py", line 912, in _do_update
+    return filtered._update(values) > 0
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/query.py", line 802, in _update
+    return query.get_compiler(self.db).execute_sql(CURSOR)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/sql/compiler.py", line 1559, in execute_sql
+    cursor = super().execute_sql(result_type)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/sql/compiler.py", line 1162, in execute_sql
+    sql, params = self.as_sql()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/backends/mysql/compiler.py", line 44, in as_sql
+    update_query, update_params = super().as_sql()
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/sql/compiler.py", line 1525, in as_sql
+    val = field.get_db_prep_save(val, connection=self.connection)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/fields/__init__.py", line 842, in get_db_prep_save
+    return self.get_db_prep_value(value, connection=connection, prepared=False)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/fields/__init__.py", line 837, in get_db_prep_value
+    value = self.get_prep_value(value)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/fields/__init__.py", line 1825, in get_prep_value
+    raise e.__class__(
+ValueError: Field 'rang' expected a number but got ''.
+"POST /produits/import_xls/ HTTP/1.1" 500 176294
+Internal Server Error: /produits/import_xls/
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/exception.py", line 47, in inner
+    response = get_response(request)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/base.py", line 181, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/contrib/auth/decorators.py", line 21, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/contrib/auth/decorators.py", line 21, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/views.py", line 1369, in import_produits_csv
+    result = produit_resource.import_data(imported_data, dry_run=True, raise_errors=True)  # Test the data import
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 771, in import_data
+    return self.import_data_inner(
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 823, in import_data_inner
+    raise row_result.errors[-1].error
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 685, in import_row
+    self.import_obj(instance, row, dry_run, **kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 535, in import_obj
+    self.import_field(field, obj, data, **kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/resources.py", line 518, in import_field
+    field.save(obj, data, is_m2m, **kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/fields.py", line 110, in save
+    cleaned = self.clean(data, **kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/fields.py", line 66, in clean
+    value = self.widget.clean(value, row=data, **kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/import_export/widgets.py", line 406, in clean
+    return self.get_queryset(value, row, *args, **kwargs).get(**{self.field: val})
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/db/models/query.py", line 435, in get
+    raise self.model.DoesNotExist(
+onlineshop.models.Produit.DoesNotExist: Produit matching query does not exist.
+"POST /produits/import_xls/ HTTP/1.1" 500 136244
+Internal Server Error: /produits/administration/
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/exception.py", line 47, in inner
+    response = get_response(request)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/base.py", line 181, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/contrib/auth/decorators.py", line 21, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/contrib/auth/decorators.py", line 21, in _wrapped_view
+    return view_func(request, *args, **kwargs)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/views.py", line 181, in onlineshop_administration
+    return render(request, 'onlineshop/administration_menu_onlineshop.html', context)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/shortcuts.py", line 19, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/template/loader.py", line 62, in render_to_string
+    return template.render(context, request)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/template/backends/django.py", line 61, in render
+    return self.template.render(context)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/template/base.py", line 170, in render
+    return self._render(context)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/template/base.py", line 162, in _render
+    return self.nodelist.render(context)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/template/base.py", line 938, in render
+    bit = node.render_annotated(context)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/template/base.py", line 905, in render_annotated
+    return self.render(context)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/template/loader_tags.py", line 150, in render
+    return compiled_parent._render(context)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/template/base.py", line 162, in _render
+    return self.nodelist.render(context)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/template/base.py", line 938, in render
+    bit = node.render_annotated(context)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/template/base.py", line 905, in render_annotated
+    return self.render(context)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/template/loader_tags.py", line 62, in render
+    result = block.nodelist.render(context)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/template/base.py", line 938, in render
+    bit = node.render_annotated(context)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/template/base.py", line 905, in render_annotated
+    return self.render(context)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/template/defaulttags.py", line 449, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/urls/base.py", line 86, in reverse
+    return resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/urls/resolvers.py", line 698, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'data-mapping' not found. 'data-mapping' is not a valid view function or pattern name.
+"GET /produits/administration/ HTTP/1.1" 500 201099
+Internal Server Error: /produits/data_mapping
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/apps/registry.py", line 156, in get_app_config
+    return self.app_configs[app_label]
+KeyError: 'your_app_name'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/exception.py", line 47, in inner
+    response = get_response(request)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/base.py", line 181, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/views.py", line 1936, in data_mapping
+    data_mappings = get_or_create_mappings(mappings)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/core.py", line 106, in get_or_create_mappings
+    ModelClass = apps.get_model('your_app_name', model)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/apps/registry.py", line 206, in get_model
+    app_config = self.get_app_config(app_label)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/apps/registry.py", line 163, in get_app_config
+    raise LookupError(message)
+LookupError: No installed app with label 'your_app_name'.
+"GET /produits/data_mapping HTTP/1.1" 500 87757
+Internal Server Error: /produits/data_mapping
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/exception.py", line 47, in inner
+    response = get_response(request)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/base.py", line 181, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/views.py", line 1936, in data_mapping
+    mapping_dict = get_or_create_mappings(mappings)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/core.py", line 120, in get_or_create_mappings
+    mapping_dict[model][field.name].append(mapping_item.field)
+TypeError: list indices must be integers or slices, not str
+"GET /produits/data_mapping HTTP/1.1" 500 93214
+Internal Server Error: /produits/data_mapping
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/exception.py", line 47, in inner
+    response = get_response(request)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/base.py", line 181, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/views.py", line 1936, in data_mapping
+    mapping_dict = get_or_create_mappings(mappings)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/core.py", line 112, in get_or_create_mappings
+    mapping_dict[model][field.name]=[]
+TypeError: list indices must be integers or slices, not str
+"GET /produits/data_mapping HTTP/1.1" 500 92757
+Internal Server Error: /produits/data_mapping
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/exception.py", line 47, in inner
+    response = get_response(request)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/base.py", line 181, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/views.py", line 1936, in data_mapping
+    mapping_dict = get_or_create_mappings(mappings)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/core.py", line 112, in get_or_create_mappings
+    mapping_dict[model][field.name]=[]
+TypeError: list indices must be integers or slices, not str
+"GET /produits/data_mapping HTTP/1.1" 500 92757
+Internal Server Error: /produits/data_mapping
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/exception.py", line 47, in inner
+    response = get_response(request)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/base.py", line 181, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/views.py", line 1936, in data_mapping
+    mapping_dict = get_or_create_mappings(mappings)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/core.py", line 112, in get_or_create_mappings
+    mapping_dict[model][field.name]=[]
+TypeError: list indices must be integers or slices, not str
+"GET /produits/data_mapping HTTP/1.1" 500 92757
+Internal Server Error: /produits/data_mapping
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/exception.py", line 47, in inner
+    response = get_response(request)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/base.py", line 181, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/views.py", line 1936, in data_mapping
+    mapping_dict = get_or_create_mappings(mappings)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/core.py", line 112, in get_or_create_mappings
+    mapping_dict[model][field.name] = []
+TypeError: list indices must be integers or slices, not str
+"GET /produits/data_mapping HTTP/1.1" 500 92761
+Internal Server Error: /produits/data_mapping
+Traceback (most recent call last):
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/exception.py", line 47, in inner
+    response = get_response(request)
+  File "/Users/cyrilhenry/miniconda3/envs/PepiEnv39/lib/python3.9/site-packages/django/core/handlers/base.py", line 181, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/views.py", line 1936, in data_mapping
+    mapping_dict = get_or_create_mappings(mappings)
+  File "/Users/cyrilhenry/Documents/PYTHON/LaPetitePepiniere/onlineshop/core.py", line 111, in get_or_create_mappings
+    mapping_dict[model][field.name] = []
+KeyError: 'Greffons'
+"GET /produits/data_mapping HTTP/1.1" 500 92701
