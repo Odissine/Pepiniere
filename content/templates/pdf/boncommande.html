@@ -55,6 +55,9 @@
                 <td style="width:40%; font-size:1.5rem" rowspan="2">
                     <span style="font-size:1.2rem; font-weight:500;">BON DE COMMANDE N° {{ commande.id}}_{{commande.date|date:'Y' }}</span><br/><br/>
                     {{ commande.client.nom }} {{ commande.client.prenom }}<br/>
+                    {% if commande.client.societe %}
+                    {{ commande.client.societe }}<br/>
+                    {% endif %}
                     {{ commande.client.adresse }}<br/>
                     {{ commande.client.cp }} {{ commande.client.ville }}
                 </td>

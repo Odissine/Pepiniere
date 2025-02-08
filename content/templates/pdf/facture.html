@@ -69,6 +69,9 @@
                 </td>
                 <td style="width: 40%; font-size: 1.5rem; padding-left: 2em; vertical-align: top;">
                     {{ commande.client.nom }} {{ commande.client.prenom }}<br/>
+                    {% if commande.client.societe %}
+                    {{ commande.client.societe }}<br/>
+                    {% endif %}
                     {% if commande.client.adresse %}{{ commande.client.adresse }}<br/>{% endif %}
                     {% if commande.client.cp %}{{ commande.client.cp }}{% endif %} {% if commande.client.ville %}{{ commande.client.ville }}{% endif %}
                 </td>
