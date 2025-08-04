@@ -1,6 +1,6 @@
 import csv
 from django.core.management.base import BaseCommand
-from produits.models import Greffons
+from onlineshop.models import Greffons
 
 class Command(BaseCommand):
     help = 'Importe les données greffons depuis un fichier CSV'
