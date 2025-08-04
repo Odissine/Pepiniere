@@ -63,7 +63,7 @@ class GreffonResource(resources.ModelResource):
     produit = fields.Field(
         column_name='Produits',
         attribute='produit',
-        widget=widgets.ForeignKeyWidget(Produit, 'nom')
+        widget=widgets.ForeignKeyWidget(Produit, 'id')
     )
     rang = fields.Field(
         column_name='Rangs',
