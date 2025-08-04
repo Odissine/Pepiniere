@@ -1361,8 +1361,6 @@ def import_produits_csv(request):
         if categorie == "GREFFONS":
             periode = Inventaire.objects.get(pk=periode)
             produit_resource = GreffonResource()
-        messages.error(request, f"Grosses erreurs : {categorie}")
-        return redirect('onlineshop:import-produits-xls')
 
         dataset = Dataset()
         new_datas = request.FILES['myfile']
@@ -1371,6 +1369,8 @@ def import_produits_csv(request):
             produit_ids = [row['Produits'] for row in imported_data.dict if row.get('Produits')]
             manquants = Produit.objects.filter(id__in=produit_ids).values_list('id', flat=True)
             ids_absents = set(produit_ids) - set(manquants)
+            messages.error(request, f"Les IDs produits suivants sont introuvables : {', '.join(map(str, manquants))}")
+            return redirect('onlineshop:import-produits-xls')
             if ids_absents:
                 messages.error(request, f"Les IDs produits suivants sont introuvables : {', '.join(map(str, ids_absents))}")
                 return redirect('onlineshop:import-produits-xls')
