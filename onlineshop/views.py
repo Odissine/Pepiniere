@@ -1361,6 +1361,8 @@ def import_produits_csv(request):
         if categorie == "GREFFONS":
             periode = Inventaire.objects.get(pk=periode)
             produit_resource = GreffonResource()
+        messages.error(request, f"Grosses erreurs : {categorie}")
+        return redirect('onlineshop:import-produits-xls')
 
         dataset = Dataset()
         new_datas = request.FILES['myfile']
