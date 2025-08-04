@@ -1366,6 +1366,13 @@ def import_produits_csv(request):
         new_datas = request.FILES['myfile']
         imported_data = dataset.load(new_datas.read().decode(), format='csv')
         if categorie == "GREFFONS":
+            produit_ids = [row['Produits'] for row in imported_data.dict if row.get('Produits')]
+            manquants = Produit.objects.filter(id__in=produit_ids).values_list('id', flat=True)
+            ids_absents = set(produit_ids) - set(manquants)
+            if ids_absents:
+                messages.error(request, f"Les IDs produits suivants sont introuvables : {', '.join(map(str, ids_absents))}")
+                return redirect('onlineshop:import-produits-xls')
+
             result = produit_resource.import_data(imported_data, dry_run=True, raise_errors=True)  # Test the data import
         else:
             result = produit_resource.import_data(dataset, dry_run=True)  # Test the data import
