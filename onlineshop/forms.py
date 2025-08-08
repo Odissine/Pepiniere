@@ -535,4 +535,4 @@ class FormBulkEditPrice(forms.ModelForm):
 
     class Meta:
         model = Produit
-        fields = ['prix', 'espece']
+        fields = ['prix']
