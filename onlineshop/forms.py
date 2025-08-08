@@ -530,7 +530,7 @@ class FormBulkEditPrice(forms.ModelForm):
             label="Espèces",
             queryset=Espece.objects.all(),
             required=False,
-            widget=Select2MultipleWidget(attrs={'placeholder': 'Espèce', 'class': 'form-control js-example-basic-single addproduct_modal'}),
+            widget=Select2MultipleWidget(attrs={'placeholder': 'Espèce', 'class': 'form-control select2 js-example-basic-single addproduct_modal'}),
             help_text='Choisir une espèce dans la liste des espèce existante !')
 
     class Meta:
