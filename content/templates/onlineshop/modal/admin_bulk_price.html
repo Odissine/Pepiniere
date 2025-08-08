@@ -30,15 +30,9 @@
             </form>
         </div>
     </div>
-    <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
-
-    <!-- Select2 JS -->
-    <script src="{%  static 'js/select2.min.js' %}"></script>
-
     <script>
         $('#id_espece').select2({
             dropdownParent: $('#bulkPriceModal')
         });
-        console.log($('#id_espece').length);
     </script>
 {% endblock %}
