@@ -533,5 +533,5 @@ class FormBulkEditPrice(forms.ModelForm):
             help_text='Choisir une espèce dans la liste des espèce existante !')
 
         class Meta:
-            model = Espece
+            model = Produit
             fields = ['prix', 'espece']
