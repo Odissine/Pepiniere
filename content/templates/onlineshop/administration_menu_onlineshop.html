@@ -103,6 +103,11 @@
 {% endblock %}
 {% block scripts %}
 <script>
+    $('#id_espece').select2({
+        dropdownParent: $('#bulkPriceModal')
+    });
+</script>
+<script>
     $(document).ready(function() {
         $('#id_nom').change(function() {
             console.log($('#id_nom').val())
