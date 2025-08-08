@@ -1956,8 +1956,8 @@ def bulk_price_update(request):
             # products.update(price=new_price)
 
             messages.success(request, f"{count} produits mis à jour pour {new_price} €")
-            return redirect('onlineshop-administration')
+            return redirect('onlineshop:onlineshop-administration')
         else:
             messages.error(request, f"{form.errors}")
-            return redirect('onlineshop-administration')
-    return redirect('onlineshop-administration')
+            return redirect('onlineshop:onlineshop-administration')
+    return redirect('onlineshop:onlineshop-administration')
