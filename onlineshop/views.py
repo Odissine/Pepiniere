@@ -1953,7 +1953,7 @@ def bulk_price_update(request):
             count = products.count()
 
             # Appliquer le prix (tu peux adapter ici selon ta logique métier)
-            # products.update(price=new_price)
+            products.update(price=new_price)
 
             messages.success(request, f"{count} produits mis à jour pour {new_price} €")
             return redirect('onlineshop:onlineshop-administration')
