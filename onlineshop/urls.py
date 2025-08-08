@@ -28,7 +28,7 @@ urlpatterns = [
     path('produits/edit/<produit_id>', edit_produit, name='edit-produit'),
     path('produits/delete/<produit_id>', delete_produit, name='delete-produit'),
     path('produits/edit/stock/', edit_stock_produit, name='edit-stock-produit'),
-    path('bulk_price_update', bulk_price_update, name='bulk_price_update'),
+    path('produits/bulk_price_update', bulk_price_update, name='bulk_price_update'),
 
     # GREFFONS
     path('greffons/manage', manage_greffons, name='manage-greffons'),
