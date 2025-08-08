@@ -1935,3 +1935,21 @@ def warning_produit(request):
     else:
         messages.error(request, "Vous n'avez pas les droits !")
     return redirect('onlineshop:produit-list')
+
+
+@login_required
+@staff_member_required
+def bulk_price_update(request):
+    if request.method == 'POST':
+        new_price = request.POST.get('price')
+
+        if new_price:
+            products = Produit.objects.all()
+            count = products.count()
+
+            # Appliquer le prix (tu peux adapter ici selon ta logique métier)
+            products.update(price=new_price)
+
+            messages.success(request, f"{count} produits mis à jour pour {new_price} €")
+            return redirect('onlineshop-administration')
+    return redirect('onlineshop-administration')

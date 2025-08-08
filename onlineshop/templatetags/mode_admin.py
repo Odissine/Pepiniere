@@ -1,6 +1,4 @@
 from django import template
-from django.contrib.auth.models import User
-from django.contrib.auth.decorators import user_passes_test, permission_required
 from order.models import AccessMode
 register = template.Library()
 
