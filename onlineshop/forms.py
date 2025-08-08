@@ -437,6 +437,12 @@ class FormProduit(forms.ModelForm):
             widget=forms.NumberInput(attrs={'placeholder': 'Stock futur du produit', 'class': 'form-control', 'value': 0}),
             help_text='Saisir une valeur pour le stock future... <br/>Valeur par défaut : 0')
 
+        self.fields['prix'] = forms.IntegerField(
+            label="Prix par défaut",
+            required=False,
+            widget=forms.NumberInput(attrs={'placeholder': 'Prix par défaut', 'class': 'form-control', 'value': 0}),
+            help_text='Saisir une valeur pour le prix par défaut... <br/>Valeur par défaut : 15')
+
         self.fields['gaf'] = forms.BooleanField(
             label="Greffe à façon",
             required=False,
@@ -445,7 +451,7 @@ class FormProduit(forms.ModelForm):
 
     class Meta:
         model = Produit
-        fields = ['nom', 'espece', 'variete', 'portegreffe', 'spec', 'stock', 'stock_bis', 'stock_future', 'gaf']
+        fields = ['nom', 'espece', 'variete', 'portegreffe', 'spec', 'stock', 'stock_bis', 'stock_future', 'prix', 'gaf']
 
 
 # FORMULAIRE DEDIE A L'UPLOAD DU FICHIER EXCEL DE LA LISTE DES PRODUITS ------------------------------------------------------------------------
