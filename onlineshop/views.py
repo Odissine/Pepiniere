@@ -401,7 +401,7 @@ def edit_produit(request, produit_id):
                 if old_nom != new_nom:
                     log_produit("Produit", str(request.user), instance.pk, None, 'Edit', 'produit', old_nom, new_nom)
                 if old_prix != new_prix:
-                    log_produit("Produit", str(request.user), instance.pk, None, 'Edit', 'prix', old_prix, new_prix)
+                    log_produit("Produit", str(request.user), instance.pk, None, 'Edit', 'prix', str(old_prix), str(new_prix))
                 if old_final != new_final:
                     log_produit("Produit", str(request.user), instance.pk, None, 'Edit', 'sf', old_final, new_final)
                 if old_bis != new_bis:
@@ -412,8 +412,6 @@ def edit_produit(request, produit_id):
                     log_produit("Produit", str(request.user), instance.pk, None, 'Edit', 'description', old_description, new_description)
                 if old_available != new_available:
                     log_produit("Produit", str(request.user), instance.pk, None, 'Edit', 'available', old_available, new_available)
-                if old_prix != new_prix:
-                    log_produit("Produit", str(request.user), instance.pk, None, 'Edit', 'prix', str(old_prix), str(new_prix))
                 if old_gaf != new_gaf:
                     log_produit("Produit", str(request.user), instance.pk, None, 'Edit', 'gaf', old_gaf, new_gaf)
                 messages.success(request, message)
