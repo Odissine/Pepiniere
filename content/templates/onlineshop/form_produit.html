@@ -118,6 +118,19 @@
                     </div>
                     <div class="row g-2">
                         <div class="col d-grid gap-2 py-2">
+                            <div class="input-group">
+                                <span class="input-group-text">{{ form.prix.label }}</span>
+                                {{ form.prix }}
+                                {% if form.prix.help_text %}
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="popover" title="{{ form.prix.label }}" data-bs-html="true" data-bs-content="{{ form.prix.help_text }}"><i class="bi bi-info-circle" aria-hidden="true"></i></button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col d-grid gap-2 py-2">
                             <label>{{ form.gaf.label }}</label>
                             <div class="form-check form-switch">
                                 {{ form.gaf }}
