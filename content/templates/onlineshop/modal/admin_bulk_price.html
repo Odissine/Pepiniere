@@ -36,7 +36,7 @@
     <script src="{%  static 'js/select2.min.js' %}"></script>
 
     <script>
-        $('#bulkPriceModal').on('shown.bs.modal', function () {
+        $(document).ready(function () {
             $('#id_espece').select2({
                 dropdownParent: $('#bulkPriceModal')
             });
