@@ -532,6 +532,6 @@ class FormBulkEditPrice(forms.ModelForm):
             widget=Select2MultipleWidget(attrs={'placeholder': 'Espèce', 'class': 'form-control js-example-basic-single'}),
             help_text='Choisir une espèce dans la liste des espèce existante !')
 
-        class Meta:
-            model = Produit
-            fields = ['prix', 'espece']
+    class Meta:
+        model = Produit
+        fields = ['prix', 'espece']
