@@ -2,33 +2,32 @@
 {% load i18n %}
 
 {% block content %}
-<div class="modal fade" id="bulkPriceModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <form method="POST" id="bulkPriceForm" action="{% url 'onlineshop:bulk_price_update' %}">
-      {% csrf_token %}
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Mise à jour des prix</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
+    <div class="modal fade" id="bulkPriceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="POST" id="bulkPriceForm" action="{% url 'onlineshop:bulk_price_update' %}">
+                {% csrf_token %}
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Mise à jour des prix</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
 
-        <div class="modal-body" id="modalStep1">
-          <div class="mb-3">
-            <label>Nouveau prix (€)</label>
-            <input type="number" name="price" class="form-control" step="0.01" required>
-          </div>
-        </div>
 
-        <div class="modal-body d-none" id="modalStep2">
-          <p id="confirmText"></p>
-        </div>
+                    <div class="modal-body" id="modalStep1">
+                        {% for field in form_price %}
+                        <div class="mb-3">
+                            <label for="price">{{ field.label }}</label>
+                            {{ field }}
+                        </div>
+                        {% endfor %}
+                    </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-          <button type="submit" class="btn btn-success d-none" id="confirmUpdate">Confirmer</button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-success" id="confirmUpdate">Confirmer</button>
+                    </div>
+                </div>
+            </form>
         </div>
-      </div>
-    </form>
-  </div>
-</div>
+    </div>
 {% endblock %}

@@ -1,4 +1,6 @@
 from django.forms import ModelForm
+
+from order.models import Inventaire
 from .models import *
 from django import forms
 from django_select2.forms import Select2Widget, Select2MultipleWidget
@@ -510,3 +512,26 @@ class FormProduitList(forms.ModelForm):
     class Meta:
         model = Produit
         fields = ['nom']
+
+
+class FormBulkEditPrice(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(FormBulkEditPrice, self).__init__(*args, **kwargs)
+
+        self.fields['prix'] = forms.IntegerField(
+            label="Prix par défaut",
+            required=False,
+            widget=forms.NumberInput(attrs={'placeholder': 'Prix par défaut', 'class': 'form-control', 'value': 0}),
+            help_text='Saisir une valeur pour le prix par défaut... <br/>Valeur par défaut : 15')
+
+        self.fields['espece'] = forms.ModelMultipleChoiceField(
+            label="Espèces",
+            queryset=Espece.objects.all(),
+            required=False,
+            widget=Select2MultipleWidget(attrs={'placeholder': 'Espèce', 'class': 'form-control js-example-basic-single'}),
+            help_text='Choisir une espèce dans la liste des espèce existante !')
+
+        class Meta:
+            model = Espece
+            fields = ['prix', 'espece']

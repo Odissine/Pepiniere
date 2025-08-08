@@ -175,7 +175,8 @@ def produit_detail(request, id):
 def onlineshop_administration(request):
     produits = Produit.objects.all()
     form = FormProduitList(request.POST or None)
-    context = {'produits':produits, 'form': form}
+    form_price = FormBulkEditPrice(request.POST or None)
+    context = {'produits':produits, 'form': form, 'form_price': form_price}
     if request.user.is_staff:
         return render(request, 'onlineshop/administration_menu_onlineshop.html', context)
     else:
@@ -1941,14 +1942,18 @@ def warning_produit(request):
 @staff_member_required
 def bulk_price_update(request):
     if request.method == 'POST':
-        new_price = request.POST.get('price')
-
-        if new_price:
+        form = FormBulkEditPrice(request.POST)
+        if form.is_valid:
+            new_price = form.cleaned_data['prix']
+            especes = form.cleaned_data['espece']
             products = Produit.objects.all()
+            if especes:
+                products = Produit.objects.filter(espece__in=especes)
+
             count = products.count()
 
             # Appliquer le prix (tu peux adapter ici selon ta logique métier)
-            products.update(price=new_price)
+            # products.update(price=new_price)
 
             messages.success(request, f"{count} produits mis à jour pour {new_price} €")
             return redirect('onlineshop-administration')
