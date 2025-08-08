@@ -36,10 +36,9 @@
     <script src="{%  static 'js/select2.min.js' %}"></script>
 
     <script>
-        $(document).ready(function () {
-            $('#id_espece').select2({
-                dropdownParent: $('#bulkPriceModal')
-            });
+        $('#id_espece').select2({
+            dropdownParent: $('#bulkPriceModal')
         });
+        console.log($('#id_espece').length);
     </script>
 {% endblock %}
