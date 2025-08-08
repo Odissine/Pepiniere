@@ -1943,7 +1943,7 @@ def warning_produit(request):
 def bulk_price_update(request):
     if request.method == 'POST':
         form = FormBulkEditPrice(request.POST)
-        if form.is_valid:
+        if form.is_valid():
             new_price = form.cleaned_data['prix']
             especes = form.cleaned_data['espece']
             products = Produit.objects.all()
@@ -1956,5 +1956,8 @@ def bulk_price_update(request):
             # products.update(price=new_price)
 
             messages.success(request, f"{count} produits mis à jour pour {new_price} €")
+            return redirect('onlineshop-administration')
+        else:
+            messages.error(request, f"{form.errors}")
             return redirect('onlineshop-administration')
     return redirect('onlineshop-administration')
